@@ -43,8 +43,11 @@ jobs:
         run: |
           python tools/diary/build.py
           python tools/diary/test_build.py
-      - name: Check browser JavaScript syntax
-        run: node --check site/app.js
+      - name: Check browser JavaScript syntax and iOS 12 compatibility
+        run: |
+          node --check site/app.js
+          node --check site/sw.js
+          python tools/diary/test_ios12.py
       - name: Install headless Chromium browser test tooling
         run: |
           python -m pip install -r tools/diary/requirements-ui.txt
