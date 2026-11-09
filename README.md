@@ -52,6 +52,16 @@ sh .githooks/pre-commit
 
 The pinned upstream OKF validator is downloaded by setup rather than vendored. Its Git hash is verified by the setup script.
 
+## iPad Air (1st generation) Home Screen app
+
+The original iPad Air is limited to **iOS 12** (latest legacy security update: iOS 12.5.8). This is a real **installable web app** rather than a modern Swift/App Store package: one iPad-friendly split-view UI, old-Safari-compatible JavaScript, Apple Home Screen metadata, generated PNG icon, and a service worker for best-effort offline access.
+
+**Install:** Open the **HTTPS hosted site** in Safari on the iPad, tap Share, then **Add to Home Screen**. The tablet will launch Knowledge Hub without the ordinary Safari browser chrome. The service worker caches the application and previously visited diary entries for offline access when Safari allows it; storage can be evicted by iOS and must not be used as the only copy.
+
+**Privacy:** The git repository and OKF files are the source of truth; the iPad app is a **read-only diary browser**. It does not provide editing or syncing from the device. Private diary data must not be exposed through publicly reachable GitHub Pages. Public exports must continue to use `--public-only`, which intentionally shows no entries if all notes are private.
+
+**Hosting:** This repository is private and a live HTTPS deployment has not been configured. A local URL or generated HTML file is not a publicly reachable link. Browser CI, icons, metadata and PWA behavior alone are not proof of operation on physical iPad Air hardware.
+
 ## Responsive browser tests
 
 The repository keeps **real headless Chromium checks** alongside the UI source in `tools/diary/test_ui.py`. They test the iPhone single-column layout, early-iPad split views at tablet and desktop widths, horizontal overflow, sidebar/date selection, Day/Week/Month switching, and opening lazy-loaded records. GitHub Actions runs these tests for every PR and `main` push.
