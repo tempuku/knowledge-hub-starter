@@ -1,7 +1,7 @@
-name: Publish approved Knowledge Hub preview
+name: Publish Knowledge Hub public diary
 
-# Only a public-only export may be published. The source repository stays private.
-# Pages hosting must first be enabled under repository Settings > Pages.
+# Publish only entries individually marked visibility: public.
+# The source repository and hosted site are public; the future private diary is separate.
 on:
   push:
     branches: [main]
@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   build-public:
-    name: Build and audit public-only diary
+    name: Build and audit approved public diary
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -63,12 +63,19 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     permissions:
+      contents: read
       pages: write
       id-token: write
     steps:
-      - name: Configure Pages (requires prior owner enablement)
+      - name: Check out live-site verification script
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Deploy the approved public-only artifact
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify real hosted app and published diary records over HTTPS
+        run: python3 tools/diary/test_live.py "${{ steps.deployment.outputs.page_url }}" --min-records 4
