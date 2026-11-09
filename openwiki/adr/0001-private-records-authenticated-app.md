@@ -60,6 +60,10 @@ Before publishing additional personal material:
 4. Change the build pipeline so a public demo uses **only explicitly public/synthetic fixtures**, while the private production app fetches records through the authenticated backend.
 5. Verify that anonymous requests cannot read or modify private entries. Test authenticated reads and edits, authorization errors, editing conflicts, link traversal, and the original iPad Air's Safari behavior.
 
+## Phased rollout — unrestricted reading before authentication
+
+On 2026-11-09, the owner authorized **unrestricted reading of the initial project-planning records through the hosted HTML web diary** as an interim step. The four existing dated journal concepts have been marked `visibility: public`; the public GitHub Pages workflow publishes only explicitly public concepts. That implementation is **read-only**, without login or web-based editing. The public front end and the underlying public Git repository do not protect those records from other internet users. New private thoughts must **not** be added to the public source repository. The longer-term decision above—separate private data, authenticated read/write API, and secure editing—remains in force but is not yet implemented.
+
 ## Alternatives considered
 
 - **Single public GitHub repository plus `visibility: private` flags:** Rejected. Metadata and website filters do not protect public source files.
@@ -76,3 +80,14 @@ Before publishing additional personal material:
 **Implementation order:** (1) audit public exposure; (2) create private data repository; (3) implement authentication and read-only API; (4) implement authenticated create/edit with OKF validation and Git commits; (5) explicitly separate public demo vs private production deployments; (6) test live HTTPS URLs, unauthenticated access denial and **physical iPad Air 1** login/read/edit.
 
 **Acceptance:** This ADR documents the chosen direction; it **does not** claim the authentication service, private repo, secure deployment or editing features have been built. Completion requires a live, verified HTTPS production page where the owner can sign in, read actual private records, add/edit a record, and observe the resulting private Git commit; anonymous access must fail.
+
+## Related architecture reuse — Ivanovo private 3D viewer (2026-11-09)
+
+The separate [Ivanovo models project](../projects/ivanovo-models.md) uses the **same security principle**, not the same application or data store. Its canonical repository `tempuku/ivanovo_models` is already private; no additional knowledge-data repository is required merely to secure that viewer. This **does not** implement the private Knowledge Hub diary/authenticated editing described by this ADR.
+
+- [Ivanovo issue #4](https://github.com/tempuku/ivanovo_models/issues/4) changed from a public-only Pages preview target to **authenticated private production viewing**, with public Pages limited to an explicitly approved synthetic/public demo.
+- [PR #7](https://github.com/tempuku/ivanovo_models/pull/7) merged safe public-demo packaging/validation but did not publish.
+- [PR #20](https://github.com/tempuku/ivanovo_models/pull/20) merged a **read-only Cloudflare Worker gateway implementation** that requires a verified Access identity, configured audience and explicit email authorization for HTML, JS, catalog, Markdown and GLB requests, and keeps the GitHub read credential server-side. The [fresh private-auth workflow run](https://github.com/tempuku/ivanovo_models/actions/runs/42677163711) passed after earlier runs failed before starting jobs.
+- The shared renderer remains [draft PR #19](https://github.com/tempuku/ivanovo_models/pull/19). The merged gateway is **not deployed**: no live Access-protected URL, external secrets, real building GLBs or physical device acceptance has been verified.
+
+**Security boundary:** UI/path filtering or a `visibility: private` flag cannot secure public GitHub files. The Ivanovo Worker uses server-side enforcement; existing Access configuration and real anonymous-denial testing must be completed before calling the site private. Its read-only gateway does not supply the Knowledge Hub's planned editing permissions, OKF record store, conflict handling or signed-in diary functionality.

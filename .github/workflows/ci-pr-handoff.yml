@@ -1,0 +1,96 @@
+name: Return to PR when CI completes
+
+on:
+  workflow_run:
+    workflows: ["Validate OKF and diary"]
+    types: [completed]
+
+# workflow_run is privileged: never check out or execute PR code here.
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  post-ci-handoff:
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Record CI completion on current pull request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const run = context.payload.workflow_run;
+            if (!run || run.event !== "pull_request" ||
+                run.repository?.full_name !== `${owner}/${repo}` ||
+                !/^[0-9a-f]{40}$/.test(run.head_sha || "")) {
+              core.info("Not a valid same-repository PR CI run");
+              return;
+            }
+
+            // GitHub sometimes omits the workflow_run.pull_requests array.
+            // In that case, look up PRs associated with the exact commit.
+            const direct = run.pull_requests || [];
+            let candidates = direct;
+            if (!candidates.length) {
+              const associated = await github.paginate(
+                github.rest.repos.listPullRequestsAssociatedWithCommit,
+                { owner, repo, commit_sha: run.head_sha, per_page: 100 }
+              );
+              candidates = associated;
+            }
+            const numbers = [...new Set(
+              candidates.map(pr => pr.number).filter(Number.isInteger)
+            )];
+            const marker = "<!-- ci-handoff:validate-okf-and-diary -->";
+            const conclusion = run.conclusion || "unknown";
+            const label = conclusion === "success" ? "✅ Passed" :
+                          conclusion === "failure" ? "❌ Failed" :
+                          conclusion === "cancelled" ? "⚪ Cancelled" :
+                          `⚠️ ${conclusion}`;
+
+            for (const number of numbers) {
+              const { data: pr } = await github.rest.pulls.get({
+                owner, repo, pull_number: number
+              });
+              // Ignore closed PRs, fork sources, and stale/replaced commits.
+              if (pr.state !== "open" ||
+                  pr.head.repo?.full_name !== `${owner}/${repo}` ||
+                  pr.head.sha !== run.head_sha) {
+                core.info(`Skipping PR #${number}: closed, fork, or stale head`);
+                continue;
+              }
+              const body = `${marker}
+            ### CI completed — return to this pull request
+            **Validate OKF and diary:** ${label}
+            **Checked commit:** \`${run.head_sha.slice(0,12)}\`
+            **[View workflow run](${run.html_url})**
+
+            **Next:** review the latest CI result and code changes. Fix failed checks or, if all required checks pass, evaluate approvals, mergeability, and the PR acceptance criteria before deciding whether to merge.
+
+            This is a handoff, **not** automatic approval, agent invocation, or automatic merging.
+            `;
+              const comments = await github.paginate(
+                github.rest.issues.listComments,
+                { owner, repo, issue_number: number, per_page: 100 }
+              );
+              const existing = comments.find(c =>
+                c.user?.login === "github-actions[bot]" &&
+                (c.body || "").includes(marker)
+              );
+              if (existing) {
+                if (existing.body !== body) {
+                  await github.rest.issues.updateComment({
+                    owner, repo, comment_id: existing.id, body
+                  });
+                }
+              } else {
+                await github.rest.issues.createComment({
+                  owner, repo, issue_number: number, body
+                });
+              }
+              core.info(`Recorded CI handoff on PR #${number}`);
+            }
+            if (!numbers.length) core.info("No PR associated with CI commit");

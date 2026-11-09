@@ -1,6 +1,6 @@
 # Knowledge Hub — OKF v0.2
 
-A private, Git-backed home for ideas, projects, decisions and a browsable diary. Uses Google's **Open Knowledge Format v0.2** (not OKF 2.0).
+A Git-backed home for ideas, projects, decisions and a browsable diary. The current first phase is a **public, read-only web diary**. Uses Google's **Open Knowledge Format v0.2** (not OKF 2.0).
 
 ## What is in this starter
 
@@ -10,18 +10,15 @@ A private, Git-backed home for ideas, projects, decisions and a browsable diary.
 - `site/`: one shared browser application with day/week/month modes, styled in **early iOS 5–6** (glossy blue navigation, grouped lists, beveled segmented controls, subtle linen textures). The theme uses CSS only: a single-column iPhone layout under 720px and a split-view, classic early-iPad library/diary layout for tablets and desktop (sidebar dates synchronize with the diary).
 - `.github/workflows/validate-openwiki.yml`, `.githooks/pre-commit`, `tools/okf/`: validation adapted from `tempuku/ivanovo_models`.
 
-## Create the private repository
+## Live site and public reading — phase 1
 
-From the extracted directory, with GitHub CLI authenticated:
+**Open the real web app:** https://tempuku.github.io/knowledge-hub-starter/
 
-```sh
-git init -b main
-git add .
-git commit -m 'Initialize OKF knowledge hub and diary'
-gh repo create tempuku/knowledge-hub --private --source=. --remote=origin --push
-```
+The repository is public. Four existing project-planning journal records for 2026-11-09 are explicitly marked `visibility: public`, so they appear on the hosted Day/Week/Month diary without login. Each record remains an atomic OKF v0.2 Markdown source with links back to original evidence.
 
-**Safety:** the repository should start **private**. The generated private diary contains personal notes and must not be deployed to public GitHub Pages. A later opt-in public preview must use `--public-only` and an explicit publication review.
+The GitHub Pages build **still uses `--public-only`**. Future records default to `visibility: private` in frontmatter and will not appear on the website until individually marked public. **Warning:** any files committed to this public repository, even those labeled `private`, remain readable via GitHub and its history. Do not commit new private thoughts here.
+
+This is an interim, unrestricted read-only release, **not** the secure final architecture. The accepted [ADR 0001](openwiki/adr/0001-private-records-authenticated-app.md) specifies a separate private data repository and authenticated reading/editing as a subsequent stage.
 
 ## Visual direction
 
@@ -60,17 +57,15 @@ The original iPad Air is limited to **iOS 12** (latest legacy security update: i
 
 **Privacy:** The git repository and OKF files are the source of truth; the iPad app is a **read-only diary browser**. It does not provide editing or syncing from the device. Private diary data must not be exposed through publicly reachable GitHub Pages. Public exports must continue to use `--public-only`, which intentionally shows no entries if all notes are private.
 
-**Hosting:** This repository is private and a live HTTPS deployment has not been configured. A local URL or generated HTML file is not a publicly reachable link. Browser CI, icons, metadata and PWA behavior alone are not proof of operation on physical iPad Air hardware.
+**Hosting:** The public GitHub Pages deployment is available at https://tempuku.github.io/knowledge-hub-starter/ . This is an actual HTTPS web app, but opening it successfully on the original physical iPad Air still requires a device-level check.
 
 ## HTTPS hosting (public-approved diary entries only)
 
 The repository includes `.github/workflows/deploy-pages.yml`, which packages the **actual Knowledge Hub app** and only OKF journal records explicitly marked `visibility: public`. A strict allowlist verifies the published static HTML/JS/CSS, generated icons and date-partitioned JSON. This is not a mock or screenshot; it is the same read-only PWA that runs locally, but with private records excluded.
 
-**Owner setup required:** GitHub Pages must be enabled for this repository before its Actions deployment will work. Go to **Settings → Pages → Build and deployment → Source: GitHub Actions**. GitHub Pages on a private repository also requires an eligible GitHub paid plan; Free supports public repositories only. Pages from a personal private repository are normally still **publicly reachable**, so the workflow deliberately excludes private records and internal project links. The connected GitHub app cannot enable Pages or change the repository's visibility.
+**Hosting status:** GitHub Pages is enabled and the deployment runs automatically for changes to journal records and site code on `main`. The public website serves the approved records without authentication. The app source remains public, but private data storage is still future work.
 
-After settings are configured and a successful Actions deployment completes, the expected project URL is `https://tempuku.github.io/knowledge-hub-starter/`. **Do not treat that address as live until an actual HTTPS request and browser navigation succeed.**
-
-**Private diary requirement:** Publishing private notes behind login needs authenticated hosting (e.g. access-controlled hosting or a private app service), not a normal public GitHub Pages site. This workflow does not solve authenticated access or provide write/edit synchronization from the iPad. If no records have `visibility: public`, the public website will correctly show an empty diary rather than leaking private data.
+**Private diary requirement:** Publishing private notes behind login needs authenticated hosting (e.g. access-controlled hosting or a private app service), not a normal public GitHub Pages site. This workflow does not solve authenticated access or provide write/edit synchronization from the iPad. If no records have `visibility: public`, the public website will show an empty diary rather than exporting records marked private.
 
 For any deployment failure check the GitHub Actions run and Pages settings. No credentials are stored in the repository: Pages deployment uses GitHub's scoped `GITHUB_TOKEN` and OIDC permissions. The shared URL becomes the acceptance proof only after a successful real deployment and device-level test.
 

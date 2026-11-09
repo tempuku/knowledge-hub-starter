@@ -6,7 +6,7 @@ occurred_on: "2026-11-09"
 project: knowledge-hub
 tags: [project, knowledge-management, okf]
 status: draft
-visibility: private
+visibility: public
 sources:
   - resource: https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md
     title: OKF v0.2 specification
