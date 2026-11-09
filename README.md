@@ -62,6 +62,18 @@ The original iPad Air is limited to **iOS 12** (latest legacy security update: i
 
 **Hosting:** This repository is private and a live HTTPS deployment has not been configured. A local URL or generated HTML file is not a publicly reachable link. Browser CI, icons, metadata and PWA behavior alone are not proof of operation on physical iPad Air hardware.
 
+## HTTPS hosting (public-approved diary entries only)
+
+The repository includes `.github/workflows/deploy-pages.yml`, which packages the **actual Knowledge Hub app** and only OKF journal records explicitly marked `visibility: public`. A strict allowlist verifies the published static HTML/JS/CSS, generated icons and date-partitioned JSON. This is not a mock or screenshot; it is the same read-only PWA that runs locally, but with private records excluded.
+
+**Owner setup required:** GitHub Pages must be enabled for this repository before its Actions deployment will work. Go to **Settings → Pages → Build and deployment → Source: GitHub Actions**. GitHub Pages on a private repository also requires an eligible GitHub paid plan; Free supports public repositories only. Pages from a personal private repository are normally still **publicly reachable**, so the workflow deliberately excludes private records and internal project links. The connected GitHub app cannot enable Pages or change the repository's visibility.
+
+After settings are configured and a successful Actions deployment completes, the expected project URL is `https://tempuku.github.io/knowledge-hub-starter/`. **Do not treat that address as live until an actual HTTPS request and browser navigation succeed.**
+
+**Private diary requirement:** Publishing private notes behind login needs authenticated hosting (e.g. access-controlled hosting or a private app service), not a normal public GitHub Pages site. This workflow does not solve authenticated access or provide write/edit synchronization from the iPad. If no records have `visibility: public`, the public website will correctly show an empty diary rather than leaking private data.
+
+For any deployment failure check the GitHub Actions run and Pages settings. No credentials are stored in the repository: Pages deployment uses GitHub's scoped `GITHUB_TOKEN` and OIDC permissions. The shared URL becomes the acceptance proof only after a successful real deployment and device-level test.
+
 ## Responsive browser tests
 
 The repository keeps **real headless Chromium checks** alongside the UI source in `tools/diary/test_ui.py`. They test the iPhone single-column layout, early-iPad split views at tablet and desktop widths, horizontal overflow, sidebar/date selection, Day/Week/Month switching, and opening lazy-loaded records. GitHub Actions runs these tests for every PR and `main` push.
