@@ -35,6 +35,18 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
     if output.exists():
         shutil.rmtree(output)
     shutil.copytree(SITE, output)
+    if public_only:
+        # Private project/repository links belong to the private source copy,
+        # not a public preview even when no journal entries are published.
+        index_file = output / "index.html"
+        index = index_file.read_text(encoding="utf-8")
+        marker = re.compile(
+            r"<!-- BEGIN PRIVATE PROJECT LINKS -->.*?<!-- END PRIVATE PROJECT LINKS -->",
+            flags=re.S,
+        )
+        if len(marker.findall(index)) != 1:
+            raise ValueError("Expected exactly one private-links section in site/index.html")
+        index_file.write_text(marker.sub("", index), encoding="utf-8")
     write_icons(output)
 
     by_day: dict[str, list[dict]] = defaultdict(list)
