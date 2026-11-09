@@ -52,6 +52,21 @@ sh .githooks/pre-commit
 
 The pinned upstream OKF validator is downloaded by setup rather than vendored. Its Git hash is verified by the setup script.
 
+## Responsive browser tests
+
+The repository keeps **real headless Chromium checks** alongside the UI source in `tools/diary/test_ui.py`. They test the iPhone single-column layout, early-iPad split views at tablet and desktop widths, horizontal overflow, sidebar/date selection, Day/Week/Month switching, and opening lazy-loaded records. GitHub Actions runs these tests for every PR and `main` push.
+
+To run locally (requires the one-time Chromium browser download):
+
+```sh
+python3 -m pip install -r tools/diary/requirements.txt -r tools/diary/requirements-ui.txt
+python3 -m playwright install chromium
+python3 tools/diary/build.py
+python3 tools/diary/test_ui.py
+```
+
+The tests serve the generated `dist/` folder on localhost and never publish private entries. CI additionally runs `node --check site/app.js` and tests the separate `--public-only` export.
+
 ## Add a dated record
 
 Create `openwiki/journal/2026/11/09/my-note.md` using the same frontmatter shape as the examples. Register it in that day's `index.md`, commit, and rebuild. `occurred_on` is a user-defined local calendar date (YYYY-MM-DD); it is distinct from `generated.at`, commits, or the date a note was last edited.
