@@ -11,3 +11,9 @@
 - Run the same staged OKF checker as `ivanovo_models` before committing. The checker reads staged files.
 - Do not duplicate huge `log.md` files, JSON catalog content, or HTML apps for each project.
 - Preserve the user-approved visual direction: **early iOS 5–6 skeuomorphic app** (blue glossy navigation, segmented controls, grouped lists, subtle linen texture). Keep one CSS-driven, responsive and accessible shared UI; no new per-project HTML or decorative external image dependencies.
+
+## Pull request CI handoff
+
+- Do not treat a PR with pending checks as complete or promise to resume the same chat spontaneously. After opening/updating a PR, link its checks; let the CI-completion handoff workflow record the final result on the PR and return to that PR for review.
+- `.github/workflows/ci-pr-handoff.yml` listens for completion of `Validate OKF and diary` on open same-repository PRs. It updates a single bot comment with the checked commit, result, and run link, skipping stale heads and forks. It never checks out PR code, runs untrusted artifacts, invokes an AI agent, or merges.
+- After CI completion, an authorized reviewer/agent must inspect failures, scope, approvals and current head before merging. New agent auto-dispatch requires an explicitly configured agent integration; a GitHub comment alone cannot resume ChatGPT.
