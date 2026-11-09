@@ -41,7 +41,8 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         cls.thread.start()
         cls.url = f"http://127.0.0.1:{cls.server.server_port}/"
         cls.playwright = sync_playwright().start()
-        cls.browser = cls.playwright.chromium.launch(headless=True)
+        engine = os.environ.get("DIARY_BROWSER", "chromium")
+        cls.browser = getattr(cls.playwright, engine).launch(headless=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -60,6 +61,18 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         expect(page.locator("#total")).to_have_text(f"{self.latest_count} records")
         self.assertFalse(errors, "JavaScript errors on load: " + str(errors))
         return page
+
+    def test_installable_home_screen_app_assets(self):
+        page = self.open_page(1024, 768)
+        expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).to_have_attribute("content", "yes")
+        expect(page.locator('link[rel="apple-touch-icon"]')).to_have_attribute("href", "./apple-touch-icon.png")
+        expect(page.locator('link[rel="manifest"]')).to_have_attribute("href", "./manifest.webmanifest")
+        result = page.evaluate("""async () => {
+          const manifest = await (await fetch('./manifest.webmanifest')).json();
+          const icon = await fetch('./apple-touch-icon.png');
+          return { name: manifest.short_name, display: manifest.display, icon: icon.ok };
+        }""")
+        self.assertEqual(result, {"name": "Knowledge Hub", "display": "standalone", "icon": True})
 
     def test_iphone_has_one_column_and_working_diary(self):
         page = self.open_page(390, 844)
