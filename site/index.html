@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#365b88">
+  <meta name="color-scheme" content="light">
+  <title>Knowledge Hub · Diary</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div class="app-shell">
+  <header class="app-navbar">
+    <div class="app-identity"><span class="book-icon" aria-hidden="true">▤</span><span>Knowledge Hub</span></div>
+    <span class="nav-version">OKF v0.2</span>
+  </header>
+  <main>
+    <section class="intro">
+      <span class="eyebrow">PERSONAL ARCHIVE</span>
+      <h1>Diary</h1>
+      <p>Ideas, decisions and progress — organized by the day they happened, with links back to the source.</p>
+    </section>
+    <section class="filter-panel" aria-label="Diary navigation">
+      <div class="toolbar">
+        <div class="segments" role="group" aria-label="Timeline view">
+          <button type="button" data-mode="day" class="selected" aria-pressed="true">Day</button>
+          <button type="button" data-mode="week" aria-pressed="false">Week</button>
+          <button type="button" data-mode="month" aria-pressed="false">Month</button>
+        </div>
+        <div class="date-control">
+          <label for="date">Jump to date</label>
+          <input type="date" id="date">
+        </div>
+      </div>
+    </section>
+    <div class="section-banner"><span>JOURNAL ENTRIES</span><span id="total" aria-live="polite"></span></div>
+    <section id="timeline" class="timeline" aria-live="polite"></section>
+  </main>
+  <footer class="app-footer">
+    <span class="footer-glyph" aria-hidden="true">◈</span>
+    <span>Original notes in OKF · Git keeps the history</span>
+  </footer>
+</div>
+<script src="./app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+if [ ! -f tools/okf/frontmatter.ts ] || [ ! -d tools/okf/node_modules/yaml ]; then
+  echo "OKF validator is missing. Run: sh tools/okf/setup.sh" >&2
+  exit 1
+fi
+exec node tools/okf/verify.mjs

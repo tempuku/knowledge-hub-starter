@@ -1,0 +1,49 @@
+name: Validate OKF and diary
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openwiki-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-openwiki:
+    name: validate-openwiki
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+          cache: npm
+          cache-dependency-path: tools/okf/package-lock.json
+      - name: Install pinned OKF validator
+        run: sh tools/okf/setup.sh
+      - name: Validate all staged OpenWiki pages and links
+        run: sh .githooks/pre-commit
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/diary/requirements.txt
+      - name: Install diary builder dependencies
+        run: python -m pip install -r tools/diary/requirements.txt
+      - name: Build and smoke-test private diary locally in CI
+        run: |
+          python tools/diary/build.py
+          python tools/diary/test_build.py
+      - name: Verify public-only export excludes private notes
+        run: |
+          python tools/diary/build.py --output-dir dist-public --public-only
+          python tools/diary/test_build.py --output-dir dist-public --public-only

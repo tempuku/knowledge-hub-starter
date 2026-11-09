@@ -1,0 +1,7 @@
+/dist/
+/dist-public/
+__pycache__/
+*.pyc
+.DS_Store
+/tools/okf/node_modules/
+/tools/okf/frontmatter.ts
