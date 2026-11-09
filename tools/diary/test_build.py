@@ -20,7 +20,7 @@ assert calendar["total"] == sum(x["count"] for x in calendar["days"])
 assert (output / "index.html").exists() and (output / "app.js").exists()
 assert (output / "sw.js").exists() and (output / "manifest.webmanifest").exists()
 for icon in ("apple-touch-icon.png", "icon-192.png", "icon-512.png"):
-    assert (output / icon).read_bytes()[:8] == b"\\x89PNG\\r\\n\\x1a\\n"
+    assert (output / icon).read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
 
 expected = set()
 for p in source.rglob("*.md"):
