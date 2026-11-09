@@ -64,7 +64,7 @@
           } else { const show = details.hidden; details.hidden = !show; open.textContent = show ? 'Hide entry' : 'Open entry'; }
         };
         article.append(open, details);
-        if (record.links?.length) { const links = document.createElement('div'); links.className = 'links';
+        if (record.links && record.links.length) { const links = document.createElement('div'); links.className = 'links';
           for (const item of record.links) { const a = document.createElement('a'); a.textContent = item.title; a.href = item.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a); }
           article.append(links); }
         slot.append(article);
@@ -91,7 +91,7 @@
     }
   };
   const renderSidebar = () => {
-    sidebarDays.replaceChildren();
+    sidebarDays.textContent = '';
     for (const item of calendar.slice(0, 90)) {
       const button = document.createElement('button');
       button.type = 'button';
@@ -141,10 +141,20 @@
     render();
   }));
   input.addEventListener('change', render);
+
+  // iPad Air (1st generation) runs Safari 12: use classic Home Screen
+  // capability meta tags plus feature-detected Service Worker registration.
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {
+        // The online app works without offline caching or service workers.
+      });
+    });
+  }
   json('./data/calendar.json').then(data => {
     calendar = data.days || [];
     renderSidebar();
-    input.value = calendar[0]?.date || new Date().toISOString().slice(0, 10);
+    input.value = (calendar.length ? calendar[0].date : new Date().toISOString().slice(0, 10));
     render();
   }).catch(error => { timeline.textContent = 'Could not load diary catalog: ' + error; });
 })();
