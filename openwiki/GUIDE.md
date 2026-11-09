@@ -18,3 +18,7 @@ For a new diary date, create `journal/YYYY/MM/DD/index.md` and one or more conce
 ## Web presentation style
 
 The diary's shared web interface follows an **early iOS 5–6** application design: glossy navigation bars, subtly textured linen backgrounds, inset grouped journal rows, blue beveled controls and compact mobile spacing. Maintain a responsive, accessible version of this visual language for future Projects, Search and Timeline views. All pages use one shared CSS/JS application; no project-specific HTML duplication.
+
+## Architecture decisions
+
+Read and maintain [architecture decision records](adr/) before changing how knowledge is stored, authenticated, published or edited. The accepted target architecture is [ADR 0001: public app, private records and authenticated access](adr/0001-private-records-authenticated-app.md). Its implementation is pending; do not confuse frontmatter `visibility: private` with access control when records live in a public repository.
