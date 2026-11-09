@@ -1,0 +1,10 @@
+{
+  "name": "Knowledge Hub — OKF Diary",
+  "short_name": "Knowledge Hub",
+  "description": "Offline-capable diary and personal knowledge library",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#d9e0ea",
+  "theme_color": "#365b88"
+}
