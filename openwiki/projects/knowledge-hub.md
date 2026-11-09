@@ -46,3 +46,7 @@ A Git-backed home for projects, ideas and decisions. Initial entry: [kickoff rec
 5. To check the future **private** functionality, verify separately that a private data repo exists, unauthenticated requests are denied, authenticated reading/editing creates a private Git commit and an actual original iPad Air can sign in. **None of those acceptance conditions is met by the current public diary.**
 
 **Privacy:** `knowledge-hub-starter` is a public GitHub repository. Frontmatter `visibility: private` does not make its source files confidential; no new personal notes or credentials should be committed here. The hosted public diary exports only explicitly `visibility: public` records. The private-data migration described in ADR 0001 is pending.
+
+## Related Ivanovo viewer implementation — separate scope
+
+The [Ivanovo models record](ivanovo-models.md) now tracks merged [private viewer gateway PR #20](https://github.com/tempuku/ivanovo_models/pull/20). It reuses this project's **public app / private records / authenticated server** design idea, but is a separate, **read-only** implementation in the private model repository. It does **not** create the proposed Knowledge Hub private data repo, authenticate the Knowledge Hub diary, or implement Git-backed diary editing. Those ADR 0001 acceptance requirements remain pending.
