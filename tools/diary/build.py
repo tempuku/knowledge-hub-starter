@@ -14,6 +14,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import yaml
+from icon import write_icons
 
 ROOT = Path(__file__).resolve().parents[2]
 NOTES = ROOT / "openwiki" / "journal"
@@ -34,6 +35,7 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
     if output.exists():
         shutil.rmtree(output)
     shutil.copytree(SITE, output)
+    write_icons(output)
 
     by_day: dict[str, list[dict]] = defaultdict(list)
     count = 0
