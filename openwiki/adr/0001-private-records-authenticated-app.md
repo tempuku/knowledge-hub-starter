@@ -60,6 +60,10 @@ Before publishing additional personal material:
 4. Change the build pipeline so a public demo uses **only explicitly public/synthetic fixtures**, while the private production app fetches records through the authenticated backend.
 5. Verify that anonymous requests cannot read or modify private entries. Test authenticated reads and edits, authorization errors, editing conflicts, link traversal, and the original iPad Air's Safari behavior.
 
+## Phased rollout — unrestricted reading before authentication
+
+On 2026-11-09, the owner authorized **unrestricted reading of the initial project-planning records through the hosted HTML web diary** as an interim step. The four existing dated journal concepts have been marked `visibility: public`; the public GitHub Pages workflow publishes only explicitly public concepts. That implementation is **read-only**, without login or web-based editing. The public front end and the underlying public Git repository do not protect those records from other internet users. New private thoughts must **not** be added to the public source repository. The longer-term decision above—separate private data, authenticated read/write API, and secure editing—remains in force but is not yet implemented.
+
 ## Alternatives considered
 
 - **Single public GitHub repository plus `visibility: private` flags:** Rejected. Metadata and website filters do not protect public source files.

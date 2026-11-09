@@ -6,7 +6,7 @@ occurred_on: "2026-11-09"
 project: ivanovo-models
 tags: [planning, github, architecture]
 status: draft
-visibility: private
+visibility: public
 sources:
   - resource: https://github.com/tempuku/ivanovo_models/issues/1
     title: Issue 1

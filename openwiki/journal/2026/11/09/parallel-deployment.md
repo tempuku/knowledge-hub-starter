@@ -6,7 +6,7 @@ occurred_on: "2026-11-09"
 project: ivanovo-models
 tags: [decision, deployment, ci-cd]
 status: draft
-visibility: private
+visibility: public
 sources:
   - resource: https://github.com/tempuku/ivanovo_models/issues/4
     title: Deployment issue
