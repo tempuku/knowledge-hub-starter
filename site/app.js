@@ -6,6 +6,7 @@
   const input = document.getElementById('date');
   const timeline = document.getElementById('timeline');
   const total = document.getElementById('total');
+  const sidebarDays = document.getElementById('sidebar-days');
   let calendar = [];
   let mode = 'day';
   const json = async (url) => {
@@ -81,11 +82,44 @@
       slot.dataset.loaded = 'yes';
     } catch (err) {slot.textContent = `Could not load records: ${err}`; delete slot.dataset.loaded;}
   };
+  const highlightSidebar = () => {
+    for (const button of sidebarDays.querySelectorAll('[data-day]')) {
+      const active = mode === 'day' && button.dataset.day === input.value;
+      button.classList.toggle('active', active);
+      if (active) button.setAttribute('aria-current', 'date');
+      else button.removeAttribute('aria-current');
+    }
+  };
+  const renderSidebar = () => {
+    sidebarDays.replaceChildren();
+    for (const item of calendar.slice(0, 90)) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'sidebar-day';
+      button.dataset.day = item.date;
+      const dateText = new Date(item.date + 'T12:00:00Z').toLocaleDateString('en-US',
+        {timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric'});
+      button.append(span(dateText, 'sidebar-date'), span(String(item.count), 'sidebar-count'));
+      button.addEventListener('click', () => {
+        input.value = item.date;
+        mode = 'day';
+        modeButtons.forEach(b => {
+          const active = b.dataset.mode === 'day';
+          b.classList.toggle('selected', active);
+          b.setAttribute('aria-pressed', String(active));
+        });
+        render();
+      });
+      sidebarDays.append(button);
+    }
+    highlightSidebar();
+  };
   const render = () => {
     const date = input.value;
     const selected = calendar.filter(x => period(date, mode)(x.date));
     timeline.textContent = '';
     total.textContent = selected.reduce((sum, d) => sum + d.count, 0) + ' records';
+    highlightSidebar();
     if (!selected.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'No records for this date range.'; timeline.append(p); return; }
     for (const [i, item] of selected.entries()) {
       const section = document.createElement('section'); section.className = 'day';
@@ -109,6 +143,7 @@
   input.addEventListener('change', render);
   json('./data/calendar.json').then(data => {
     calendar = data.days || [];
+    renderSidebar();
     input.value = calendar[0]?.date || new Date().toISOString().slice(0, 10);
     render();
   }).catch(error => { timeline.textContent = 'Could not load diary catalog: ' + error; });
