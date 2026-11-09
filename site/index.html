@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#365b88">
   <meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Knowledge Hub">
+  <meta name="application-name" content="Knowledge Hub">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <title>Knowledge Hub · Diary</title>
   <link rel="stylesheet" href="./style.css">
 </head>
@@ -14,7 +20,20 @@
     <div class="app-identity"><span class="book-icon" aria-hidden="true">▤</span><span>Knowledge Hub</span></div>
     <span class="nav-version">OKF v0.2</span>
   </header>
-  <main>
+  <div class="workspace">
+    <aside class="library-sidebar" aria-label="Diary library">
+      <div class="sidebar-toolbar"><span class="sidebar-toolbar-icon" aria-hidden="true">▤</span><strong>Library</strong><span class="sidebar-toolbar-detail">Journal</span></div>
+      <div class="sidebar-scroll">
+        <div class="sidebar-label">COLLECTIONS</div>
+        <div class="library-group"><div class="library-current"><span class="library-current-icon" aria-hidden="true">▣</span><span>Diary</span><span class="library-disclosure" aria-hidden="true">›</span></div></div>
+        <div class="sidebar-label" id="sidebar-dates-label">RECENT DAYS</div>
+        <nav class="sidebar-days" id="sidebar-days" aria-labelledby="sidebar-dates-label"></nav>
+        <div class="sidebar-label">PROJECT LINKS</div>
+        <div class="library-group library-projects"><a href="https://github.com/tempuku/ivanovo_models" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">▰</span> Ivanovo Models <span aria-hidden="true">↗</span></a><a href="https://github.com/tempuku/knowledge-hub-starter" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">▰</span> Knowledge Hub <span aria-hidden="true">↗</span></a></div>
+      </div>
+      <div class="sidebar-bottom">OKF v0.2 <span>·</span> Git-backed library</div>
+    </aside>
+  <main class="diary-content">
     <section class="intro">
       <span class="eyebrow">PERSONAL ARCHIVE</span>
       <h1>Diary</h1>
@@ -36,6 +55,7 @@
     <div class="section-banner"><span>JOURNAL ENTRIES</span><span id="total" aria-live="polite"></span></div>
     <section id="timeline" class="timeline" aria-live="polite"></section>
   </main>
+  </div>
   <footer class="app-footer">
     <span class="footer-glyph" aria-hidden="true">◈</span>
     <span>Original notes in OKF · Git keeps the history</span>

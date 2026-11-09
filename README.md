@@ -7,7 +7,7 @@ A private, Git-backed home for ideas, projects, decisions and a browsable diary.
 - `openwiki/`: source-of-truth OKF bundle, one concept/diary record per Markdown file.
 - `openwiki/journal/YYYY/MM/DD/`: date-partitioned immutable records; optional scoped `log.md` remains small.
 - `tools/diary/build.py`: static web exporter. It builds a tiny calendar, daily metadata JSON shards and one lazy-loadable JSON document per record. The browser never downloads or parses a giant `log.md`.
-- `site/`: one shared browser application with day/week/month modes, styled in **early iOS 5–6** (glossy blue navigation, grouped lists, beveled segmented controls, subtle linen textures). The theme uses CSS only and works on phones and desktop.
+- `site/`: one shared browser application with day/week/month modes, styled in **early iOS 5–6** (glossy blue navigation, grouped lists, beveled segmented controls, subtle linen textures). The theme uses CSS only: a single-column iPhone layout under 720px and a split-view, classic early-iPad library/diary layout for tablets and desktop (sidebar dates synchronize with the diary).
 - `.github/workflows/validate-openwiki.yml`, `.githooks/pre-commit`, `tools/okf/`: validation adapted from `tempuku/ivanovo_models`.
 
 ## Create the private repository
@@ -51,6 +51,31 @@ sh .githooks/pre-commit
 ```
 
 The pinned upstream OKF validator is downloaded by setup rather than vendored. Its Git hash is verified by the setup script.
+
+## iPad Air (1st generation) Home Screen app
+
+The original iPad Air is limited to **iOS 12** (latest legacy security update: iOS 12.5.8). This is a real **installable web app** rather than a modern Swift/App Store package: one iPad-friendly split-view UI, old-Safari-compatible JavaScript, Apple Home Screen metadata, generated PNG icon, and a service worker for best-effort offline access.
+
+**Install:** Open the **HTTPS hosted site** in Safari on the iPad, tap Share, then **Add to Home Screen**. The tablet will launch Knowledge Hub without the ordinary Safari browser chrome. The service worker caches the application and previously visited diary entries for offline access when Safari allows it; storage can be evicted by iOS and must not be used as the only copy.
+
+**Privacy:** The git repository and OKF files are the source of truth; the iPad app is a **read-only diary browser**. It does not provide editing or syncing from the device. Private diary data must not be exposed through publicly reachable GitHub Pages. Public exports must continue to use `--public-only`, which intentionally shows no entries if all notes are private.
+
+**Hosting:** This repository is private and a live HTTPS deployment has not been configured. A local URL or generated HTML file is not a publicly reachable link. Browser CI, icons, metadata and PWA behavior alone are not proof of operation on physical iPad Air hardware.
+
+## Responsive browser tests
+
+The repository keeps **real headless Chromium checks** alongside the UI source in `tools/diary/test_ui.py`. They test the iPhone single-column layout, early-iPad split views at tablet and desktop widths, horizontal overflow, sidebar/date selection, Day/Week/Month switching, and opening lazy-loaded records. GitHub Actions runs these tests for every PR and `main` push.
+
+To run locally (requires the one-time Chromium browser download):
+
+```sh
+python3 -m pip install -r tools/diary/requirements.txt -r tools/diary/requirements-ui.txt
+python3 -m playwright install chromium
+python3 tools/diary/build.py
+python3 tools/diary/test_ui.py
+```
+
+The tests serve the generated `dist/` folder on localhost and never publish private entries. CI additionally runs `node --check site/app.js` and tests the separate `--public-only` export.
 
 ## Add a dated record
 

@@ -30,7 +30,7 @@ button:focus-visible, input:focus-visible, a:focus-visible {
 a { color: #205b9b; text-decoration: none; }
 a:hover { text-decoration: underline; }
 .app-shell {
-  width: min(100%, 540px);
+  width: 100%;
   min-height: 100vh;
   margin: 0 auto;
   background: #d9e0ea;
@@ -238,3 +238,148 @@ button.open:disabled { opacity: .6; cursor: wait; }
   .app-identity { font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *:before, *:after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+
+/* Classic early iPad split-view: permanent source list on the left, diary on the right.
+   Under 720px, retain the original single-column iPhone layout. */
+.workspace { display: flex; flex: 1; min-height: 0; }
+.diary-content { min-width: 0; }
+.library-sidebar { display: none; }
+
+@media (min-width: 720px) {
+  .app-shell {
+    width: calc(100% - 36px);
+    max-width: 1360px;
+    height: calc(100vh - 36px);
+    min-height: 620px;
+    margin: 18px auto;
+    border: 1px solid #7e90a6;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .app-navbar { min-height: 55px; padding: 0 21px; flex-shrink: 0; }
+  .workspace { display: grid; grid-template-columns: 275px minmax(0, 1fr); overflow: hidden; }
+  .library-sidebar {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    color: #2d4059;
+    border-right: 1px solid #7487a1;
+    background: repeating-linear-gradient(0deg, #ffffff20 0 1px, transparent 1px 4px), linear-gradient(105deg, #c1cbd8, #dee5ee 76%);
+    box-shadow: inset -1px 0 #e9f2ff91, 2px 0 5px #29415d33;
+    z-index: 1;
+  }
+  .sidebar-toolbar {
+    min-height: 51px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border-bottom: 1px solid #8999b0;
+    background: linear-gradient(#f6f8fc, #d5dce7 48%, #bdc9d8 49%, #bdcadb);
+    box-shadow: inset 0 1px #fff, 0 1px 2px #5a729439;
+    color: #304866;
+    text-shadow: 0 1px #fff;
+    font-size: 18px;
+  }
+  .sidebar-toolbar-icon { color: #3e638f; font-size: 23px; }
+  .sidebar-toolbar-detail { margin-left: auto; font-size: 11px; font-weight: 700; color: #6e8099; }
+  .sidebar-scroll { overflow-y: auto; flex: 1; padding-bottom: 24px; }
+  .sidebar-label {
+    margin: 20px 14px 7px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .11em;
+    color: #697b91;
+    text-shadow: 0 1px #f9fcff;
+  }
+  .library-group { margin: 0 10px; border: 1px solid #9daebf; border-radius: 8px; overflow: hidden; box-shadow: 0 1px #fff9; }
+  .library-current {
+    min-height: 45px;
+    padding: 0 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(#86a9d1, #5a85b7 49%, #3e73ab 50%, #35669f);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 750;
+    text-shadow: 0 -1px #1d4c7b;
+  }
+  .library-current-icon { font-size: 21px; }
+  .library-disclosure { margin-left: auto; font-size: 26px; font-weight: 400; opacity: .85; }
+  .sidebar-days { margin: 0 10px; border: 1px solid #9eacbf; border-radius: 8px; overflow: hidden; background: #f8f9fc; box-shadow: 0 1px #fff9; }
+  .sidebar-day {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 43px;
+    padding: 10px 13px;
+    border: 0;
+    border-bottom: 1px solid #d1d9e5;
+    background: linear-gradient(#fff, #edf2f8);
+    text-align: left;
+    color: #3e516c;
+    font-size: 13px;
+    font-weight: 700;
+    text-shadow: 0 1px #fff;
+  }
+  .sidebar-day:last-child { border-bottom: 0; }
+  .sidebar-day:hover { background: linear-gradient(#f7faff, #dce9f6); }
+  .sidebar-day.active {
+    background: linear-gradient(#779cc7, #527fb2 49%, #376da7 50%, #3768a1);
+    color: #fff;
+    text-shadow: 0 -1px #254d7b;
+    box-shadow: inset 0 1px #acd0f88a;
+  }
+  .sidebar-count { min-width: 24px; text-align: center; padding: 1px 6px; border-radius: 10px; background: #a2b2c752; font-size: 11px; }
+  .sidebar-day.active .sidebar-count { background: #204b7950; }
+  .library-projects a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 41px;
+    padding: 9px 12px;
+    border-bottom: 1px solid #d5dce6;
+    background: linear-gradient(#fff, #edf2f8);
+    color: #3b5877;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .library-projects a:last-child { border-bottom: 0; }
+  .library-projects a span:last-child { margin-left: auto; }
+  .sidebar-bottom { padding: 11px 13px; text-align: center; border-top: 1px solid #9caabd; color: #61728a; font-size: 11px; font-weight: 700; text-shadow: 0 1px #fff; }
+  .sidebar-bottom span { color: #91a2b9; }
+  .diary-content {
+    overflow-y: auto;
+    min-width: 0;
+    background: repeating-linear-gradient(90deg, #fff5 0, #fff5 1px, transparent 1px 5px), repeating-linear-gradient(0deg, #15233808 0, #15233808 1px, transparent 1px 5px), linear-gradient(#e1e7f0, #d4dce7);
+    scrollbar-color: #98a8bd #e0e5ee;
+  }
+  .intro { padding: 25px 22px 16px; }
+  .intro h1 { font-size: 36px; }
+  .intro p { max-width: 590px; }
+  .filter-panel { max-width: 930px; margin: 0 auto 16px; padding: 0 24px; }
+  .toolbar { flex-direction: row; justify-content: space-between; align-items: center; gap: 20px; }
+  .segments { width: min(360px, 60%); }
+  .date-control { min-width: 235px; }
+  .section-banner { max-width: 930px; margin: 0 auto; padding: 8px 29px; }
+  .timeline { max-width: 930px; margin: 0 auto; padding: 0 24px 18px; }
+  .day { border-radius: 10px; }
+  .app-footer { flex-shrink: 0; min-height: 41px; padding: 7px; }
+}
+@media (min-width: 1100px) {
+  .workspace { grid-template-columns: 320px minmax(0, 1fr); }
+  .intro { padding-top: 31px; }
+}
+@media (min-width: 720px) and (max-width: 900px) {
+  .workspace { grid-template-columns: 232px minmax(0, 1fr); }
+  .toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .segments { width: 100%; }
+  .filter-panel { padding: 0 16px; }
+  .timeline { padding: 0 16px; }
+  .section-banner { padding: 7px 20px; }
+  .intro h1 { font-size: 33px; }
+}

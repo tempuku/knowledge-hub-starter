@@ -6,6 +6,7 @@
   const input = document.getElementById('date');
   const timeline = document.getElementById('timeline');
   const total = document.getElementById('total');
+  const sidebarDays = document.getElementById('sidebar-days');
   let calendar = [];
   let mode = 'day';
   const json = async (url) => {
@@ -63,7 +64,7 @@
           } else { const show = details.hidden; details.hidden = !show; open.textContent = show ? 'Hide entry' : 'Open entry'; }
         };
         article.append(open, details);
-        if (record.links?.length) { const links = document.createElement('div'); links.className = 'links';
+        if (record.links && record.links.length) { const links = document.createElement('div'); links.className = 'links';
           for (const item of record.links) { const a = document.createElement('a'); a.textContent = item.title; a.href = item.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a); }
           article.append(links); }
         slot.append(article);
@@ -81,11 +82,44 @@
       slot.dataset.loaded = 'yes';
     } catch (err) {slot.textContent = `Could not load records: ${err}`; delete slot.dataset.loaded;}
   };
+  const highlightSidebar = () => {
+    for (const button of sidebarDays.querySelectorAll('[data-day]')) {
+      const active = mode === 'day' && button.dataset.day === input.value;
+      button.classList.toggle('active', active);
+      if (active) button.setAttribute('aria-current', 'date');
+      else button.removeAttribute('aria-current');
+    }
+  };
+  const renderSidebar = () => {
+    sidebarDays.textContent = '';
+    for (const item of calendar.slice(0, 90)) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'sidebar-day';
+      button.dataset.day = item.date;
+      const dateText = new Date(item.date + 'T12:00:00Z').toLocaleDateString('en-US',
+        {timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric'});
+      button.append(span(dateText, 'sidebar-date'), span(String(item.count), 'sidebar-count'));
+      button.addEventListener('click', () => {
+        input.value = item.date;
+        mode = 'day';
+        modeButtons.forEach(b => {
+          const active = b.dataset.mode === 'day';
+          b.classList.toggle('selected', active);
+          b.setAttribute('aria-pressed', String(active));
+        });
+        render();
+      });
+      sidebarDays.append(button);
+    }
+    highlightSidebar();
+  };
   const render = () => {
     const date = input.value;
     const selected = calendar.filter(x => period(date, mode)(x.date));
     timeline.textContent = '';
     total.textContent = selected.reduce((sum, d) => sum + d.count, 0) + ' records';
+    highlightSidebar();
     if (!selected.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'No records for this date range.'; timeline.append(p); return; }
     for (const [i, item] of selected.entries()) {
       const section = document.createElement('section'); section.className = 'day';
@@ -107,9 +141,20 @@
     render();
   }));
   input.addEventListener('change', render);
+
+  // iPad Air (1st generation) runs Safari 12: use classic Home Screen
+  // capability meta tags plus feature-detected Service Worker registration.
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {
+        // The online app works without offline caching or service workers.
+      });
+    });
+  }
   json('./data/calendar.json').then(data => {
     calendar = data.days || [];
-    input.value = calendar[0]?.date || new Date().toISOString().slice(0, 10);
+    renderSidebar();
+    input.value = (calendar.length ? calendar[0].date : new Date().toISOString().slice(0, 10));
     render();
   }).catch(error => { timeline.textContent = 'Could not load diary catalog: ' + error; });
 })();
