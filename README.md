@@ -7,7 +7,7 @@ A private, Git-backed home for ideas, projects, decisions and a browsable diary.
 - `openwiki/`: source-of-truth OKF bundle, one concept/diary record per Markdown file.
 - `openwiki/journal/YYYY/MM/DD/`: date-partitioned immutable records; optional scoped `log.md` remains small.
 - `tools/diary/build.py`: static web exporter. It builds a tiny calendar, daily metadata JSON shards and one lazy-loadable JSON document per record. The browser never downloads or parses a giant `log.md`.
-- `site/`: one shared browser application with day/week/month modes, styled in **early iOS 5–6** (glossy blue navigation, grouped lists, beveled segmented controls, subtle linen textures). The theme uses CSS only and works on phones and desktop.
+- `site/`: one shared browser application with day/week/month modes, styled in **early iOS 5–6** (glossy blue navigation, grouped lists, beveled segmented controls, subtle linen textures). The theme uses CSS only: a single-column iPhone layout under 720px and a split-view, classic early-iPad library/diary layout for tablets and desktop (sidebar dates synchronize with the diary).
 - `.github/workflows/validate-openwiki.yml`, `.githooks/pre-commit`, `tools/okf/`: validation adapted from `tempuku/ivanovo_models`.
 
 ## Create the private repository
