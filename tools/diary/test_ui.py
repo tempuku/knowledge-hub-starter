@@ -84,7 +84,7 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         expect(page.locator(".body").first).to_be_visible()
 
     def test_ipad_portrait_uses_split_view(self):
-        page = self.open_page(820, 1180)
+        page = self.open_page(768, 1024)
         sidebar = page.locator(".library-sidebar")
         diary = page.locator(".diary-content")
         expect(sidebar).to_be_visible()
