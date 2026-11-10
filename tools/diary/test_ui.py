@@ -158,6 +158,18 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         expect(page.locator(".body").first).to_be_visible()
         self.assertGreater(len(page.locator(".body").first.inner_text()), 10)
 
+    def test_history_opens_with_changed_lines_and_optional_snapshot(self):
+        page = self.open_page(1024, 768)
+        history = page.locator(".note").filter(has_text="#history").first
+        history.get_by_role("button", name="Open entry").click()
+        expect(history.get_by_text("Changes in this entry", exact=False)).to_be_visible()
+        expect(history.locator(".diff-added").first).to_be_visible()
+        snapshot = history.get_by_role("button", name="Read record at this revision")
+        expect(snapshot).to_have_attribute("aria-expanded", "false")
+        expect(history.locator(".body").nth(1)).to_be_hidden()
+        snapshot.click()
+        expect(history.locator(".body").nth(1)).to_be_visible()
+
 
 if __name__ == "__main__":
     unittest.main()

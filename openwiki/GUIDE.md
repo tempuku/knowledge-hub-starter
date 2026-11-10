@@ -15,11 +15,15 @@ Keep relative concept links valid. Cite external GitHub issues by URL. Do not cl
 
 For a new diary date, create `journal/YYYY/MM/DD/index.md` and one or more concept documents, then update year/month indexes as required. Do not create one global ever-growing timeline file.
 
+For a record update, write a short sentence in the log's `summary` field describing what changed in the record. Write it for someone reading the diary. Avoid copying the Git commit message. The diary labels older Git imports by their record title and action.
+
 ## Web presentation style
 
 The diary's shared web interface follows an **early iOS 5–6** application design: glossy navigation bars, subtly textured linen backgrounds, inset grouped journal rows, blue beveled controls and compact mobile spacing. Maintain a responsive, accessible version of this visual language for future Projects, Search and Timeline views. All pages use one shared CSS/JS application; no project-specific HTML duplication.
 
 The diary opens to the Monday–Sunday week containing the latest available entry. Each day in that week opens automatically with its first page of titles. The total covers the selected date range, including additional pages. Selecting a sidebar date switches to Day view. Month view opens the newest day and loads other dates when expanded. Full entry bodies load when opened.
+
+Dates and timestamped entries are ordered newest first. Date-only entries follow the timed entries for that day. Use `occurred_at` with a verified UTC timestamp ending in `Z` when the event time is known and its UTC date matches `occurred_on`. Opening a record change shows added and removed lines with nearby context. The record at that revision is available separately.
 
 ## Architecture decisions
 

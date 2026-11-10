@@ -49,6 +49,7 @@
         const article = document.createElement('article'); article.className = 'note';
         const title = document.createElement('h3'); title.textContent = record.title; article.append(title);
         if (record.description) {const p = document.createElement('p'); p.textContent = record.description; article.append(p);}
+        if (record.timestamp) article.append(span(record.timestamp.slice(11, 16) + ' UTC', 'chip'));
         if (record.project) article.append(span(record.project, 'chip'));
         for (const tag of record.tags || []) article.append(span('#' + tag, 'chip'));
         const details = document.createElement('div');
@@ -57,50 +58,47 @@
           if (!details.dataset.loaded) {
             open.disabled = true; open.textContent = 'Loading entry…';
             try { const full = await json(`./data/entries/${encodeURIComponent(record.id)}.json`);
-              const body = document.createElement('pre'); body.className = 'body'; body.textContent = full.body; details.append(body);
+              details.textContent = '';
+              const change = full.change;
+              const body = document.createElement('pre');
+              body.className = 'body';
+              if (change && change.diff) {
+                const legend = document.createElement('p');
+                legend.textContent = 'Changes in this entry (+ added, − removed)';
+                details.append(legend);
+                for (const line of change.diff.split('\n')) {
+                  const style = line.startsWith('+') && !line.startsWith('+++ ') ? 'diff-added'
+                    : line.startsWith('-') && !line.startsWith('--- ') ? 'diff-removed' : '';
+                  body.append(span(line + '\n', style));
+                }
+              } else {
+                body.textContent = full.body;
+              }
+              details.append(body);
               if (full.log_entry) {
-                const entry = full.log_entry;
                 const openRecord = document.createElement('button');
                 openRecord.type = 'button'; openRecord.className = 'open';
-                openRecord.textContent = 'Open original record';
-                const recordView = document.createElement('pre');
-                recordView.className = 'body'; recordView.hidden = true;
-                recordView.textContent = entry.after || '(record deleted)';
+                openRecord.textContent = 'Read record at this revision';
+                openRecord.setAttribute('aria-expanded', 'false');
+                const recordView = document.createElement('div');
+                recordView.hidden = true;
+                const snapshot = document.createElement('pre');
+                snapshot.className = 'body';
+                snapshot.textContent = full.log_entry.after;
+                recordView.append(snapshot);
                 openRecord.onclick = () => {
                   recordView.hidden = !recordView.hidden;
-                  openRecord.textContent = recordView.hidden ? 'Open original record' : 'Hide original record';
+                  openRecord.setAttribute('aria-expanded', String(!recordView.hidden));
+                  openRecord.textContent = recordView.hidden ? 'Read record at this revision' : 'Hide record';
                 };
-                const changes = document.createElement('button');
-                changes.type = 'button'; changes.className = 'open';
-                changes.textContent = 'View complete change';
-                const beforeAfter = document.createElement('div'); beforeAfter.hidden = true;
-                const beforeTitle = document.createElement('h4'); beforeTitle.textContent = 'Before';
-                const beforeBody = document.createElement('pre'); beforeBody.className = 'body';
-                beforeBody.textContent = entry.before === null ? '(record did not exist)' : entry.before;
-                const afterTitle = document.createElement('h4'); afterTitle.textContent = 'After';
-                const afterBody = document.createElement('pre'); afterBody.className = 'body';
-                afterBody.textContent = entry.after;
-                beforeAfter.append(beforeTitle, beforeBody, afterTitle, afterBody);
-                changes.onclick = () => {
-                  beforeAfter.hidden = !beforeAfter.hidden;
-                  changes.textContent = beforeAfter.hidden ? 'View complete change' : 'Hide complete change';
-                };
-                const actions = document.createElement('div'); actions.className = 'entry-actions';
-                actions.append(openRecord, changes);
-                details.append(actions, recordView, beforeAfter);
-              } else if (full.change) {
+                details.append(openRecord, recordView);
+              } else if (change && change.source_url) {
                 const source = document.createElement('a');
-                source.textContent = 'Original record'; source.href = full.change.source_url;
+                source.textContent = 'Original record'; source.href = change.source_url;
                 source.target = '_blank'; source.rel = 'noopener noreferrer';
                 const actions = document.createElement('div'); actions.className = 'entry-actions';
                 actions.append(source);
-                const diffButton = document.createElement('button');
-                diffButton.type = 'button'; diffButton.className = 'open'; diffButton.textContent = 'View full diff';
-                const diff = document.createElement('pre'); diff.className = 'body'; diff.hidden = true;
-                diff.textContent = full.change.diff;
-                diffButton.onclick = () => { diff.hidden = !diff.hidden; diffButton.textContent = diff.hidden ? 'View full diff' : 'Hide full diff'; };
-                actions.append(diffButton);
-                details.append(actions, diff);
+                details.append(actions);
               }
               details.dataset.loaded = 'yes';
               open.textContent = 'Hide entry';

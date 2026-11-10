@@ -3,7 +3,7 @@
    Browser Cache Storage can retain diary content on this device; do not deploy
    private records to a publicly reachable site. */
 'use strict';
-var CACHE_NAME = 'knowledge-hub-pwa-v3';
+var CACHE_NAME = 'knowledge-hub-pwa-v4';
 var SHELL = ['./', './index.html', './app.js', './style.css', './manifest.webmanifest'];
 
 self.addEventListener('install', function (event) {

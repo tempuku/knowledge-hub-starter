@@ -3,6 +3,7 @@ type: diary-entry
 title: Knowledge Hub opens to the latest week
 description: The diary expands each date in Week view so entries across multiple dates are visible on load.
 occurred_on: "2026-11-10"
+occurred_at: "2026-11-10T18:25:06Z"
 project: knowledge-hub
 tags: [diary, ui]
 status: draft

@@ -42,13 +42,13 @@ def history(path: str) -> list[dict]:
             continue
         stamp = git("show", "-s", "--format=%cI", sha).strip()
         timestamp = dt.datetime.fromisoformat(stamp).astimezone(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
-        summary = git("show", "-s", "--format=%s", sha).strip()
+        action = "CREATED" if previous is None else "UPDATED"
         actor = git("show", "-s", "--format=%an", sha).strip()
         visibility = re.search(r"(?m)^visibility:\s*(\S+)", current)
         events.append({
             "id": "git-" + sha[:16], "timestamp": timestamp, "actor": actor,
-            "action": "CREATED" if previous is None else "UPDATED",
-            "summary": summary or "Historical Git revision", "record": path,
+            "action": action,
+            "summary": f"{action.capitalize()} record", "record": path,
             "visibility": visibility.group(1).strip("\"'") if visibility else "private",
             "before": previous, "after": current,
             "before_sha256": digest(previous), "after_sha256": digest(current),

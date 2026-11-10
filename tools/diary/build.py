@@ -13,6 +13,8 @@ import re
 import shutil
 import subprocess
 from collections import defaultdict
+from datetime import date, datetime
+from difflib import unified_diff
 from pathlib import Path
 
 import yaml
@@ -30,6 +32,12 @@ FRONT = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", flags=re.S)
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def utc_timestamp(value: str) -> datetime:
+    if not isinstance(value, str) or not value.endswith("Z"):
+        raise ValueError(f"Expected a UTC timestamp ending in Z: {value!r}")
+    return datetime.fromisoformat(value[:-1] + "+00:00")
 
 
 def build(output: Path, public_only: bool) -> tuple[int, int]:
@@ -63,7 +71,6 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             continue
         day = "-".join(match.group(i) for i in (1, 2, 3))
         try:
-            from datetime import date
             date.fromisoformat(day)
         except ValueError as exc:
             raise ValueError(f"Invalid diary path date: {file}") from exc
@@ -121,6 +128,11 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             "tags": meta.get("tags", []),
             "links": links,
         }
+        if "occurred_at" in meta:
+            timestamp = utc_timestamp(meta["occurred_at"])
+            if timestamp.date().isoformat() != day:
+                raise ValueError(f"Timestamp date mismatch: {file}")
+            summary["timestamp"] = timestamp.isoformat(timespec="microseconds")
         if change_payload:
             summary["has_change"] = True
         by_day[day].append(summary)
@@ -145,11 +157,8 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             record = entry.get("record")
             if not isinstance(record, str) or not record.startswith("openwiki/") or ".." in Path(record).parts:
                 raise ValueError(f"Unsafe record path: {log_file}")
-            stamp = entry.get("timestamp")
-            from datetime import datetime
-            if not isinstance(stamp, str) or not stamp.endswith("Z"):
-                raise ValueError(f"Invalid timestamp: {log_file}")
-            day = datetime.fromisoformat(stamp.replace("Z", "+00:00")).date().isoformat()
+            timestamp = utc_timestamp(entry.get("timestamp"))
+            day = timestamp.date().isoformat()
             before, after = entry.get("before"), entry.get("after")
             if not isinstance(after, str) or (before is not None and not isinstance(before, str)):
                 raise ValueError(f"Invalid snapshots: {log_file}")
@@ -165,14 +174,24 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             if public_only and (entry.get("visibility") != "public" or current_meta.get("visibility") != "public"):
                 continue
             record_id = "log-" + hashlib.sha256((record + ":" + entry["id"]).encode()).hexdigest()[:24]
-            summary = {"id": record_id, "date": day, "title": entry.get("summary", ""),
-                       "description": entry.get("action", ""), "project": record,
+            title = current_meta.get("title") or Path(record).stem
+            action = entry.get("action", "UPDATED")
+            description = entry.get("summary", "")
+            if entry.get("provenance") == "git-backfill" or not description:
+                description = f"{action.capitalize()} record"
+            diff = "\n".join(unified_diff(
+                (before or "").splitlines(), after.splitlines(),
+                fromfile="Previous revision", tofile="This revision", n=2, lineterm="",
+            ))
+            summary = {"id": record_id, "date": day, "title": title,
+                       "timestamp": timestamp.isoformat(timespec="microseconds"),
+                       "description": description, "project": record,
                        "status": "stable", "tags": ["history"], "links": [], "has_change": True}
             by_day[day].append(summary)
             write_json(output / "data" / "entries" / (record_id + ".json"), {
-                **summary, "body": entry.get("summary", ""),
+                **summary, "body": description,
                 "change": {"record": record, "before": before, "after": after,
-                           "diff": "", "source_url": "", "internal": True},
+                           "diff": diff, "source_url": "", "internal": True},
                 "log_entry": entry,
             })
             count += 1
@@ -180,6 +199,7 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
     calendar = []
     for day in sorted(by_day, reverse=True):
         items = sorted(by_day[day], key=lambda v: v["id"])
+        items.sort(key=lambda v: v.get("timestamp", ""), reverse=True)
         pages = (len(items) + PAGE_SIZE - 1) // PAGE_SIZE
         write_json(output / "data" / "days" / (day + ".json"), {
             "date": day, "count": len(items), "pages": pages, "page_size": PAGE_SIZE

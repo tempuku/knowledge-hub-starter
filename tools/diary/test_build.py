@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -63,6 +64,7 @@ for day in calendar["days"]:
     assert meta["count"] == day["count"]
     assert meta["pages"] >= 1 and meta["page_size"] == 50
     found = 0
+    timestamps = []
     for page in range(1, meta["pages"] + 1):
         shard = output / "data/days" / day["date"] / (str(page) + ".json")
         rows = json.loads(shard.read_text())
@@ -73,6 +75,11 @@ for day in calendar["days"]:
             seen.add(note["id"])
             item = json.loads((output / "data/entries" / (note["id"] + ".json")).read_text())
             assert item["date"] == day["date"] and item["body"]
+            timestamps.append(datetime.fromisoformat(note["timestamp"]).timestamp()
+                              if "timestamp" in note else float("-inf"))
+            if item.get("log_entry", {}).get("provenance") == "git-backfill":
+                assert item["description"] == item["log_entry"]["action"].capitalize() + " record"
     assert found == day["count"]
+    assert timestamps == sorted(timestamps, reverse=True), day["date"]
 assert seen == expected, ("missing", sorted(expected - seen), "extra", sorted(seen - expected))
 print(f"Diary smoke check passed: {len(seen)} included entries, public_only={a.public_only}")
