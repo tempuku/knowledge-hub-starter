@@ -1,0 +1,29 @@
+name: Knowledge Hub private gateway unit tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  private-hub-auth:
+    name: private-hub-auth
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+      - name: Check Worker syntax
+        run: node --check tools/private_hub/worker.mjs
+      - name: Verify fail-closed split-repository gateway
+        run: node --test tools/private_hub/worker.test.mjs
+      - name: Reject Workers Static Assets bypass and checked-in secrets
+        run: |
+          ! grep -Eq '^[[:space:]]*\[assets\]' tools/private_hub/wrangler.toml
+          ! grep -Eq '^[[:space:]]*(ACCESS_AUD|ALLOWED_EMAILS|GITHUB_READ_TOKEN)[[:space:]]*=' tools/private_hub/wrangler.toml
