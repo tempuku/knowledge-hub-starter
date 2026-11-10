@@ -58,7 +58,35 @@
             open.disabled = true; open.textContent = 'Loading entry…';
             try { const full = await json(`./data/entries/${encodeURIComponent(record.id)}.json`);
               const body = document.createElement('pre'); body.className = 'body'; body.textContent = full.body; details.append(body);
-              if (full.change) {
+              if (full.log_entry) {
+                const entry = full.log_entry;
+                const openRecord = document.createElement('button');
+                openRecord.type = 'button'; openRecord.className = 'open';
+                openRecord.textContent = 'Open original record';
+                const recordView = document.createElement('pre');
+                recordView.className = 'body'; recordView.hidden = true;
+                recordView.textContent = entry.after || '(record deleted)';
+                openRecord.onclick = () => {
+                  recordView.hidden = !recordView.hidden;
+                  openRecord.textContent = recordView.hidden ? 'Open original record' : 'Hide original record';
+                };
+                const changes = document.createElement('button');
+                changes.type = 'button'; changes.className = 'open';
+                changes.textContent = 'View complete change';
+                const beforeAfter = document.createElement('div'); beforeAfter.hidden = true;
+                const beforeTitle = document.createElement('h4'); beforeTitle.textContent = 'Before';
+                const beforeBody = document.createElement('pre'); beforeBody.className = 'body';
+                beforeBody.textContent = entry.before === null ? '(record did not exist)' : entry.before;
+                const afterTitle = document.createElement('h4'); afterTitle.textContent = 'After';
+                const afterBody = document.createElement('pre'); afterBody.className = 'body';
+                afterBody.textContent = entry.after;
+                beforeAfter.append(beforeTitle, beforeBody, afterTitle, afterBody);
+                changes.onclick = () => {
+                  beforeAfter.hidden = !beforeAfter.hidden;
+                  changes.textContent = beforeAfter.hidden ? 'View complete change' : 'Hide complete change';
+                };
+                details.append(openRecord, recordView, changes, beforeAfter);
+              } else if (full.change) {
                 const source = document.createElement('a');
                 source.textContent = 'Original record'; source.href = full.change.source_url;
                 source.target = '_blank'; source.rel = 'noopener noreferrer';
