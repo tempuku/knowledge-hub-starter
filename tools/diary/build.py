@@ -126,6 +126,7 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
         count += 1
 
     # Project authoritative sibling OKF logs into the same daily, lazy-loaded UI.
+    # Existing journal notes remain for records that have not been migrated.
     log_pattern = re.compile(r"^## Entry ([a-z0-9-]+)\n\x60\x60\x60json\n(.*?)\n\x60\x60\x60(?:\n|$)", re.M | re.S)
     for log_file in sorted((ROOT / "openwiki").rglob("*.log.md")):
         source_log = log_file.read_text(encoding="utf-8")
@@ -150,7 +151,13 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             digest = lambda value: hashlib.sha256(value.encode("utf-8")).hexdigest() if value is not None else None
             if digest(before) != entry.get("before_sha256") or digest(after) != entry.get("after_sha256"):
                 raise ValueError(f"Snapshot hash mismatch: {log_file}")
-            if public_only and entry.get("visibility") != "public":
+            current_record = ROOT / record
+            if not current_record.is_file() or current_record.resolve().is_relative_to((ROOT / "openwiki").resolve()) is False:
+                raise ValueError(f"Missing or unsafe canonical record: {record}")
+            current_source = current_record.read_text(encoding="utf-8")
+            current_front = FRONT.match(current_source)
+            current_meta = yaml.safe_load(current_front.group(1)) if current_front else {}
+            if public_only and (entry.get("visibility") != "public" or current_meta.get("visibility") != "public"):
                 continue
             record_id = "log-" + hashlib.sha256((record + ":" + entry["id"]).encode()).hexdigest()[:24]
             summary = {"id": record_id, "date": day, "title": entry.get("summary", ""),
