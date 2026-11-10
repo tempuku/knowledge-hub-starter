@@ -8,3 +8,4 @@ okf_version: "0.2"
 * [Architecture decision records](adr/)
 * [Projects](projects/)
 * [Journal](journal/)
+* [Concepts](concepts/)
