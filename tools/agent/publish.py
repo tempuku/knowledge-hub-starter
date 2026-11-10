@@ -31,7 +31,7 @@ def publish(request):
     path = (ROOT / record).resolve()
     if not path.is_relative_to((ROOT / "openwiki").resolve()):
         raise ValueError("Record must be inside openwiki")
-    if not path.is_file() or path.suffix != ".md":
+    if not path.is_file() or path.suffix != ".md" or path.is_symlink():
         raise ValueError("Existing Markdown record required")
     if git("status", "--porcelain"):
         raise ValueError("Working tree must be clean before publish")
@@ -44,7 +44,11 @@ def publish(request):
     today = dt.date.today().isoformat()
     journal = ROOT / "openwiki" / "journal" / today.replace("-", "/") / (key + ".md")
     if journal.exists():
-        raise ValueError("Idempotency key already exists; inspect prior journal before retrying")
+        previous = journal.read_text(encoding="utf-8")
+        if ("idempotency_key: " + key) not in previous:
+            raise ValueError("Idempotency collision")
+        return {"status": "already_committed", "head": git("rev-parse", "HEAD"),
+                "journal": str(journal.relative_to(ROOT)), "record": record}
     old = path.read_text(encoding="utf-8")
     new = request["content"]
     match = FRONT.match(new)
@@ -76,6 +80,7 @@ def publish(request):
         "occurred_on": today,
         "visibility": "public",
         "actor": actor,
+        "idempotency_key": key,
         "change": {"record": record, "before": expected, "after": "SELF"},
         "sources": [{"title": "Original record", "resource": source_url}],
     }
