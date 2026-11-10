@@ -74,10 +74,27 @@ def main() -> None:
         events = history(relative)
         current = path.read_text(encoding="utf-8")
         if not events or events[-1]["after"] != current:
-            # The log must be continuous and end at the actual current record.
+            # Preserve verified Git revisions, then explicitly baseline the
+            # current snapshot without attributing it to a historical commit.
             counts["mismatches"] += 1
-            print("SKIP mismatched history:", relative)
-            continue
+            previous = events[-1]["after"] if events else None
+            stamp = git("log", "-1", "--format=%cI", "--", relative).strip()
+            if not stamp:
+                stamp = git("show", "-s", "--format=%cI", "HEAD").strip()
+            timestamp = dt.datetime.fromisoformat(stamp).astimezone(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+            visibility = re.search(r"(?m)^visibility:\\s*(\\S+)", current)
+            events.append({
+                "id": "baseline-" + digest(current)[:16],
+                "timestamp": timestamp, "actor": "history-migration",
+                "action": "BASELINED",
+                "summary": "Current record snapshot; earlier Git history incomplete",
+                "record": relative,
+                "visibility": visibility.group(1).strip(chr(34) + chr(39)) if visibility else "private",
+                "before": previous, "after": current,
+                "before_sha256": digest(previous), "after_sha256": digest(current),
+                "source_commit": None, "provenance": "unmatched-current-baseline",
+            })
+            print("BASELINE unmatched current snapshot:", relative)
         content = "# OKF Record Change Log\n\n" + "\n".join(
             "## Entry " + e["id"] + "\n\x60\x60\x60json\n" +
             json.dumps(e, ensure_ascii=False, indent=2) + "\n\x60\x60\x60\n"
@@ -90,7 +107,7 @@ def main() -> None:
         print(("WRITE" if args.write else "WOULD WRITE"), relative, len(events), "events")
     print(json.dumps(counts))
     if counts["mismatches"]:
-        raise SystemExit("Some records require manual review; history not invented")
+        print("WARNING: unmatched snapshots explicitly baselined; review provenance")
 
 
 if __name__ == "__main__":
