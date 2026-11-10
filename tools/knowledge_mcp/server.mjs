@@ -36,8 +36,8 @@ const tools = [
      required:['title','description','occurred_on','body','source_urls','idempotency_key'],
      properties:captureProperties},
    annotations:{readOnlyHint:false, destructiveHint:false, idempotentHint:true}},
-  {name:'knowledge_propose_edit',
-   description:'Propose body-only revision at an expected Git blob SHA, always in a draft PR; never changes frontmatter.',
+  {name:'knowledge_update',
+   description:'Update existing PRIVATE diary body. In direct-write mode commits immediately on private main after SHA checking; in other enabled modes opens a draft PR. Cannot alter protected frontmatter.',
    inputSchema:{type:'object', additionalProperties:false,
      required:['path','expected_sha','replacement_body','reason','idempotency_key'],
      properties:{
@@ -48,12 +48,15 @@ const tools = [
      }},
    annotations:{readOnlyHint:false, destructiveHint:false, idempotentHint:true}}
 ];
+tools.push({...tools.find(t=>t.name==='knowledge_update'), name:'knowledge_propose_edit',
+  description:'Always submit private diary body update for review in a draft PR, even in direct-write mode.'});
 const calls = new Map([
   ['knowledge_search', value => gateway.search(value)],
   ['knowledge_read', value => gateway.read(value)],
   ['knowledge_validate', value => gateway.validate(value)],
   ['knowledge_capture', value => gateway.capture(value)],
-  ['knowledge_propose_edit', value => gateway.edit(value)]
+  ['knowledge_update', value => gateway.edit(value)],
+  ['knowledge_propose_edit', value => gateway.edit(value, true)]
 ]);
 let initialized = false;
 function send(packet) { process.stdout.write(JSON.stringify(packet) + '\n'); }
@@ -82,7 +85,7 @@ async function handle(line) {
         protocolVersion:supported.includes(offered) ? offered : '2025-06-18',
         capabilities:{tools:{listChanged:false}},
         serverInfo:{name:'knowledge-hub-strict', version:'0.1.0'},
-        instructions:'Private OKF only. Direct writes are opt-in and restricted to new validated drafts.'
+        instructions:'Private OKF only. Direct writes are opt-in and support new drafts and SHA-checked body updates in the verified private repo.'
       };
       initialized = true;
     } else if (!initialized) {
