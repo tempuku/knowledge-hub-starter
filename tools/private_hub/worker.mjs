@@ -13,7 +13,6 @@ const PRIVATE_REPO = 'tempuku/knowledge-hub-data';
 const PRIVATE_REF = 'main';
 const PUBLIC_APP = 'https://tempuku.github.io/knowledge-hub-starter';
 const MAX_BYTES = 1024 * 1024;
-const DAY = '\\d{4}-\\d{2}-\\d{2}';
 const TEXT_ASSETS = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/index.html', ['index.html', 'text/html; charset=utf-8']],
