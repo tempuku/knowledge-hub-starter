@@ -189,7 +189,7 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
                        "status": "stable", "tags": ["history"], "links": [], "has_change": True}
             by_day[day].append(summary)
             write_json(output / "data" / "entries" / (record_id + ".json"), {
-                **summary, "body": description,
+                **summary, "body": after,
                 "change": {"record": record, "diff": diff},
                 "log_entry": {key: value for key, value in entry.items() if key not in {"before", "after"}},
             })

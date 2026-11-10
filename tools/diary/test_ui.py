@@ -166,21 +166,26 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         expect(body).to_be_visible()
         self.assertGreater(len(body.inner_text()), 10)
 
-    def test_history_only_shows_diff_on_request(self):
+    def test_history_switches_between_diff_and_full_record(self):
         page = self.open_page(390, 844)
         expect(page.locator('#timeline a[href*="github.com"]')).to_have_count(0)
         history = page.locator(".note").filter(has_text="#history").first
-        history.get_by_role("button", name="Open entry").click()
-        toggle = history.locator("summary")
-        expect(toggle).to_have_text("Show diff")
-        expect(history.locator(".body")).to_have_count(1)
-        expect(history.locator(".body")).to_be_hidden()
-        toggle.click()
-        expect(toggle).to_have_text("Hide diff")
+        open_record = history.get_by_role("button", name="Open", exact=True)
+        show_diff = history.get_by_role("button", name="Show diff")
+        expect(open_record).to_be_visible()
+        expect(show_diff).to_be_visible()
+        expect(history.locator(".body")).to_have_count(0)
+        with page.expect_response(lambda response: "/data/entries/log-" in response.url) as fetched:
+            show_diff.click()
+        record = fetched.value.json()["body"]
+        expect(history.get_by_role("button", name="Hide diff")).to_have_attribute("aria-expanded", "true")
         expect(history.locator(".diff-added").first).to_be_visible()
-        toggle.click()
-        expect(history.locator(".diff-added").first).to_be_hidden()
-        expect(history.get_by_text("Original record", exact=True)).to_have_count(0)
+        open_record.click()
+        expect(history.locator(".body")).to_have_text(record)
+        expect(show_diff).to_have_attribute("aria-expanded", "false")
+        expect(history.locator(".diff-added")).to_have_count(0)
+        history.get_by_role("button", name="Close", exact=True).click()
+        expect(history.locator(".body")).to_be_hidden()
 
 
 if __name__ == "__main__":

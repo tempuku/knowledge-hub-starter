@@ -54,56 +54,64 @@
         for (const tag of record.tags || []) article.append(span('#' + tag, 'chip'));
         const details = document.createElement('div');
         details.hidden = true;
-        const open = document.createElement('button'); open.className = 'open'; open.textContent = 'Open entry';
-        open.setAttribute('aria-expanded', 'false');
-        open.onclick = async () => {
-          if (!details.dataset.loaded) {
-            open.disabled = true; open.textContent = 'Loading entry…';
-            try { const full = await json(`./data/entries/${encodeURIComponent(record.id)}.json`);
-              details.textContent = '';
-              const change = full.change;
-              const body = document.createElement('pre');
-              body.className = 'body';
-              if (change) {
-                const diffView = document.createElement('details');
-                const caption = document.createElement('summary');
-                caption.className = 'diff-toggle';
-                caption.textContent = 'Show diff';
-                diffView.addEventListener('toggle', () => {
-                  caption.textContent = diffView.open ? 'Hide diff' : 'Show diff';
-                });
-                const legend = document.createElement('p');
-                legend.textContent = 'Changes in this entry (+ added, − removed)';
-                const diff = change.diff || 'No changed lines in this revision.';
-                for (const line of diff.split('\n')) {
-                  const style = line.startsWith('+') && !line.startsWith('+++ ') ? 'diff-added'
-                    : line.startsWith('-') && !line.startsWith('--- ') ? 'diff-removed' : '';
-                  body.append(span(line + '\n', style));
-                }
-                diffView.append(caption, legend, body);
-                details.append(diffView);
-              } else {
-                body.textContent = full.body;
-                details.append(body);
+        const controls = document.createElement('div');
+        controls.className = 'entry-controls';
+        const views = record.has_change ? [
+          {label: 'Show diff', close: 'Hide diff', diff: true},
+          {label: 'Open', close: 'Close'},
+        ] : [{label: 'Open entry', close: 'Hide entry'}];
+        let full;
+        let activeView;
+        const buttons = views.map(view => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'open';
+          button.textContent = view.label;
+          button.setAttribute('aria-expanded', 'false');
+          button.onclick = async () => {
+            if (!full) {
+              buttons.forEach(item => { item.disabled = true; });
+              details.hidden = false;
+              details.textContent = 'Loading entry…';
+              try {
+                full = await json(`./data/entries/${encodeURIComponent(record.id)}.json`);
+              } catch (e) {
+                details.textContent = 'Could not load entry. ' + e;
+                return;
+              } finally {
+                buttons.forEach(item => { item.disabled = false; });
               }
-              details.dataset.loaded = 'yes';
-              details.hidden = false;
-              open.textContent = 'Hide entry';
-              open.setAttribute('aria-expanded', 'true');
-            } catch (e) {
-              details.textContent = String(e);
-              details.hidden = false;
-              open.textContent = 'Retry';
-              open.setAttribute('aria-expanded', 'true');
             }
-            open.disabled = false;
-          } else {
-            details.hidden = !details.hidden;
-            open.textContent = details.hidden ? 'Open entry' : 'Hide entry';
-            open.setAttribute('aria-expanded', String(!details.hidden));
-          }
-        };
-        article.append(open, details);
+            activeView = activeView === view ? null : view;
+            details.hidden = !activeView;
+            buttons.forEach((item, i) => {
+              const selected = activeView === views[i];
+              item.textContent = selected ? views[i].close : views[i].label;
+              item.setAttribute('aria-expanded', String(selected));
+            });
+            if (!activeView) return;
+            details.textContent = '';
+            const body = document.createElement('pre');
+            body.className = 'body';
+            if (view.diff) {
+              const legend = document.createElement('p');
+              legend.textContent = 'Changes in this entry (+ added, − removed)';
+              details.append(legend);
+              const diff = full.change && full.change.diff || 'No changed lines in this revision.';
+              for (const line of diff.split('\n')) {
+                const style = line.startsWith('+') && !line.startsWith('+++ ') ? 'diff-added'
+                  : line.startsWith('-') && !line.startsWith('--- ') ? 'diff-removed' : '';
+                body.append(span(line + '\n', style));
+              }
+            } else {
+              body.textContent = full.body;
+            }
+            details.append(body);
+          };
+          return button;
+        });
+        controls.append(...buttons);
+        article.append(controls, details);
         const sourceLinks = (record.links || []).filter(item => !/^https?:\/\/(?:www\.)?github\.com(?:[/:?#]|$)/i.test(item.url));
         if (sourceLinks.length) {
           const links = document.createElement('div'); links.className = 'links';

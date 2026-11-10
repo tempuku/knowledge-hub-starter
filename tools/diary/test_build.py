@@ -44,6 +44,7 @@ for p in source.rglob("*.md"):
 
 # Independently enumerate native history entries.
 FRONT = re.compile(r'\A---\r?\n(.*?)\r?\n---\r?\n', flags=re.S)
+revision_bodies = {}
 for log_file in (ROOT / "openwiki").rglob("*.log.md"):
     source_log = log_file.read_text(encoding="utf-8")
     blocks = re.findall(r"^## Entry ([a-z0-9-]+)\n```json\n(.*?)\n```(?:\n|$)", source_log, re.M | re.S)
@@ -56,7 +57,9 @@ for log_file in (ROOT / "openwiki").rglob("*.log.md"):
             record_meta = yaml.safe_load(FRONT.match(record_file.read_text()).group(1))
             if entry.get("visibility") != "public" or record_meta.get("visibility") != "public":
                 continue
-        expected.add("log-" + hashlib.sha256((entry["record"] + ":" + entry_id).encode()).hexdigest()[:24])
+        record_id = "log-" + hashlib.sha256((entry["record"] + ":" + entry_id).encode()).hexdigest()[:24]
+        expected.add(record_id)
+        revision_bodies[record_id] = entry["after"]
 
 seen = set()
 for day in calendar["days"]:
@@ -79,6 +82,7 @@ for day in calendar["days"]:
                               if "timestamp" in note else float("-inf"))
             if "log_entry" in item:
                 log_entry = item["log_entry"]
+                assert item["body"] == revision_bodies[note["id"]]
                 for payload in (log_entry, item["change"]):
                     assert "before" not in payload and "after" not in payload
                 if log_entry.get("provenance") == "git-backfill":
