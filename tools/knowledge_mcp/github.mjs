@@ -74,8 +74,8 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
     if (!/^[0-9a-f]{40}$/.test(headCommit?.tree?.sha || '')) throw Error('INVALID_BASE_COMMIT');
     return {mainSha, treeSha:headCommit.tree.sha};
   }
-  async function atomicCommit(change, changes, targetRef) {
-    const {mainSha, treeSha} = await getMain();
+  async function atomicCommit(change, changes, targetRef, base) {
+    const {mainSha, treeSha} = base;
     const tree = await request('git/trees', 'POST', {
       base_tree:treeSha,
       tree:Object.entries(changes).map(([path, content]) =>
@@ -95,8 +95,8 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
     await request('git/refs', 'POST', {ref:'refs/heads/' + targetRef, sha:commit.sha});
     return {sha:commit.sha, base_sha:mainSha};
   }
-  async function captureChanges(change) {
-    const root = await file('openwiki/index.md');
+  async function captureChanges(change, baseSha) {
+    const root = await file('openwiki/index.md', baseSha);
     if (!root || !/\]\(journal\/\)/.test(root.content))
       throw Error('PRIVATE_OKF_BUNDLE_NOT_INITIALIZED');
     const daydir = change.path.slice(0, change.path.lastIndexOf('/'));
@@ -110,14 +110,14 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
     ];
     const indexes = {};
     for (const indexPath of indexPaths) {
-      const found = await file(indexPath);
+      const found = await file(indexPath, baseSha);
       indexes[indexPath] = found?.content ?? null;
     }
     return {[change.path]:change.content,
       ...indexPlan(change.day, change.title, change.slug, indexes)};
   }
-  async function sameDayDuplicate(change) {
-    const tree = await request('git/trees/' + BASE + '?recursive=1');
+  async function sameDayDuplicate(change, baseSha) {
+    const tree = await request('git/trees/' + baseSha + '?recursive=1');
     if (tree.truncated || !Array.isArray(tree.tree) || tree.tree.length > 50000)
       throw Error('DUPLICATE_SCAN_UNAVAILABLE');
     const dir = change.path.slice(0, change.path.lastIndexOf('/') + 1);
@@ -139,8 +139,8 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
       version:1, kind:change.kind, path:change.path, digest
     }) + '\n'};
   }
-  async function checkReceipt(receiptData) {
-    const saved = await file(receiptData.path);
+  async function checkReceipt(receiptData, baseSha) {
+    const saved = await file(receiptData.path, baseSha);
     if (!saved) return false;
     let existing;
     try { existing = JSON.parse(saved.content); } catch { throw Error('INVALID_OPERATION_RECEIPT'); }
@@ -154,30 +154,32 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
     await requirePrivate(true);
     if (!['direct-capture', 'direct-write'].includes(env.KNOWLEDGE_ENABLE_WRITE))
       throw Error('DIRECT_CAPTURE_DISABLED');
+    const base = await getMain();
     const op = receipt(change);
-    if (await checkReceipt(op)) return {status:'already_committed', path:change.path};
-    if (await file(change.path)) throw Error('RECORD_ALREADY_EXISTS');
-    await sameDayDuplicate(change);
-    const changes = await captureChanges(change);
+    if (await checkReceipt(op, base.mainSha)) return {status:'already_committed', path:change.path};
+    if (await file(change.path, base.mainSha)) throw Error('RECORD_ALREADY_EXISTS');
+    await sameDayDuplicate(change, base.mainSha);
+    const changes = await captureChanges(change, base.mainSha);
     changes[op.path] = op.text;
-    const result = await atomicCommit(change, changes, 'main');
+    const result = await atomicCommit(change, changes, 'main', base);
     return {status:'committed_private', path:change.path, commit_sha:result.sha};
   }
-  async function updateDirect(change) {
+  async function updateDirect(change, base) {
     await requirePrivate(true);
     if (env.KNOWLEDGE_ENABLE_WRITE !== 'direct-write') throw Error('DIRECT_UPDATE_DISABLED');
     const op = receipt(change);
-    if (await checkReceipt(op)) return {status:'already_committed', path:change.path};
-    const current = await file(change.path);
+    if (await checkReceipt(op, base.mainSha)) return {status:'already_committed', path:change.path};
+    const current = await file(change.path, base.mainSha);
     if (!current || current.sha !== change.expected_sha) throw Error('STALE_OR_MISSING_RECORD');
     const content = replaceBody(current.content, change);
     if (content === current.content) return {status:'unchanged', path:change.path};
     const changes = {[change.path]:content, [op.path]:op.text};
-    const result = await atomicCommit(change, changes, 'main');
+    const result = await atomicCommit(change, changes, 'main', base);
     return {status:'updated_private', path:change.path, commit_sha:result.sha};
   }
   async function proposeCapture(change) {
     await requirePrivate(true);
+    const base = await getMain();
     const oldBranch = await reference(change.branch);
     if (oldBranch) {
       const existing = await file(change.path, change.branch);
@@ -185,14 +187,14 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
       const pr = await ensurePull(change.branch, change.title, change.description);
       return {status:'existing_proposal', ...pr, path:change.path, branch:change.branch};
     }
-    if (await file(change.path)) throw Error('RECORD_ALREADY_EXISTS');
-    await sameDayDuplicate(change);
-    const changes = await captureChanges(change);
-    await atomicCommit(change, changes, change.branch);
+    if (await file(change.path, base.mainSha)) throw Error('RECORD_ALREADY_EXISTS');
+    await sameDayDuplicate(change, base.mainSha);
+    const changes = await captureChanges(change, base.mainSha);
+    await atomicCommit(change, changes, change.branch, base);
     const pr = await ensurePull(change.branch, change.title, change.description);
     return {status:'draft_pr_created', ...pr, path:change.path, branch:change.branch};
   }
-  async function propose(change) {
+  async function propose(change, base) {
     await requirePrivate(true);
     const oldBranch = await reference(change.branch);
     if (oldBranch) {
@@ -202,11 +204,11 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
       const pr = await ensurePull(change.branch, change.title, change.description);
       return {status:'existing_proposal', ...pr, path:change.path, branch:change.branch};
     }
-    const mainFile = await file(change.path);
+    const mainFile = await file(change.path, base.mainSha);
     if (change.kind === 'edit' && (!mainFile || mainFile.sha !== change.expected_sha))
       throw Error('STALE_OR_MISSING_RECORD');
     const changes = {[change.path]:change.content};
-    await atomicCommit(change, changes, change.branch);
+    await atomicCommit(change, changes, change.branch, base);
     const pr = await ensurePull(change.branch, change.title, change.description);
     return {status:'draft_pr_created', ...pr, path:change.path, branch:change.branch};
   }
@@ -252,7 +254,8 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
     async edit(args, forceReview = false) {
       const edit = validateEdit(args);
       await requirePrivate(true);
-      const old = await file(edit.path);
+      const base = await getMain();
+      const old = await file(edit.path, base.mainSha);
       if (!old) throw Error('STALE_OR_MISSING_RECORD');
       // For replay the direct-update receipt can prove an earlier successful
       // operation even after the original expected_sha is no longer current.
@@ -263,10 +266,10 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
       if (env.KNOWLEDGE_ENABLE_WRITE === 'direct-write' && !forceReview) {
         // Receipt digest must be based on the intended replacement, not the
         // current document (which might have changed since the first attempt).
-        return updateDirect(draft);
+        return updateDirect(draft, base);
       }
       if (old.sha !== edit.expected_sha) throw Error('STALE_OR_MISSING_RECORD');
-      return propose(draft);
+      return propose(draft, base);
     }
   };
 }
