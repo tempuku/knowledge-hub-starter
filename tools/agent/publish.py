@@ -33,11 +33,6 @@ def publish(request):
         raise ValueError("Record must be inside openwiki")
     if not path.is_file() or path.suffix != ".md" or path.is_symlink():
         raise ValueError("Existing Markdown record required")
-    if git("status", "--porcelain"):
-        raise ValueError("Working tree must be clean before publish")
-    expected = request["expected_head"]
-    if git("rev-parse", "HEAD") != expected:
-        raise ValueError("Stale expected_head")
     key = request["idempotency_key"]
     if not SLUG.fullmatch(key):
         raise ValueError("Invalid idempotency key")
@@ -49,6 +44,11 @@ def publish(request):
             raise ValueError("Idempotency collision")
         return {"status": "already_committed", "head": git("rev-parse", "HEAD"),
                 "journal": str(journal.relative_to(ROOT)), "record": record}
+    if git("status", "--porcelain"):
+        raise ValueError("Working tree must be clean before publish")
+    expected = request["expected_head"]
+    if git("rev-parse", "HEAD") != expected:
+        raise ValueError("Stale expected_head")
     old = path.read_text(encoding="utf-8")
     new = request["content"]
     match = FRONT.match(new)
