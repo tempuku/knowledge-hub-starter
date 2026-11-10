@@ -1,0 +1,10 @@
+# Direct Worker for a future private Knowledge Hub. No Static Assets router.
+# Do NOT deploy without Cloudflare Worker-level Access on ALL traffic.
+# Never put identities, GitHub credentials or private data in this file.
+name = "knowledge-hub-private"
+main = "worker.mjs"
+compatibility_date = "2026-11-10"
+workers_dev = true
+preview_urls = false
+# Set ACCESS_AUD, ALLOWED_EMAILS, GITHUB_READ_TOKEN as Worker secrets.
+# The GitHub credential must read tempuku/knowledge-hub-data ONLY.
