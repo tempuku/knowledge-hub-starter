@@ -7,6 +7,7 @@ and individual content JSON files. It never parses or serves log.md.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import shutil
@@ -16,6 +17,7 @@ from pathlib import Path
 
 import yaml
 from icon import write_icons
+
 
 ROOT = Path(__file__).resolve().parents[2]
 NOTES = ROOT / "openwiki" / "journal"
@@ -122,6 +124,46 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             **summary, "body": body, "change": change_payload,
         })
         count += 1
+
+    # Project authoritative sibling OKF logs into the same daily, lazy-loaded UI.
+    log_pattern = re.compile(r"^## Entry ([a-z0-9-]+)\\n\\x60\\x60\\x60json\\n(.*?)\\n\\x60\\x60\\x60(?:\\n|$)", re.M | re.S)
+    for log_file in sorted((ROOT / "openwiki").rglob("*.log.md")):
+        source_log = log_file.read_text(encoding="utf-8")
+        matches = list(log_pattern.finditer(source_log))
+        if source_log.count("## Entry ") != len(matches):
+            raise ValueError(f"Malformed log: {log_file}")
+        for match in matches:
+            entry = json.loads(match.group(2))
+            if entry.get("id") != match.group(1):
+                raise ValueError(f"Log entry ID mismatch: {log_file}")
+            record = entry.get("record")
+            if not isinstance(record, str) or not record.startswith("openwiki/") or ".." in Path(record).parts:
+                raise ValueError(f"Unsafe record path: {log_file}")
+            stamp = entry.get("timestamp")
+            from datetime import datetime
+            if not isinstance(stamp, str) or not stamp.endswith("Z"):
+                raise ValueError(f"Invalid timestamp: {log_file}")
+            day = datetime.fromisoformat(stamp.replace("Z", "+00:00")).date().isoformat()
+            before, after = entry.get("before"), entry.get("after")
+            if not isinstance(after, str) or (before is not None and not isinstance(before, str)):
+                raise ValueError(f"Invalid snapshots: {log_file}")
+            digest = lambda value: hashlib.sha256(value.encode("utf-8")).hexdigest() if value is not None else None
+            if digest(before) != entry.get("before_sha256") or digest(after) != entry.get("after_sha256"):
+                raise ValueError(f"Snapshot hash mismatch: {log_file}")
+            if public_only and entry.get("visibility") != "public":
+                continue
+            record_id = "log-" + hashlib.sha256((record + ":" + entry["id"]).encode()).hexdigest()[:24]
+            summary = {"id": record_id, "date": day, "title": entry.get("summary", ""),
+                       "description": entry.get("action", ""), "project": record,
+                       "status": "stable", "tags": ["history"], "links": [], "has_change": True}
+            by_day[day].append(summary)
+            write_json(output / "data" / "entries" / (record_id + ".json"), {
+                **summary, "body": entry.get("summary", ""),
+                "change": {"record": record, "before": before, "after": after,
+                           "diff": "", "source_url": "", "internal": True},
+                "log_entry": entry,
+            })
+            count += 1
 
     calendar = []
     for day in sorted(by_day, reverse=True):
