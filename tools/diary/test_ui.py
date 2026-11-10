@@ -11,6 +11,7 @@ import json
 import os
 import threading
 import unittest
+from datetime import date, timedelta
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -35,6 +36,11 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
             raise RuntimeError("Browser navigation tests need at least one fixture day")
         cls.latest_day = calendar["days"][0]["date"]
         cls.latest_count = calendar["days"][0]["count"]
+        latest = date.fromisoformat(cls.latest_day)
+        monday = latest - timedelta(days=latest.weekday())
+        sunday = monday + timedelta(days=6)
+        cls.week = [day for day in calendar["days"]
+                    if monday.isoformat() <= day["date"] <= sunday.isoformat()]
         handler = functools.partial(QuietStaticFiles, directory=str(DIST))
         cls.server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
@@ -58,9 +64,27 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(self.url, wait_until="networkidle")
-        expect(page.locator("#total")).to_have_text(f"{self.latest_count} changes")
+        count = sum(day["count"] for day in self.week)
+        expect(page.locator("#total")).to_have_text(self.entry_count_label(count))
         self.assertFalse(errors, "JavaScript errors on load: " + str(errors))
         return page
+
+    @staticmethod
+    def entry_count_label(count: int) -> str:
+        return f"{count} {'entry' if count == 1 else 'entries'}"
+
+    def test_initial_week_displays_entries_from_every_day(self):
+        page = self.open_page(390, 844)
+        expect(page.get_by_role("button", name="Week", exact=True)).to_have_attribute("aria-pressed", "true")
+        headers = page.locator(".day-header")
+        expect(headers).to_have_count(len(self.week))
+        for i, day in enumerate(self.week):
+            expect(headers.nth(i)).to_have_attribute("aria-expanded", "true")
+            first_page = DIST / "data" / "days" / day["date"] / "1.json"
+            titles = json.loads(first_page.read_text(encoding="utf-8"))
+            notes = page.locator(".day").nth(i).locator(".note")
+            expect(notes).to_have_count(len(titles))
+            expect(notes.first).to_be_visible()
 
     def test_installable_home_screen_app_assets(self):
         page = self.open_page(1024, 768)
@@ -97,8 +121,7 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         self.assertGreater(right["width"], 450)
         self.assertLessEqual(left["x"] + left["width"], right["x"] + 2)
         self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"))
-        expect(page.locator(".sidebar-day.active")).to_have_count(1)
-        expect(page.locator(".sidebar-day.active")).to_have_attribute("aria-current", "date")
+        expect(page.locator(".sidebar-day.active")).to_have_count(0)
 
     def test_desktop_uses_full_width_ipad_layout_not_iphone_column(self):
         page = self.open_page(1440, 900)
@@ -122,8 +145,9 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         page.locator(".sidebar-day").first.click()
         expect(page.locator('button[data-mode="day"]')).to_have_attribute("aria-pressed", "true")
         self.assertEqual(page.locator("#date").input_value(), self.latest_day)
-        expect(page.locator("#total")).to_have_text(f"{self.latest_count} changes")
+        expect(page.locator("#total")).to_have_text(self.entry_count_label(self.latest_count))
         expect(page.locator(".sidebar-day.active")).to_have_count(1)
+        expect(page.locator(".sidebar-day.active")).to_have_attribute("aria-current", "date")
 
     def test_day_week_month_navigation_and_lazy_loaded_entry(self):
         page = self.open_page(1024, 768)

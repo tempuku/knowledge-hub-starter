@@ -8,9 +8,9 @@
   const total = document.getElementById('total');
   const sidebarDays = document.getElementById('sidebar-days');
   let calendar = [];
-  let mode = 'day';
+  let mode = 'week';
   const json = async (url) => {
-    const response = await fetch(url);
+    const response = await fetch(url, {cache: 'no-cache'});
     if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`);
     return response.json();
   };
@@ -161,23 +161,25 @@
   };
   const render = () => {
     const date = input.value;
-    const selected = calendar.filter(x => period(date, mode)(x.date));
+    const inPeriod = date ? period(date, mode) : () => false;
+    const selected = calendar.filter(x => inPeriod(x.date));
     timeline.textContent = '';
-    total.textContent = selected.reduce((sum, d) => sum + d.count, 0) + ' changes';
+    const count = selected.reduce((sum, d) => sum + d.count, 0);
+    total.textContent = `${count} ${count === 1 ? 'entry' : 'entries'}`;
     highlightSidebar();
     if (!selected.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'No records for this date range.'; timeline.append(p); return; }
     for (const [i, item] of selected.entries()) {
       const section = document.createElement('section'); section.className = 'day';
       const header = document.createElement('button'); header.className = 'day-header';
       const left = document.createElement('b'); left.textContent = new Date(item.date + 'T12:00:00Z').toLocaleDateString('en-US', {timeZone:'UTC', year:'numeric', month:'short', day:'numeric', weekday:'short'});
-      const right = span(`${item.count} ${item.count === 1 ? 'change' : 'changes'}  ▾`);
+      const right = span(`${item.count} ${item.count === 1 ? 'entry' : 'entries'}  ▾`);
       header.append(left, right);
       const slot = document.createElement('div'); slot.className = 'items'; slot.hidden = true;
       header.setAttribute('aria-expanded', 'false');
       header.onclick = () => {slot.hidden = !slot.hidden; header.setAttribute('aria-expanded', String(!slot.hidden)); if (!slot.hidden) notesForDay(item.date, slot);};
       section.append(header, slot); timeline.append(section);
-      // One useful day opens initially; other dates remain lazy, especially for month view.
-      if (i === 0) header.click();
+      // Show the week at a glance. In Month view, load only the first day.
+      if (mode !== 'month' || i === 0) header.click();
     }
   };
   modeButtons.forEach(button => button.addEventListener('click', () => {
