@@ -53,7 +53,11 @@
         if (record.project) article.append(span(record.project, 'chip'));
         for (const tag of record.tags || []) article.append(span('#' + tag, 'chip'));
         const details = document.createElement('div');
-        const open = document.createElement('button'); open.className = 'open'; open.textContent = 'Open entry';
+        details.hidden = true;
+        const openLabel = record.has_change ? 'Show changes' : 'Open entry';
+        const closeLabel = record.has_change ? 'Hide changes' : 'Hide entry';
+        const open = document.createElement('button'); open.className = 'open'; open.textContent = openLabel;
+        open.setAttribute('aria-expanded', 'false');
         open.onclick = async () => {
           if (!details.dataset.loaded) {
             open.disabled = true; open.textContent = 'Loading entry…';
@@ -76,40 +80,40 @@
               }
               details.append(body);
               if (full.log_entry) {
-                const openRecord = document.createElement('button');
-                openRecord.type = 'button'; openRecord.className = 'open';
-                openRecord.textContent = 'Read record at this revision';
-                openRecord.setAttribute('aria-expanded', 'false');
-                const recordView = document.createElement('div');
-                recordView.hidden = true;
+                const recordView = document.createElement('details');
+                const caption = document.createElement('summary');
+                caption.className = 'snapshot-toggle';
+                caption.textContent = 'Original record';
                 const snapshot = document.createElement('pre');
                 snapshot.className = 'body';
                 snapshot.textContent = full.log_entry.after;
-                recordView.append(snapshot);
-                openRecord.onclick = () => {
-                  recordView.hidden = !recordView.hidden;
-                  openRecord.setAttribute('aria-expanded', String(!recordView.hidden));
-                  openRecord.textContent = recordView.hidden ? 'Read record at this revision' : 'Hide record';
-                };
-                details.append(openRecord, recordView);
-              } else if (change && change.source_url) {
-                const source = document.createElement('a');
-                source.textContent = 'Original record'; source.href = change.source_url;
-                source.target = '_blank'; source.rel = 'noopener noreferrer';
-                const actions = document.createElement('div'); actions.className = 'entry-actions';
-                actions.append(source);
-                details.append(actions);
+                recordView.append(caption, snapshot);
+                details.append(recordView);
               }
               details.dataset.loaded = 'yes';
-              open.textContent = 'Hide entry';
-            } catch (e) { details.textContent = String(e); open.textContent = 'Retry'; }
+              details.hidden = false;
+              open.textContent = closeLabel;
+              open.setAttribute('aria-expanded', 'true');
+            } catch (e) {
+              details.textContent = String(e);
+              details.hidden = false;
+              open.textContent = 'Retry';
+              open.setAttribute('aria-expanded', 'true');
+            }
             open.disabled = false;
-          } else { const show = details.hidden; details.hidden = !show; open.textContent = show ? 'Hide entry' : 'Open entry'; }
+          } else {
+            details.hidden = !details.hidden;
+            open.textContent = details.hidden ? openLabel : closeLabel;
+            open.setAttribute('aria-expanded', String(!details.hidden));
+          }
         };
         article.append(open, details);
-        if (record.links && record.links.length) { const links = document.createElement('div'); links.className = 'links';
-          for (const item of record.links) { const a = document.createElement('a'); a.textContent = item.title; a.href = item.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a); }
-          article.append(links); }
+        const sourceLinks = (record.links || []).filter(item => !/^https?:\/\/(?:www\.)?github\.com(?:[/:?#]|$)/i.test(item.url));
+        if (sourceLinks.length) {
+          const links = document.createElement('div'); links.className = 'links';
+          for (const item of sourceLinks) { const a = document.createElement('a'); a.textContent = item.title; a.href = item.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; links.append(a); }
+          article.append(links);
+        }
         slot.append(article);
       }
           nextPage += 1;

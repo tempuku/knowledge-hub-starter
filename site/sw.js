@@ -3,13 +3,15 @@
    Browser Cache Storage can retain diary content on this device; do not deploy
    private records to a publicly reachable site. */
 'use strict';
-var CACHE_NAME = 'knowledge-hub-pwa-v4';
-var SHELL = ['./', './index.html', './app.js', './style.css', './manifest.webmanifest'];
+var CACHE_NAME = 'knowledge-hub-pwa-v5';
+var SHELL = ['./', './index.html', './app.js?v=5', './style.css?v=5', './manifest.webmanifest'];
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      return cache.addAll(SHELL);
+      return cache.addAll(SHELL.map(function (url) {
+        return new Request(url, {cache: 'reload'});
+      }));
     }).then(function () {
       return self.skipWaiting();
     })
@@ -38,7 +40,7 @@ self.addEventListener('fetch', function (event) {
   // Never cache requests outside this app's own deployment scope.
   if (url.href.indexOf(self.registration.scope) !== 0) return;
   event.respondWith(
-    fetch(request).then(function (response) {
+    fetch(request, {cache: 'no-cache'}).then(function (response) {
       if (!response.ok) return response;
       var copy = response.clone();
       event.waitUntil(
