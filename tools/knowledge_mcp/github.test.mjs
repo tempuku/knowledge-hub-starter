@@ -42,13 +42,10 @@ function server(mode='direct-write', options={}) {
     if (path.startsWith('git/trees/'+B)) {
       return json({truncated:false,tree:[...files].map(([path])=>({type:'blob',path}))});
     }
-    if (path === 'git/trees' && init.method === 'POST') {
-      assert.equal(init.body,'unused'); // overridden below by parsed body test
-    }
     if (path === 'git/commits' && init.method === 'POST') return json({sha:D});
     if (path === 'git/refs/heads/main' && init.method === 'PATCH') return json({ref:'refs/heads/main'});
     if (path === 'git/refs' && init.method === 'POST') return json({ref:'refs/heads/mcp'});
-    if (path.startsWith('pulls?') && init.method === 'GET') return json([]);
+    if (path === 'pulls' && init.method === 'GET') return json([]);
     if (path === 'pulls' && init.method === 'POST') return json({html_url:'https://github.com/tempuku/knowledge-hub-data/pull/1',number:1});
     return json({message:'Unknown mocked route'},404);
   };
