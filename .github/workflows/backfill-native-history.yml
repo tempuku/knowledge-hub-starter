@@ -1,0 +1,32 @@
+name: Backfill native record history
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/backfill-native-history-and-mobile-fix]
+    paths:
+      - 'tools/agent/backfill_record_logs.py'
+      - '.github/workflows/backfill-native-history.yml'
+permissions:
+  contents: write
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate native logs from complete Git history
+        run: python tools/agent/backfill_record_logs.py --write
+      - name: Commit generated history to PR branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- 'openwiki'
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(history): backfill native logs from Git revisions"
+            git push
+          fi

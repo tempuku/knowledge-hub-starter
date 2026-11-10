@@ -85,18 +85,22 @@
                   beforeAfter.hidden = !beforeAfter.hidden;
                   changes.textContent = beforeAfter.hidden ? 'View complete change' : 'Hide complete change';
                 };
-                details.append(openRecord, recordView, changes, beforeAfter);
+                const actions = document.createElement('div'); actions.className = 'entry-actions';
+                actions.append(openRecord, changes);
+                details.append(actions, recordView, beforeAfter);
               } else if (full.change) {
                 const source = document.createElement('a');
                 source.textContent = 'Original record'; source.href = full.change.source_url;
                 source.target = '_blank'; source.rel = 'noopener noreferrer';
-                details.append(source);
+                const actions = document.createElement('div'); actions.className = 'entry-actions';
+                actions.append(source);
                 const diffButton = document.createElement('button');
                 diffButton.type = 'button'; diffButton.className = 'open'; diffButton.textContent = 'View full diff';
                 const diff = document.createElement('pre'); diff.className = 'body'; diff.hidden = true;
                 diff.textContent = full.change.diff;
                 diffButton.onclick = () => { diff.hidden = !diff.hidden; diffButton.textContent = diff.hidden ? 'View full diff' : 'Hide full diff'; };
-                details.append(diffButton, diff);
+                actions.append(diffButton);
+                details.append(actions, diff);
               }
               details.dataset.loaded = 'yes';
               open.textContent = 'Hide entry';
@@ -159,14 +163,14 @@
     const date = input.value;
     const selected = calendar.filter(x => period(date, mode)(x.date));
     timeline.textContent = '';
-    total.textContent = selected.reduce((sum, d) => sum + d.count, 0) + ' records';
+    total.textContent = selected.reduce((sum, d) => sum + d.count, 0) + ' changes';
     highlightSidebar();
     if (!selected.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'No records for this date range.'; timeline.append(p); return; }
     for (const [i, item] of selected.entries()) {
       const section = document.createElement('section'); section.className = 'day';
       const header = document.createElement('button'); header.className = 'day-header';
       const left = document.createElement('b'); left.textContent = new Date(item.date + 'T12:00:00Z').toLocaleDateString('en-US', {timeZone:'UTC', year:'numeric', month:'short', day:'numeric', weekday:'short'});
-      const right = span(`${item.count} ${item.count === 1 ? 'record' : 'records'}  ▾`);
+      const right = span(`${item.count} ${item.count === 1 ? 'change' : 'changes'}  ▾`);
       header.append(left, right);
       const slot = document.createElement('div'); slot.className = 'items'; slot.hidden = true;
       header.setAttribute('aria-expanded', 'false');

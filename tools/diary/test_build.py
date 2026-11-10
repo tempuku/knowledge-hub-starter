@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generic smoke checks for initial and future OKF diary entries."""
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -22,6 +23,7 @@ assert (output / "sw.js").exists() and (output / "manifest.webmanifest").exists(
 for icon in ("apple-touch-icon.png", "icon-192.png", "icon-512.png"):
     assert (output / icon).read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
 
+native_records = {p.relative_to(ROOT).as_posix()[:-7] + '.md' for p in (ROOT / 'openwiki').rglob('*.log.md')}
 expected = set()
 for p in source.rglob("*.md"):
     rel = p.relative_to(source).as_posix()
@@ -33,8 +35,27 @@ for p in source.rglob("*.md"):
     metadata = yaml.safe_load(content.split("---", 2)[1])
     if a.public_only and metadata.get("visibility", "private") != "public":
         continue
+    change = metadata.get("change")
+    if isinstance(change, dict) and change.get("record") in native_records:
+        continue
     day = "-".join(p.relative_to(source).parts[:3])
     expected.add(day + "-" + p.stem)
+
+# Independently enumerate native history entries.
+FRONT = re.compile(r'\A---\r?\n(.*?)\r?\n---\r?\n', flags=re.S)
+for log_file in (ROOT / "openwiki").rglob("*.log.md"):
+    source_log = log_file.read_text(encoding="utf-8")
+    blocks = re.findall(r"^## Entry ([a-z0-9-]+)\n```json\n(.*?)\n```(?:\n|$)", source_log, re.M | re.S)
+    assert source_log.count("## Entry ") == len(blocks), log_file
+    for entry_id, raw in blocks:
+        entry = json.loads(raw)
+        assert entry["id"] == entry_id
+        if a.public_only:
+            record_file = ROOT / entry["record"]
+            record_meta = yaml.safe_load(FRONT.match(record_file.read_text()).group(1))
+            if entry.get("visibility") != "public" or record_meta.get("visibility") != "public":
+                continue
+        expected.add("log-" + hashlib.sha256((entry["record"] + ":" + entry_id).encode()).hexdigest()[:24])
 
 seen = set()
 for day in calendar["days"]:
