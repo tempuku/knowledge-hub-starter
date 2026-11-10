@@ -77,8 +77,12 @@ for day in calendar["days"]:
             assert item["date"] == day["date"] and item["body"]
             timestamps.append(datetime.fromisoformat(note["timestamp"]).timestamp()
                               if "timestamp" in note else float("-inf"))
-            if item.get("log_entry", {}).get("provenance") == "git-backfill":
-                assert item["description"] == item["log_entry"]["action"].capitalize() + " record"
+            if "log_entry" in item:
+                log_entry = item["log_entry"]
+                for payload in (log_entry, item["change"]):
+                    assert "before" not in payload and "after" not in payload
+                if log_entry.get("provenance") == "git-backfill":
+                    assert item["description"] == log_entry["action"].capitalize() + " record"
     assert found == day["count"]
     assert timestamps == sorted(timestamps, reverse=True), day["date"]
 assert seen == expected, ("missing", sorted(expected - seen), "extra", sorted(seen - expected))

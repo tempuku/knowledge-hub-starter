@@ -190,9 +190,8 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             by_day[day].append(summary)
             write_json(output / "data" / "entries" / (record_id + ".json"), {
                 **summary, "body": description,
-                "change": {"record": record, "before": before, "after": after,
-                           "diff": diff, "source_url": "", "internal": True},
-                "log_entry": entry,
+                "change": {"record": record, "diff": diff},
+                "log_entry": {key: value for key, value in entry.items() if key not in {"before", "after"}},
             })
             count += 1
 

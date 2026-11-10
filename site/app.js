@@ -54,9 +54,7 @@
         for (const tag of record.tags || []) article.append(span('#' + tag, 'chip'));
         const details = document.createElement('div');
         details.hidden = true;
-        const openLabel = record.has_change ? 'Show changes' : 'Open entry';
-        const closeLabel = record.has_change ? 'Hide changes' : 'Hide entry';
-        const open = document.createElement('button'); open.className = 'open'; open.textContent = openLabel;
+        const open = document.createElement('button'); open.className = 'open'; open.textContent = 'Open entry';
         open.setAttribute('aria-expanded', 'false');
         open.onclick = async () => {
           if (!details.dataset.loaded) {
@@ -66,33 +64,31 @@
               const change = full.change;
               const body = document.createElement('pre');
               body.className = 'body';
-              if (change && change.diff) {
+              if (change) {
+                const diffView = document.createElement('details');
+                const caption = document.createElement('summary');
+                caption.className = 'diff-toggle';
+                caption.textContent = 'Show diff';
+                diffView.addEventListener('toggle', () => {
+                  caption.textContent = diffView.open ? 'Hide diff' : 'Show diff';
+                });
                 const legend = document.createElement('p');
                 legend.textContent = 'Changes in this entry (+ added, − removed)';
-                details.append(legend);
-                for (const line of change.diff.split('\n')) {
+                const diff = change.diff || 'No changed lines in this revision.';
+                for (const line of diff.split('\n')) {
                   const style = line.startsWith('+') && !line.startsWith('+++ ') ? 'diff-added'
                     : line.startsWith('-') && !line.startsWith('--- ') ? 'diff-removed' : '';
                   body.append(span(line + '\n', style));
                 }
+                diffView.append(caption, legend, body);
+                details.append(diffView);
               } else {
                 body.textContent = full.body;
-              }
-              details.append(body);
-              if (full.log_entry) {
-                const recordView = document.createElement('details');
-                const caption = document.createElement('summary');
-                caption.className = 'snapshot-toggle';
-                caption.textContent = 'Original record';
-                const snapshot = document.createElement('pre');
-                snapshot.className = 'body';
-                snapshot.textContent = full.log_entry.after;
-                recordView.append(caption, snapshot);
-                details.append(recordView);
+                details.append(body);
               }
               details.dataset.loaded = 'yes';
               details.hidden = false;
-              open.textContent = closeLabel;
+              open.textContent = 'Hide entry';
               open.setAttribute('aria-expanded', 'true');
             } catch (e) {
               details.textContent = String(e);
@@ -103,7 +99,7 @@
             open.disabled = false;
           } else {
             details.hidden = !details.hidden;
-            open.textContent = details.hidden ? openLabel : closeLabel;
+            open.textContent = details.hidden ? 'Open entry' : 'Hide entry';
             open.setAttribute('aria-expanded', String(!details.hidden));
           }
         };
