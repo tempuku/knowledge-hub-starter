@@ -9,7 +9,7 @@ on:
       - ".github/workflows/deploy-pages.yml"
       - "site/**"
       - "tools/diary/**"
-      - "openwiki/journal/**"
+      - "openwiki/**"
   workflow_dispatch:
 
 permissions:
