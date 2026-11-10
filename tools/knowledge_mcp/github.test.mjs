@@ -39,7 +39,7 @@ function server(mode='direct-write', options={}) {
         ? json({object:{sha:B}}) : json({message:'Not found'},404);
     }
     if (path === 'git/commits/'+B) return json({tree:{sha:C}});
-    if (path.startsWith('git/trees/main')) {
+    if (path.startsWith('git/trees/'+B)) {
       return json({truncated:false,tree:[...files].map(([path])=>({type:'blob',path}))});
     }
     if (path === 'git/trees' && init.method === 'POST') {
