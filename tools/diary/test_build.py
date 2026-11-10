@@ -42,7 +42,7 @@ for p in source.rglob("*.md"):
     expected.add(day + "-" + p.stem)
 
 # Independently enumerate native history entries.
-from tools.diary.build import FRONT
+FRONT = re.compile(r'\A---\r?\n(.*?)\r?\n---\r?\n', flags=re.S)
 for log_file in (ROOT / "openwiki").rglob("*.log.md"):
     source_log = log_file.read_text(encoding="utf-8")
     blocks = re.findall(r"^## Entry ([a-z0-9-]+)\n```json\n(.*?)\n```(?:\n|$)", source_log, re.M | re.S)
