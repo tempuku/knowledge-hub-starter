@@ -3,7 +3,7 @@ okf_version: "0.2"
 type: decision
 title: Append-only OKF record logs and day-by-day knowledge history
 visibility: public
-status: proposed
+status: draft
 ---
 # ADR: Append-only OKF record logs and day-by-day knowledge history
 
