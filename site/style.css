@@ -168,6 +168,18 @@ input[type=date] {
 }
 .note:last-child { border-bottom: 0; }
 .note h3 { font-size: 15px; line-height: 1.3; margin: 0 0 5px; font-weight: 750; color: #23364a; }
+.record-name {
+  font: inherit;
+  color: #285684;
+  background: none;
+  border: 0;
+  padding: 0;
+  max-width: 100%;
+  text-align: left;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
 .note p { font-size: 12px; line-height: 1.5; margin: 0 0 9px; color: #6b798b; }
 .chip {
   display: inline-block;

@@ -47,12 +47,24 @@
           const records = await json(`./data/days/${day}/${nextPage}.json`);
       for (const record of records) {
         const article = document.createElement('article'); article.className = 'note';
-        const title = document.createElement('h3'); title.textContent = record.title; article.append(title);
+        const title = document.createElement('h3');
+        const recordName = record.has_change ? document.createElement('button') : null;
+        if (recordName) {
+          recordName.type = 'button';
+          recordName.className = 'record-name';
+          recordName.textContent = record.title;
+          recordName.setAttribute('aria-expanded', 'false');
+          title.append(recordName);
+        } else {
+          title.textContent = record.title;
+        }
+        article.append(title);
         if (record.description) {const p = document.createElement('p'); p.textContent = record.description; article.append(p);}
         if (record.timestamp) article.append(span(record.timestamp.slice(11, 16) + ' UTC', 'chip'));
         if (record.project) article.append(span(record.project, 'chip'));
         for (const tag of record.tags || []) article.append(span('#' + tag, 'chip'));
         const details = document.createElement('div');
+        details.id = 'entry-' + record.id;
         details.hidden = true;
         const controls = document.createElement('div');
         controls.className = 'entry-controls';
@@ -68,9 +80,11 @@
           button.className = 'open';
           button.textContent = view.label;
           button.setAttribute('aria-expanded', 'false');
+          button.setAttribute('aria-controls', details.id);
           button.onclick = async () => {
             if (!full) {
               buttons.forEach(item => { item.disabled = true; });
+              if (recordName) recordName.disabled = true;
               details.hidden = false;
               details.textContent = 'Loading entry…';
               try {
@@ -80,6 +94,7 @@
                 return;
               } finally {
                 buttons.forEach(item => { item.disabled = false; });
+                if (recordName) recordName.disabled = false;
               }
             }
             activeView = activeView === view ? null : view;
@@ -89,6 +104,7 @@
               item.textContent = selected ? views[i].close : views[i].label;
               item.setAttribute('aria-expanded', String(selected));
             });
+            if (recordName) recordName.setAttribute('aria-expanded', String(activeView === views[1]));
             if (!activeView) return;
             details.textContent = '';
             const body = document.createElement('pre');
@@ -110,6 +126,10 @@
           };
           return button;
         });
+        if (recordName) {
+          recordName.setAttribute('aria-controls', details.id);
+          recordName.onclick = () => buttons[1].click();
+        }
         controls.append(...buttons);
         article.append(controls, details);
         const sourceLinks = (record.links || []).filter(item => !/^https?:\/\/(?:www\.)?github\.com(?:[/:?#]|$)/i.test(item.url));

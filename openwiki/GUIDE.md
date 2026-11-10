@@ -23,7 +23,7 @@ The diary's shared web interface follows an **early iOS 5–6** application desi
 
 The diary opens to the Monday–Sunday week containing the latest available entry. Each day in that week opens automatically with its first page of titles. The total covers the selected date range, including additional pages. Selecting a sidebar date switches to Day view. Month view opens the newest day and loads other dates when expanded. Full entry bodies load when opened.
 
-Dates and timestamped entries are ordered newest first. Date-only entries follow the timed entries for that day. Use `occurred_at` with a verified UTC timestamp ending in `Z` when the event time is known and its UTC date matches `occurred_on`. On a history entry, choose **Show diff** for the changed lines or **Open** for the full record at that revision.
+Dates and timestamped entries are ordered newest first. Date-only entries follow the timed entries for that day. Use `occurred_at` with a verified UTC timestamp ending in `Z` when the event time is known and its UTC date matches `occurred_on`. History entries for the same record share its name. Select the name or **Open** for the full record at that revision. Choose **Show diff** for the changed lines.
 
 ## Architecture decisions
 
