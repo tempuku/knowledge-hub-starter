@@ -126,7 +126,7 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
         count += 1
 
     # Project authoritative sibling OKF logs into the same daily, lazy-loaded UI.
-    log_pattern = re.compile(r"^## Entry ([a-z0-9-]+)\\n\\x60\\x60\\x60json\\n(.*?)\\n\\x60\\x60\\x60(?:\\n|$)", re.M | re.S)
+    log_pattern = re.compile(r"^## Entry ([a-z0-9-]+)\n\x60\x60\x60json\n(.*?)\n\x60\x60\x60(?:\n|$)", re.M | re.S)
     for log_file in sorted((ROOT / "openwiki").rglob("*.log.md")):
         source_log = log_file.read_text(encoding="utf-8")
         matches = list(log_pattern.finditer(source_log))

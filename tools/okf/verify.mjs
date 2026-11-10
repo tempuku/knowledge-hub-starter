@@ -4,7 +4,7 @@ import { posix as path } from "node:path";
 import { validateOkfFrontmatter } from "./frontmatter.ts";
 
 const files = new Set(git("ls-files", "--cached", "-z").split("\0").filter(Boolean));
-const markdown = [...files].filter(file => file.startsWith("openwiki/") && file.endsWith(".md"));
+const markdown = [...files].filter(file => file.startsWith("openwiki/") && file.endsWith(".md") && !file.endsWith(".log.md"));
 const directories = new Map([["openwiki", new Set()]]);
 const rootHeader = '---\nokf_version: "0.2"\n---\n\n';
 
