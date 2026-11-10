@@ -65,7 +65,7 @@ def publish(request):
         raise ValueError("Actor required")
     journal.parent.mkdir(parents=True, exist_ok=True)
     index = journal.parent / "index.md"
-    index_old = index.read_text(encoding="utf-8") if index.exists() else "# " + today + " — diary records\\n"
+    index_old = index.read_text(encoding="utf-8") if index.exists() else "# " + today + " — diary records\n"
     if ("(" + journal.name + ")") in index_old:
         raise ValueError("Journal record already indexed")
     source_url = "https://github.com/tempuku/knowledge-hub-starter/blob/main/" + record
@@ -83,7 +83,7 @@ def publish(request):
     try:
         path.write_text(new, encoding="utf-8")
         journal.write_text(entry, encoding="utf-8")
-        index.write_text(index_old.rstrip() + "\\n* [" + str(meta["title"]) + "](" + journal.name + ")\\n", encoding="utf-8")
+        index.write_text(index_old.rstrip() + "\n* [" + str(meta["title"]) + "](" + journal.name + ")\n", encoding="utf-8")
         git("add", "--", record, str(journal.relative_to(ROOT)), str(index.relative_to(ROOT)))
         git("commit", "-m", "knowledge: " + summary[:70], "--", record, str(journal.relative_to(ROOT)), str(index.relative_to(ROOT)))
     except Exception:
