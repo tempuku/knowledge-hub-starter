@@ -58,7 +58,7 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(self.url, wait_until="networkidle")
-        expect(page.locator("#total")).to_have_text(f"{self.latest_count} records")
+        expect(page.locator("#total")).to_have_text(f"{self.latest_count} changes")
         self.assertFalse(errors, "JavaScript errors on load: " + str(errors))
         return page
 
@@ -122,7 +122,7 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         page.locator(".sidebar-day").first.click()
         expect(page.locator('button[data-mode="day"]')).to_have_attribute("aria-pressed", "true")
         self.assertEqual(page.locator("#date").input_value(), self.latest_day)
-        expect(page.locator("#total")).to_have_text(f"{self.latest_count} records")
+        expect(page.locator("#total")).to_have_text(f"{self.latest_count} changes")
         expect(page.locator(".sidebar-day.active")).to_have_count(1)
 
     def test_day_week_month_navigation_and_lazy_loaded_entry(self):
