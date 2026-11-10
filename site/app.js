@@ -57,7 +57,20 @@
           if (!details.dataset.loaded) {
             open.disabled = true; open.textContent = 'Loading entry…';
             try { const full = await json(`./data/entries/${encodeURIComponent(record.id)}.json`);
-              const body = document.createElement('pre'); body.className = 'body'; body.textContent = full.body; details.append(body); details.dataset.loaded = 'yes';
+              const body = document.createElement('pre'); body.className = 'body'; body.textContent = full.body; details.append(body);
+              if (full.change) {
+                const source = document.createElement('a');
+                source.textContent = 'Original record'; source.href = full.change.source_url;
+                source.target = '_blank'; source.rel = 'noopener noreferrer';
+                details.append(source);
+                const diffButton = document.createElement('button');
+                diffButton.type = 'button'; diffButton.className = 'open'; diffButton.textContent = 'View full diff';
+                const diff = document.createElement('pre'); diff.className = 'body'; diff.hidden = true;
+                diff.textContent = full.change.diff;
+                diffButton.onclick = () => { diff.hidden = !diff.hidden; diffButton.textContent = diff.hidden ? 'View full diff' : 'Hide full diff'; };
+                details.append(diffButton, diff);
+              }
+              details.dataset.loaded = 'yes';
               open.textContent = 'Hide entry';
             } catch (e) { details.textContent = String(e); open.textContent = 'Retry'; }
             open.disabled = false;
