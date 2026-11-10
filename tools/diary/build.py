@@ -10,6 +10,7 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
 from collections import defaultdict
 from pathlib import Path
 
@@ -80,6 +81,29 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
                 url = item["resource"]
                 if url.startswith("https://") or url.startswith("http://"):
                     links.append({"title": item.get("title", url), "url": url})
+        change = meta.get("change")
+        change_payload = None
+        if isinstance(change, dict):
+            record = change.get("record")
+            before = change.get("before")
+            after = change.get("after")
+            if not all(isinstance(x, str) for x in (record, before, after)):
+                raise ValueError(f"Invalid change references: {file}")
+            if not record.startswith("openwiki/") or ".." in Path(record).parts:
+                raise ValueError(f"Unsafe source path: {record}")
+            if not re.fullmatch(r"[0-9a-f]{40}", before):
+                raise ValueError(f"Invalid before revision: {before}")
+            if after != "SELF" and not re.fullmatch(r"[0-9a-f]{40}", after):
+                raise ValueError(f"Invalid after revision: {after}")
+            after_ref = "HEAD" if after == "SELF" else after
+            diff = subprocess.run(
+                ["git", "diff", "--no-ext-diff", before, after_ref, "--", record],
+                cwd=ROOT, capture_output=True, text=True, check=True,
+            ).stdout
+            if not diff.strip():
+                raise ValueError(f"Empty source diff: {file}")
+            change_payload = {"record": record, "before": before, "after": after_ref,
+                              "diff": diff, "source_url": "https://github.com/tempuku/knowledge-hub-starter/blob/" + after_ref + "/" + record}
         summary = {
             "id": record_id,
             "date": day,
@@ -90,10 +114,12 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             "tags": meta.get("tags", []),
             "links": links,
         }
+        if change_payload:
+            summary["has_change"] = True
         by_day[day].append(summary)
         body = source[parts.end():].strip()
         write_json(output / "data" / "entries" / (record_id + ".json"), {
-            **summary, "body": body,
+            **summary, "body": body, "change": change_payload,
         })
         count += 1
 
