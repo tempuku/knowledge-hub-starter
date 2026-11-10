@@ -12,7 +12,7 @@ function routePath(path) {
 function assertConfigured(env, write = false) {
   if (typeof env.KNOWLEDGE_GITHUB_TOKEN !== 'string' ||
       env.KNOWLEDGE_GITHUB_TOKEN.length < 20) throw Error('TOKEN_REQUIRED');
-  if (write && env.KNOWLEDGE_ENABLE_WRITE !== 'review-only') throw Error('WRITES_DISABLED');
+  if (write && !['review-only', 'direct-capture'].includes(env.KNOWLEDGE_ENABLE_WRITE)) throw Error('WRITES_DISABLED');
 }
 export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
   async function request(path, method = 'GET', body = undefined, absent = false) {
@@ -65,6 +65,96 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
     });
     return {url:pr.html_url, number:pr.number, reused:false};
   }
+  async function getMain() {
+    const mainRef = await reference(BASE);
+    const mainSha = mainRef?.object?.sha;
+    if (!/^[0-9a-f]{40}$/.test(mainSha || '')) throw Error('INVALID_BASE_REF');
+    const headCommit = await request('git/commits/' + mainSha);
+    if (!/^[0-9a-f]{40}$/.test(headCommit?.tree?.sha || '')) throw Error('INVALID_BASE_COMMIT');
+    return {mainSha, treeSha:headCommit.tree.sha};
+  }
+  async function atomicCommit(change, changes, targetRef) {
+    const {mainSha, treeSha} = await getMain();
+    const tree = await request('git/trees', 'POST', {
+      base_tree:treeSha,
+      tree:Object.entries(changes).map(([path, content]) =>
+        ({path, mode:'100644', type:'blob', content}))
+    });
+    if (!/^[0-9a-f]{40}$/.test(tree?.sha || '')) throw Error('INVALID_TREE');
+    const commit = await request('git/commits', 'POST', {
+      message:change.title, tree:tree.sha, parents:[mainSha]
+    });
+    if (!/^[0-9a-f]{40}$/.test(commit?.sha || '')) throw Error('INVALID_COMMIT');
+    if (targetRef === 'main') {
+      // GitHub enforces fast-forward: concurrent changes and protection failures
+      // abort the entire multi-file update instead of silently overwriting.
+      await request('git/refs/heads/main', 'PATCH', {sha:commit.sha, force:false});
+      return {sha:commit.sha, base_sha:mainSha};
+    }
+    await request('git/refs', 'POST', {ref:'refs/heads/' + targetRef, sha:commit.sha});
+    return {sha:commit.sha, base_sha:mainSha};
+  }
+  async function captureChanges(change) {
+    const root = await file('openwiki/index.md');
+    if (!root || !/\]\(journal\/\)/.test(root.content))
+      throw Error('PRIVATE_OKF_BUNDLE_NOT_INITIALIZED');
+    const daydir = change.path.slice(0, change.path.lastIndexOf('/'));
+    const year = change.day.slice(0,4);
+    const month = change.day.slice(5,7);
+    const indexPaths = [
+      'openwiki/journal/index.md',
+      'openwiki/journal/' + year + '/index.md',
+      'openwiki/journal/' + year + '/' + month + '/index.md',
+      daydir + '/index.md'
+    ];
+    const indexes = {};
+    for (const indexPath of indexPaths) {
+      const found = await file(indexPath);
+      indexes[indexPath] = found?.content ?? null;
+    }
+    return {[change.path]:change.content,
+      ...indexPlan(change.day, change.title, change.slug, indexes)};
+  }
+  async function sameDayDuplicate(change) {
+    const tree = await request('git/trees/' + BASE + '?recursive=1');
+    if (tree.truncated || !Array.isArray(tree.tree) || tree.tree.length > 50000)
+      throw Error('DUPLICATE_SCAN_UNAVAILABLE');
+    const dir = change.path.slice(0, change.path.lastIndexOf('/') + 1);
+    const slugBase = change.slug.replace(/-[0-9a-f]{10}$/, '');
+    if (tree.tree.some(item => item.type === 'blob' &&
+        typeof item.path === 'string' && item.path.startsWith(dir + slugBase + '-') &&
+        item.path.endsWith('.md')))
+      throw Error('POSSIBLE_DUPLICATE_RECORD');
+  }
+  async function captureDirect(change) {
+    await requirePrivate(true);
+    if (env.KNOWLEDGE_ENABLE_WRITE !== 'direct-capture') throw Error('DIRECT_CAPTURE_DISABLED');
+    const existing = await file(change.path);
+    if (existing) {
+      if (existing.content !== change.content) throw Error('IDEMPOTENCY_KEY_CONFLICT');
+      return {status:'already_committed', path:change.path};
+    }
+    await sameDayDuplicate(change);
+    const changes = await captureChanges(change);
+    const result = await atomicCommit(change, changes, 'main');
+    return {status:'committed_private', path:change.path, commit_sha:result.sha};
+  }
+  async function proposeCapture(change) {
+    await requirePrivate(true);
+    const oldBranch = await reference(change.branch);
+    if (oldBranch) {
+      const existing = await file(change.path, change.branch);
+      if (!existing || existing.content !== change.content) throw Error('IDEMPOTENCY_KEY_CONFLICT');
+      const pr = await ensurePull(change.branch, change.title, change.description);
+      return {status:'existing_proposal', ...pr, path:change.path, branch:change.branch};
+    }
+    if (await file(change.path)) throw Error('RECORD_ALREADY_EXISTS');
+    await sameDayDuplicate(change);
+    const changes = await captureChanges(change);
+    await atomicCommit(change, changes, change.branch);
+    const pr = await ensurePull(change.branch, change.title, change.description);
+    return {status:'draft_pr_created', ...pr, path:change.path, branch:change.branch};
+  }
   async function propose(change) {
     await requirePrivate(true);
     const oldBranch = await reference(change.branch);
@@ -75,49 +165,11 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
       const pr = await ensurePull(change.branch, change.title, change.description);
       return {status:'existing_proposal', ...pr, path:change.path, branch:change.branch};
     }
-    const mainRef = await reference(BASE);
-    const mainSha = mainRef?.object?.sha;
-    if (!/^[0-9a-f]{40}$/.test(mainSha || '')) throw Error('INVALID_BASE_REF');
     const mainFile = await file(change.path);
-    if (change.kind === 'capture' && mainFile) throw Error('RECORD_ALREADY_EXISTS');
     if (change.kind === 'edit' && (!mainFile || mainFile.sha !== change.expected_sha))
       throw Error('STALE_OR_MISSING_RECORD');
-
     const changes = {[change.path]:change.content};
-    if (change.kind === 'capture') {
-      const root = await file('openwiki/index.md');
-      if (!root || !/\]\(journal\/\)/.test(root.content))
-        throw Error('PRIVATE_OKF_BUNDLE_NOT_INITIALIZED');
-      const daydir = change.path.slice(0, change.path.lastIndexOf('/'));
-      const year = change.day.slice(0,4);
-      const month = change.day.slice(5,7);
-      const indexPaths = [
-        'openwiki/journal/index.md',
-        'openwiki/journal/' + year + '/index.md',
-        'openwiki/journal/' + year + '/' + month + '/index.md',
-        daydir + '/index.md'
-      ];
-      const indexes = {};
-      for (const indexPath of indexPaths) {
-        const found = await file(indexPath);
-        indexes[indexPath] = found?.content ?? null;
-      }
-      Object.assign(changes, indexPlan(change.day, change.title, change.slug, indexes));
-    }
-    // A single immutable tree/commit holds the record and all indexes.
-    const headCommit = await request('git/commits/' + mainSha);
-    if (!/^[0-9a-f]{40}$/.test(headCommit?.tree?.sha || '')) throw Error('INVALID_BASE_COMMIT');
-    const tree = await request('git/trees', 'POST', {
-      base_tree:headCommit.tree.sha,
-      tree:Object.entries(changes).map(([path, content]) =>
-        ({path, mode:'100644', type:'blob', content}))
-    });
-    const commit = await request('git/commits', 'POST', {
-      message:change.title, tree:tree.sha, parents:[mainSha]
-    });
-    await request('git/refs', 'POST', {
-      ref:'refs/heads/' + change.branch, sha:commit.sha
-    });
+    await atomicCommit(change, changes, change.branch);
     const pr = await ensurePull(change.branch, change.title, change.description);
     return {status:'draft_pr_created', ...pr, path:change.path, branch:change.branch};
   }
@@ -153,9 +205,12 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
     async capture(args) {
       const record = validateCapture(args);
       const slug = checkedPath(record.path).slug;
-      return propose({kind:'capture', ...record, day:record.occurred_on, slug,
+      const change = {kind:'capture', ...record, day:record.occurred_on, slug,
         title:'knowledge: capture ' + record.title,
-        description:'Strict MCP diary capture.\n\nPrivate data only; draft status; human PR review required.\nNo automatic merge or public publication.'});
+        description:'Strict MCP diary capture. Private data only; review required when not in direct-capture mode.'};
+      return env.KNOWLEDGE_ENABLE_WRITE === 'direct-capture'
+        ? captureDirect(change)
+        : proposeCapture(change);
     },
     async edit(args) {
       const edit = validateEdit(args);
