@@ -25,6 +25,7 @@ SHARDED = (
     re.compile(r"data/days/\d{4}-\d{2}-\d{2}\.json"),
     re.compile(r"data/days/\d{4}-\d{2}-\d{2}/[1-9]\d*\.json"),
     re.compile(r"data/entries/\d{4}-\d{2}-\d{2}-[a-z0-9-]+\.json"),
+    re.compile(r"data/entries/log-[0-9a-f]{24}\.json"),
 )
 seen = set()
 total_size = 0
