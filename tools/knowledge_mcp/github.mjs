@@ -1,4 +1,5 @@
 import {checkedPath, validateCapture, validateEdit, replaceBody, indexPlan} from './policy.mjs';
+import {createHash} from 'node:crypto';
 
 const REPO = 'tempuku/knowledge-hub-data';
 const API = 'https://api.github.com/repos/' + REPO + '/';
@@ -12,7 +13,7 @@ function routePath(path) {
 function assertConfigured(env, write = false) {
   if (typeof env.KNOWLEDGE_GITHUB_TOKEN !== 'string' ||
       env.KNOWLEDGE_GITHUB_TOKEN.length < 20) throw Error('TOKEN_REQUIRED');
-  if (write && !['review-only', 'direct-capture'].includes(env.KNOWLEDGE_ENABLE_WRITE)) throw Error('WRITES_DISABLED');
+  if (write && !['review-only', 'direct-capture', 'direct-write'].includes(env.KNOWLEDGE_ENABLE_WRITE)) throw Error('WRITES_DISABLED');
 }
 export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
   async function request(path, method = 'GET', body = undefined, absent = false) {
@@ -126,18 +127,54 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
         item.path.endsWith('.md')))
       throw Error('POSSIBLE_DUPLICATE_RECORD');
   }
+  function receipt(change) {
+    const id = change.branch.split('-').at(-1);
+    if (!/^[a-f0-9]{14}$/.test(id)) throw Error('INVALID_OPERATION_ID');
+    const path = '.knowledge-mcp/operations/' + id + '.json';
+    const digest = createHash('sha256').update(JSON.stringify({
+      kind:change.kind, path:change.path, content:change.content,
+      expected_sha:change.expected_sha || null
+    })).digest('hex');
+    return {path, digest, text:JSON.stringify({
+      version:1, kind:change.kind, path:change.path, digest
+    }) + '\n'};
+  }
+  async function checkReceipt(receiptData) {
+    const saved = await file(receiptData.path);
+    if (!saved) return false;
+    let existing;
+    try { existing = JSON.parse(saved.content); } catch { throw Error('INVALID_OPERATION_RECEIPT'); }
+    if (existing.version !== 1 || existing.digest !== receiptData.digest ||
+        existing.path !== JSON.parse(receiptData.text).path ||
+        existing.kind !== JSON.parse(receiptData.text).kind)
+      throw Error('IDEMPOTENCY_KEY_CONFLICT');
+    return true;
+  }
   async function captureDirect(change) {
     await requirePrivate(true);
-    if (env.KNOWLEDGE_ENABLE_WRITE !== 'direct-capture') throw Error('DIRECT_CAPTURE_DISABLED');
-    const existing = await file(change.path);
-    if (existing) {
-      if (existing.content !== change.content) throw Error('IDEMPOTENCY_KEY_CONFLICT');
-      return {status:'already_committed', path:change.path};
-    }
+    if (!['direct-capture', 'direct-write'].includes(env.KNOWLEDGE_ENABLE_WRITE))
+      throw Error('DIRECT_CAPTURE_DISABLED');
+    const op = receipt(change);
+    if (await checkReceipt(op)) return {status:'already_committed', path:change.path};
+    if (await file(change.path)) throw Error('RECORD_ALREADY_EXISTS');
     await sameDayDuplicate(change);
     const changes = await captureChanges(change);
+    changes[op.path] = op.text;
     const result = await atomicCommit(change, changes, 'main');
     return {status:'committed_private', path:change.path, commit_sha:result.sha};
+  }
+  async function updateDirect(change) {
+    await requirePrivate(true);
+    if (env.KNOWLEDGE_ENABLE_WRITE !== 'direct-write') throw Error('DIRECT_UPDATE_DISABLED');
+    const op = receipt(change);
+    if (await checkReceipt(op)) return {status:'already_committed', path:change.path};
+    const current = await file(change.path);
+    if (!current || current.sha !== change.expected_sha) throw Error('STALE_OR_MISSING_RECORD');
+    const content = replaceBody(current.content, change);
+    if (content === current.content) return {status:'unchanged', path:change.path};
+    const changes = {[change.path]:content, [op.path]:op.text};
+    const result = await atomicCommit(change, changes, 'main');
+    return {status:'updated_private', path:change.path, commit_sha:result.sha};
   }
   async function proposeCapture(change) {
     await requirePrivate(true);
@@ -208,20 +245,28 @@ export function createGateway(env = process.env, fetchImpl = globalThis.fetch) {
       const change = {kind:'capture', ...record, day:record.occurred_on, slug,
         title:'knowledge: capture ' + record.title,
         description:'Strict MCP diary capture. Private data only; review required when not in direct-capture mode.'};
-      return env.KNOWLEDGE_ENABLE_WRITE === 'direct-capture'
+      return ['direct-capture','direct-write'].includes(env.KNOWLEDGE_ENABLE_WRITE)
         ? captureDirect(change)
         : proposeCapture(change);
     },
-    async edit(args) {
+    async edit(args, forceReview = false) {
       const edit = validateEdit(args);
       await requirePrivate(true);
       const old = await file(edit.path);
-      if (!old || old.sha !== edit.expected_sha) throw Error('STALE_OR_MISSING_RECORD');
-      const content = replaceBody(old.content, edit);
-      return propose({...edit, content, kind:'edit',
-        title:'knowledge: propose diary revision',
-        description:'Strict MCP body-only edit; review required.\n\nReason: ' + edit.reason +
-          '\n\nExpected blob SHA: ' + edit.expected_sha + '\n\nNo automatic merge or public publication.'});
+      if (!old) throw Error('STALE_OR_MISSING_RECORD');
+      // For replay the direct-update receipt can prove an earlier successful
+      // operation even after the original expected_sha is no longer current.
+      const draft = {...edit, content:replaceBody(old.content, edit), kind:'edit',
+        title:'knowledge: revise private diary record',
+        description:'Strict MCP body-only update.\n\nReason: ' + edit.reason +
+          '\n\nExpected blob SHA: ' + edit.expected_sha};
+      if (env.KNOWLEDGE_ENABLE_WRITE === 'direct-write' && !forceReview) {
+        // Receipt digest must be based on the intended replacement, not the
+        // current document (which might have changed since the first attempt).
+        return updateDirect(draft);
+      }
+      if (old.sha !== edit.expected_sha) throw Error('STALE_OR_MISSING_RECORD');
+      return propose(draft);
     }
   };
 }
