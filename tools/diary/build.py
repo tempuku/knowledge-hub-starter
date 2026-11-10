@@ -53,6 +53,8 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
     write_icons(output)
 
     by_day: dict[str, list[dict]] = defaultdict(list)
+    native_records = {p.relative_to(ROOT).as_posix()[:-7] + ".md"
+                      for p in (ROOT / "openwiki").rglob("*.log.md")}
     count = 0
     for file in sorted(NOTES.rglob("*.md")):
         rel = file.relative_to(NOTES).as_posix()
@@ -97,6 +99,9 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
                 raise ValueError(f"Invalid before revision: {before}")
             if after != "SELF" and not re.fullmatch(r"[0-9a-f]{40}", after):
                 raise ValueError(f"Invalid after revision: {after}")
+            if record in native_records:
+                # Native record-owned history supersedes legacy Git-diff diary entries.
+                continue
             after_ref = "HEAD" if after == "SELF" else after
             diff = subprocess.run(
                 ["git", "diff", "--no-ext-diff", before, after_ref, "--", record],
