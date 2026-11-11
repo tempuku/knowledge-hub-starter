@@ -29,3 +29,7 @@ Keep its existing same-repository, current-head and open-PR checks. This privile
 ## Verification
 
 Run the commands in the [repository README](../README.md), including the staged OKF checker before every commit. Build `dist/` before browser tests, and separately build and audit `dist-public/` with `--public-only`. Inspect the real GitHub Actions result for the exact commit after pushing; local macOS checks alone do not establish that the Ubuntu runner passes.
+
+The repair merged in [PR #22](https://github.com/tempuku/knowledge-hub-starter/pull/22). The [PR validation run](https://github.com/tempuku/knowledge-hub-starter/actions/runs/42979580422) passed every step for `cb4fca7f1fd210846941c37ccc25caa0bd4022cf`. The [main push validation run](https://github.com/tempuku/knowledge-hub-starter/actions/runs/42979797478) also passed every step for merged commit `e68270c2d1dc4c3195eaab4590a74677108f999d`, including Chromium, WebKit and the public-only export audit.
+
+The [handoff triggered by PR #22](https://github.com/tempuku/knowledge-hub-starter/actions/runs/42979756960) still ran the old default-branch workflow before the repair merged and failed with the existing permissions error. A fresh PR after the merge is required to exercise the repaired handoff against an open current head; a successful validation run alone does not verify that comment write.
