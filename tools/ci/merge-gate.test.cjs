@@ -122,3 +122,9 @@ test("delegated owner-agent self-review requires a genuine exact-head review com
   assert.equal(gate.validateReview([{...self,author_association:"NONE"}],"tempuku",SHA),false);
   assert.equal(gate.validateReview([{...self,user:{login:"other",type:"User"}}],"other",SHA),false);
 });
+
+test("multi-word pending ledger values cannot pass as evidence", () => {
+  const bad = body().replace("node --test tools/ci/merge-gate.test.cjs","Pending verification");
+  const errors = gate.validateBody({body:bad,issueNumber:26,issueBody:issue,sha:SHA});
+  assert.ok(errors.some(e=>e.includes("C1: missing command")));
+});
