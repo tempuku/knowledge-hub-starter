@@ -29,6 +29,8 @@ jobs:
           node-version: '22.18.0'
           cache: npm
           cache-dependency-path: tools/okf/package-lock.json
+      - name: Test merge gate policy (negative and positive fixtures)
+        run: node --test tools/ci/merge-gate.test.cjs
       - name: Install pinned OKF validator
         run: sh tools/okf/setup.sh
       - name: Test Knowledge Hub frontmatter validation
