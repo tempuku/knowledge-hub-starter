@@ -20,7 +20,11 @@ sources:
 
 # Knowledge Hub
 
-A Git-backed home for projects, ideas and decisions. Initial entry: [kickoff record](../journal/2026/11/09/knowledge-hub-kickoff.md). Keep atomic OKF v0.2 dated records and a small day/week/month static diary, not a generated copy of a giant `log.md`.
+A Git-backed home for projects, ideas and decisions. Initial entry: [kickoff record](../journal/2026/11/09/knowledge-hub-kickoff.md). Target storage is one hierarchical OKF record plus its sibling history, with a generated diary. Existing date-folder records remain until migration.
+
+## Design baseline — implementation pending
+
+The owner selected hierarchical records and per-record logs, and requested exact implementation and UI/UX contracts. [Design index](../design/index.md) and [issue #24](https://github.com/tempuku/knowledge-hub-starter/issues/24) cover schemas, writes, publication, search/navigation, calendar, migration and acceptance. Documentation merge does not migrate records or implement these features. The snapshot counts below are historical evidence, not assertions about the current live total.
 
 ## Implementation snapshot — 2026-11-09
 

@@ -1,43 +1,29 @@
 ---
-okf_version: "0.2"
 type: decision
-title: Append-only OKF record logs and day-by-day knowledge history
+title: Hierarchical records with per-record logs and a projected diary
 visibility: public
 status: draft
 ---
-# ADR: Append-only OKF record logs and day-by-day knowledge history
+# ADR: Hierarchical records, per-record logs and a projected diary
 
-Status: Proposed (implementation in progress)
-Date: 2026-11-10
+Decision status: owner-selected direction; this merged documentation establishes the implementation baseline. Implementation and migration remain pending. Tracking: [issue #24](https://github.com/tempuku/knowledge-hub-starter/issues/24).
 
 ## Context
-The diary currently depends on separately authored journal pages and, for some changes, Git diffs. Users need to see what happened on any concrete day, including multiple updates to the same record. The browser must not parse thousands of Markdown files.
+The application currently combines date-folder notes and native sibling logs. The MCP adapter still invokes the older journal writer. Keeping both authoring paths permits missing or duplicated activity and makes record discovery depend on dates. The owner requested one record in its subject hierarchy and per-record logs projected into the diary, with a complete UI/UX contract.
 
 ## Decision
-Each managed record `openwiki/<area>/<name>.md` has a sibling `<name>.log.md`. Creating a record creates its log and appends a CREATED entry. Updating a record appends an UPDATED entry. The author (human or agent) supplies a meaningful summary and the writer stores complete before/after content as self-contained log entry data. A record and its log are written together by the trusted writer. Logs are authoritative; Git is transport and optional audit evidence, not the source of history.
+One canonical Markdown record under a nested subject area and one sibling append-only log form a single aggregate. Current content equals the final log snapshot. Stable IDs survive moves. No new independently authored diary copies or required source date directories remain after migration. Structural indexes are not knowledge events. Generated date shards remain useful and disposable.
 
-Each entry has a unique ID, UTC ISO-8601 timestamp, actor, action, summary and complete snapshots. Multiple entries on the same day remain distinct. Existing journal records remain readable during migration. Operational CI logs are not knowledge diary events.
+All human/CLI/MCP writes use one validated atomic transaction with optimistic branch concurrency and durable idempotency. Direct unlogged edits fail required validation. Full snapshots are retained; no history restore or hard delete is introduced. The diary shows recorded changes in UTC; factual occurrence dates remain separate metadata. Current record, historical revision and diff have distinct UI routes/actions. The single status field retains draft/stable/completed/deprecated.
 
-A build-time indexer projects log entries into per-day paginated JSON and per-entry detail JSON. The UI fetches only selected days and opens full entries lazily. It offers internal record navigation. Generated indexes can be rebuilt from OKF logs and are not authoritative. A full rebuild is the correctness baseline; incremental processing is a later optimization, not a prerequisite for correct daily browsing.
+## Normative implementation specification
+The [design baseline](../design/overview.md), [source/write contract](../design/records-and-writes.md), [read models and publication](../design/projections.md), [UI/UX contract](../design/ui-ux.md), [migration plan](../design/migration.md) and [acceptance matrix](../design/acceptance.md) define the exact observable behavior. They replace the earlier open alternatives in this ADR and the older domain/use-case notes. Unspecified product behavior requires an explicit design amendment; implementers may not infer a second authoring model or silent reconciliation.
 
-## Invariants
-1. Create => record + log + CREATED entry; update => record + appended UPDATED entry.
-2. An existing log entry cannot be rewritten by the supported writer.
-3. A successful write publishes the record and log in one commit; no partial success is reported.
-4. Each log entry has a stable unique ID and timestamp; the diary groups by timestamp date, not filename.
-5. Snapshots are complete, including frontmatter; their SHA-256 hashes are validated.
-6. An update's before snapshot equals the existing record content.
-7. The diary exposes all dates, including several changes to one record on one day.
-8. Public builds exclude nonpublic records and logs; visibility cannot be escalated by the indexer.
-9. Existing journal pages remain compatible.
-10. Generated read models are disposable and may be rebuilt from logs.
+## Consequences
+Full snapshots consume space proportional to edits and record size; v1 measures this and keeps full rebuilds as the correctness baseline. Browser reads stay paginated and lazy. Search and subject navigation operate on generated current-record indexes. Atomic moves may update several records' relative links in one transaction; each changed record gets its own event. Visibility is not repository access control: ADR 0001 remains authoritative for private hosting, and public historical snapshots require explicit eligibility and review.
 
-## Tradeoffs
-Full snapshots consume more storage but keep the history portable without Git. Initial builds scan logs; browsers never do. Future hash-manifest indexing may reduce build work. Concurrent writers require serialization or optimistic revision checking.
+## Supersession and rollout
+The previous proposed history ADR allowed legacy journal coexistence and left concurrency open. Coexistence is now migration-only, with a native-only cutover. Date-folder source storage from ADR 0001 section 6 is superseded by this design; its security requirements are unchanged. Existing history is preserved through the reviewed migration, not moved in this documentation change.
 
 ## Acceptance
-- Create, update twice on one date, build, and see three separate entries for that date.
-- Expand an entry to read the full change content and open the canonical record within Knowledge Hub.
-- Build without Git history; daily log entries remain readable.
-- Reject malformed timestamps, duplicate entry IDs, modified history and mismatched snapshot hashes.
-- Verify public-only builds never emit private log contents.
+All S/P/U scenarios in the acceptance matrix are implementation requirements, not passed checks. Completion requires real writer/MCP transactions, migration reconciliation, public-export audit, measured performance and live UI verification. A merged design does not complete issue #24.

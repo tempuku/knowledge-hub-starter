@@ -41,6 +41,20 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         sunday = monday + timedelta(days=6)
         cls.week = [day for day in calendar["days"]
                     if monday.isoformat() <= day["date"] <= sunday.isoformat()]
+        # Documentation updates can make the newest day history-only. Select
+        # actual fixture capabilities instead of assuming a date or row order.
+        cls.fixtures = {}
+        for day in calendar["days"]:
+            directory = DIST / "data" / "days" / day["date"]
+            info = json.loads(directory.with_suffix(".json").read_text())
+            for number in range(1, info["pages"] + 1):
+                for record in json.loads((directory / f"{number}.json").read_text()):
+                    kind = ("public_history" if record.get("source_file") else "private_history") \
+                        if record.get("has_change") else "note"
+                    cls.fixtures.setdefault(kind, (day["date"], number, record["id"]))
+        for required in ("note", "public_history", "private_history"):
+            if required not in cls.fixtures:
+                raise RuntimeError(f"Browser interaction tests require a {required} fixture")
         handler = functools.partial(QuietStaticFiles, directory=str(DIST))
         cls.server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
         cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
@@ -72,6 +86,17 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
     @staticmethod
     def entry_count_label(count: int) -> str:
         return f"{count} {'entry' if count == 1 else 'entries'}"
+
+    def open_fixture(self, page, kind):
+        day, number, record_id = self.fixtures[kind]
+        page.locator("#date").fill(day)
+        page.get_by_role("button", name="Day", exact=True).click()
+        expect(page.locator(".day")).to_have_count(1)
+        for _ in range(1, number):
+            page.get_by_role("button", name="Load more entries", exact=True).click()
+        note = page.locator(".note").filter(has=page.locator(f'[id="entry-{record_id}"]'))
+        expect(note).to_be_visible()
+        return note
 
     def test_initial_week_displays_entries_from_every_day(self):
         page = self.open_page(390, 844)
@@ -108,7 +133,7 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         expect(page.locator(".library-sidebar")).to_be_hidden()
         expect(page.locator(".diary-content")).to_be_visible()
         self.assertTrue(page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"))
-        note = page.locator(".note").filter(has_not=page.get_by_text("#history", exact=True)).first
+        note = self.open_fixture(page, "note")
         expect(note).to_be_visible()
         note.get_by_role("button", name="Open entry").click()
         expect(note.locator(".body")).to_be_visible()
@@ -160,7 +185,7 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         for view in ("Week", "Month", "Day"):
             page.get_by_role("button", name=view, exact=True).click()
             expect(page.locator(f'button[data-mode="{view.lower()}"]')).to_have_attribute("aria-pressed", "true")
-        note = page.locator(".note").filter(has_not=page.get_by_text("#history", exact=True)).first
+        note = self.open_fixture(page, "note")
         note.get_by_role("button", name="Open entry").click()
         body = note.locator(".body")
         expect(body).to_be_visible()
@@ -168,7 +193,7 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
 
     def test_history_switches_between_diff_and_full_record(self):
         page = self.open_page(390, 844)
-        history = page.locator(".note").filter(has_text="#history").first
+        history = self.open_fixture(page, "public_history")
         open_record = history.get_by_role("button", name="Open", exact=True)
         show_diff = history.get_by_role("button", name="Show diff")
         source = history.get_by_role("link", name="File: ")
@@ -189,6 +214,7 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         open_record.click()
         expect(history.locator(".body")).to_have_text(record)
         expect(history.get_by_role("button", name="Close", exact=True)).to_have_attribute("aria-expanded", "true")
+
         expect(show_diff).to_have_attribute("aria-expanded", "false")
         expect(history.locator(".diff-added")).to_have_count(0)
         history.get_by_role("button", name="Close", exact=True).click()
@@ -196,6 +222,15 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         open_record.click()
         expect(history.locator(".body")).to_have_text(record)
         expect(history.get_by_role("button", name="Close", exact=True)).to_have_attribute("aria-expanded", "true")
+
+    def test_private_history_has_internal_controls_without_public_file_link(self):
+        page = self.open_page(390, 844)
+        history = self.open_fixture(page, "private_history")
+        expect(history.locator(".record-file-link")).to_have_count(0)
+        expect(history.get_by_role("button", name="Show diff")).to_be_visible()
+        history.get_by_role("button", name="Open", exact=True).click()
+        expect(history.locator(".body")).to_be_visible()
+        self.assertGreater(len(history.locator(".body").inner_text()), 10)
 
 
 if __name__ == "__main__":

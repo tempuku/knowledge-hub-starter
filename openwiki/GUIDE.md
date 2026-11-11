@@ -7,51 +7,34 @@ tags: [knowledge-management, okf, journal]
 
 # Knowledge hub conventions
 
-This is an OKF v0.2 bundle. Each note/idea/decision is its own Markdown concept with YAML frontmatter and references to authoritative evidence. A `project` field links a diary record to a project concept; `occurred_on` is the local calendar date and determines day/week/month browsing; `visibility: private` is the default.
+Start with the [implementation design](design/overview.md). The owner selected hierarchical records plus per-record history, and requested a complete UI/UX design. Merging that documentation establishes the target contract; the current application remains transitional until its implementation and migration checks pass.
 
-`log.md` is optional per-directory summary history, **not** the database for the web UI. The web build reads atomic concepts, emits small date-sharded metadata JSON files, and lazy-loads content. Git tracks changes but does not substitute for event dates.
+## Target authoring model
 
-Keep relative concept links valid. Cite external GitHub issues by URL. Do not claim that a plan is implemented just because an issue exists. Use `status: draft` for unreviewed records.
+Keep each knowledge item once, under its subject area with optional deeper hierarchy. Keep a sibling append-only `.log.md`. The current record and its log form one atomic aggregate. Stable IDs survive renaming and moving. The diary is generated from log events; do not design a second authored diary copy or required year/month/day source directory. Generated date indexes are still required for efficient browsing.
 
-For a new diary date, create `journal/YYYY/MM/DD/index.md` and one or more concept documents, then update year/month indexes as required. Do not create one global ever-growing timeline file.
+The exact fields, enum values, limits, paths, reminder tuples, concurrency and retry behavior are in [Records and writes](design/records-and-writes.md). Generated indexes, publication and performance are in [Projections](design/projections.md). Do not invent extra status fields, timestamp semantics or fallback writers. The single status field is draft/stable/completed/deprecated; completed means finished and deprecated is the archived presentation.
 
-For a record update, write a short sentence in the log's `summary` field describing what changed in the record. Write it for someone reading the diary. Avoid copying the Git commit message. The diary labels older Git imports by their record title and action.
+Every new concept belongs in its directory index. Each new directory has an index and parent entry. Structural indexes have no record logs or diary rows. Keep evidence references and valid relative links until migration converts appropriate links to stable IDs. Do not claim plans are implemented because an issue or design exists.
 
-## Web presentation style
+## Current implementation boundary
 
-The diary's shared web interface follows an **early iOS 5–6** application design: glossy navigation bars, subtly textured linen backgrounds, inset grouped journal rows, blue beveled controls and compact mobile spacing. Maintain a responsive, accessible version of this visual language for future Projects, Search and Timeline views. All pages use one shared CSS/JS application; no project-specific HTML duplication.
+At audited revision `e68270c`, the builder accepts both dated journal notes and sibling native logs. The app is public/read-only. The local MCP adapter imports the legacy journal writer; it does not yet implement the target shared writer. Existing files in `journal/YYYY/MM/DD/` and existing logs must be preserved until the [reviewed migration](design/migration.md). Do not move records ad hoc or claim the new schema is supported by current tools.
 
-The diary opens to the Monday–Sunday week containing the latest available entry. Each day in that week opens automatically with its first page of titles. The total covers the selected date range, including additional pages. Selecting a sidebar date switches to Day view. Month view opens the newest day and loads other dates when expanded. Full entry bodies load when opened.
+The current diary opens the week containing its latest entry, loads daily pages and opens full bodies lazily. Its heading is plain text; a separate File link opens the current canonical GitHub file; Open shows a stored revision and Show diff shows changes. Earlier instructions saying the heading itself opens a record are obsolete. The current raw-Markdown viewer is not the target readable record page.
 
-Dates and timestamped entries are ordered newest first. Date-only entries follow the timed entries for that day. Use `occurred_at` with a verified UTC timestamp ending in `Z` when the event time is known and its UTC date matches `occurred_on`. History entries for the same record share its name. Select the name or **Open** for the full record at that revision. Choose **Show diff** for the changed lines.
+## UI/UX contract
 
-## Architecture decisions
+Preserve early iOS 5–6 CSS styling and one shared responsive app. Target primary navigation is Today, Projects, Records, Diary, Calendar; Search is in Records. The [UI/UX specification](design/ui-ux.md) fixes routes, labels, filters, count semantics, record/history/diff actions, calendar behavior, breakpoints, keyboard/focus handling and loading/error/offline states. The diary displays changes, not an ambiguous count of notes plus revisions. It clearly separates current content from historical snapshots. Source files remain a secondary explicit link, as requested by the owner.
 
-Read and maintain [architecture decision records](adr/) before changing how knowledge is stored, authenticated, published or edited. The accepted target architecture is [ADR 0001: public app, private records and authenticated access](adr/0001-private-records-authenticated-app.md). Its implementation is pending; do not confuse frontmatter `visibility: private` with access control when records live in a public repository.
+Important dates remain `[date-or-range, text]` tuples, not push notifications. The target preserves timestamp offsets and links every calendar item to its current record. The existing exporter currently reduces timestamps to dates; this is an implementation gap, not the target rule.
 
-## Phase 1: public read-only web diary
+## Privacy and architecture
 
-The initial four **project-planning** diary records dated 2026-11-09 are approved for public reading and marked `visibility: public`. They are available through the [hosted day/week/month diary](https://tempuku.github.io/knowledge-hub-starter/) without login. The public deployment still uses `--public-only`; future records are not automatically published. A frontmatter `visibility: private` flag does **not** protect files stored in this public Git repository. Do not add sensitive or personal notes to this repository while private storage and authenticated editing from [ADR 0001](adr/0001-private-records-authenticated-app.md) remain unimplemented.
+Read [ADR 0001](adr/0001-private-records-authenticated-app.md) for private repository and authenticated hosting requirements; that rollout remains pending. A visibility flag cannot secure source files in a public repository. No private personal material belongs here. Public exports require explicit approval and target snapshot-level rules in the design; do not infer historical publication consent from a current visibility flag.
 
+## Feature workflow
 
-## Record lifecycle and important dates
+Before implementing a feature, create an issue with user problem, behavior, non-goals and checklist. Resolve UI, schemas, privacy, edge cases and acceptance in its design. The owner authorized merging the documentation for [issue #24](https://github.com/tempuku/knowledge-hub-starter/issues/24); link the merged revision there as the implementation baseline. New deviations require an explicit amendment before code. Implement through reviewable PRs, validate representative data and the deployed UI, and retain unchecked acceptance items until verified. A passing build is not a working deployment.
 
-Use the existing single `status` field. `status: completed` displays a green Completed label in the diary; do not add a separate `record_status` field. Native history headings link to the canonical source file when public.
-
-Optional `reminders` is a list of **[date or inclusive date range, text]** pairs in the canonical record's YAML frontmatter. Quote dates to preserve ISO formatting. Use ISO 8601 dates or timestamps (timezone recommended); the calendar groups timestamps by their written date. Ranges use a nested two-element list. For example:
-
-```yaml
-status: completed
-reminders:
-  - ["2026-12-01T16:00:00+01:00", "Submit milestone report"]
-  - [["2026-12-05", "2026-12-07"], "Review window"]
-```
-
-The static public calendar exports reminders only from currently public records. These are displayed as important dates, **not push notifications or scheduled alerts**. Do not place private deadlines in public records.
-
-
-## Discussion-first feature workflow (default)
-
-Before implementing **any new feature**, create a GitHub issue containing a user problem, proposed behavior, explicit non-goals, and a task checklist. Discuss and agree on UI, schema/API changes, security/privacy, edge cases, acceptance criteria, and how the deployed feature will be verified. Record the decision in the issue **before** writing implementation code. Only then open a draft PR, implement, validate against representative data, and verify the live site before closing the issue. Keep unchecked TODO items visible until verified; a passing build is not equivalent to a working deployment.
-
-**Reference issue:** [Read-only record diff viewer, #21](https://github.com/tempuku/knowledge-hub-starter/issues/21). It explicitly excludes restoring prior states or rollback. Existing history is for inspection, not recovery controls.
+History is for inspection; [diff issue #21](https://github.com/tempuku/knowledge-hub-starter/issues/21) excludes restoration. Do not add restore/rollback controls. Before every commit, stage intended changes and run `sh .githooks/pre-commit`; fix and restage errors. Implementation requires the additional source/event validators specified in the design, not only today's OKF checker.

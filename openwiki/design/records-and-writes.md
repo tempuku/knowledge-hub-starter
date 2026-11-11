@@ -1,0 +1,133 @@
+---
+type: guide
+title: Record, event and writer contracts
+status: draft
+---
+
+# Record, event and writer contracts
+
+Normative target under [the design baseline](overview.md). Implementation is pending. All byte limits use UTF-8 bytes; character limits use Unicode code points.
+
+## S-01: Files and identity
+
+Canonical records are `openwiki/<area>/<optional-subareas>/<slug>.md`. Top-level areas are `projects`, `ideas`, `notes`, `concepts`, `adr`, `design`; `GUIDE.md` and `CI.md` remain allowed legacy root guides. `journal/` is migration input only. New path segments and slugs match `[a-z0-9]+(?:-[a-z0-9]+)*`; reject absolute paths, dot segments, backslashes, control characters, symlinks at any component and case-insensitive collisions. At most eight directory segments below `openwiki/`; full repository-relative path at most 240 bytes. Paths are case-sensitive but uniqueness is checked case-insensitively for cross-platform safety.
+
+Each record has a permanent lowercase UUIDv4 `id`, allocated by the writer on create. A move preserves it. An event has a separate globally unique UUIDv4 `id`. IDs must not be recycled. A source filename is never an identity. IDs are opaque to users.
+
+`index.md` in each directory is structural, not a knowledge record: no record ID, log or diary row. It lists direct child records and direct child directories exactly once, sorted by relative target path; excludes `.log.md`. Writer regenerates affected indexes atomically. Only root `openwiki/index.md` declares `okf_version: "0.2"`. Old directory `log.md` is legacy input, not an active log convention. Empty directories/indexes are removed on move, except root. A path cannot be occupied by both a structural index and a record.
+
+## S-02: Canonical Markdown schema
+
+File bytes MUST be valid UTF-8 without BOM, use LF, and end with one newline. Writer rejects invalid encoding, CRLF and NUL rather than silently changing snapshots. Maximum current record size is 1 MiB. Frontmatter is one YAML mapping bounded by `---` lines; reject duplicate keys, aliases, arbitrary tags and non-string mapping keys. The body is Markdown and may be empty only for a `project` record. No serialized revision number or generated timestamp is placed in frontmatter; version comes from the log.
+
+| Field | Requirement and exact meaning |
+|---|---|
+| `id` | Required immutable UUIDv4 |
+| `schema_version` | Required integer `1`; separate from OKF bundle version |
+| `type` | Required nonempty kebab-case string, maximum 64 characters; known types `project`, `note`, `idea`, `decision`, `guide`, `concept`; other values display literally, without invented behavior |
+| `title` | Required trimmed string, 1–200 characters, one line |
+| `description` | Optional string, 0–500 characters, one line; default empty |
+| `status` | Required: `draft`, `stable`, `completed`, `deprecated`; default for create `draft` |
+| `visibility` | Required `private` or `public`; create default `private` |
+| `project_id` | Optional UUID referencing an existing `type: project` record; omit for no project; a project cannot reference itself or another project |
+| `tags` | Optional list of unique lowercase kebab-case strings, each 1–64 characters, at most 32; default empty |
+| `occurred_on` | Optional quoted valid Gregorian `YYYY-MM-DD`, factual date supplied by author |
+| `occurred_at` | Optional RFC3339 timestamp with `Z` or numeric offset, second precision; requires `occurred_on` equal to its written calendar date |
+| `reminders` | Optional list of tuples specified below; default empty |
+| `sources` | Optional list of mappings `{resource: string, title?: string}`; resource must be an HTTPS/HTTP URL or `record:<uuid>`; title 1–200 characters if present |
+| `x_*` | Optional YAML-safe JSON-compatible extension data; retained and rendered only in Source; no behavioral meaning |
+
+Unknown unprefixed fields fail validation, not disappear. Migration maps legacy metadata explicitly. `draft` means unreviewed; `stable` means reviewed/current; `completed` means work is finished; `deprecated` means archived or superseded. This remains ONE status field, not separate review/task statuses. Any transition between these values requires an explicit write and summary. Archive sets `deprecated`; reopen explicitly chooses `draft`, `stable` or `completed`. No automatic status changes based on dates. Completing a record does not remove reminders. Deprecated records are hidden from default record lists and Today, but remain directly readable and retain diary/history.
+
+Example target record (IDs illustrative):
+
+```yaml
+---
+id: "123e4567-e89b-42d3-a456-426614174000"
+schema_version: 1
+type: decision
+title: Hierarchical record storage
+status: draft
+visibility: private
+tags: [storage]
+occurred_on: "2026-11-10"
+reminders:
+  - ["2026-12-01T16:00:00+01:00", "Review storage design"]
+  - [["2026-12-05", "2026-12-07"], "Review window"]
+---
+```
+
+### Important dates
+
+Every tuple is `[when, text]`, where text is trimmed, 1–240 characters. `when` is either one quoted date/timestamp or `[start, end]`. A range must use two dates or two offset-qualified timestamps, never mixed types. Date ranges are inclusive; timestamp ranges are inclusive instants, compared in UTC. Timestamp endpoints must use the same explicit offset; no inferred zone or daylight-saving conversion. Reject invalid dates, missing timestamp offset, reversed ranges and duplicates of the same tuple. At most 100 tuples per record. Keep input strings and offsets exactly, not just their dates. Date grids group by the written dates, even for timestamps. There is no recurrence, reminder completion flag or delivery scheduler. A past date is labelled Past, never assumed Overdue. Removing a tuple removes it from the current calendar; its historical snapshot remains readable.
+
+## S-03: Native log format
+
+Sibling `<slug>.log.md` starts with `# Record history` followed by one `## Entry <event-id>` section per event and a fenced `json` object. JSON is UTF-8, two-space indentation and LF. Strings escape all embedded newlines; no raw source is placed outside JSON. Header-only or malformed logs are invalid. The parser consumes the entire file; unmatched text, duplicate JSON keys, trailing fragments or duplicate section IDs fail validation.
+
+Every v1 event has exactly the following keys (nullable values are present as JSON null):
+
+| Key | Contract |
+|---|---|
+| `schema_version` | Integer `1` |
+| `id`, `record_id`, `operation_id` | UUIDv4; operation ID shared only by events in one atomic transaction |
+| `sequence` | Positive integer, starts at 1, increases by exactly 1 per record |
+| `action` | `CREATED`, `UPDATED`, `MOVED`, `ARCHIVED`, `REOPENED`, `IMPORTED` |
+| `recorded_at` | Writer-assigned UTC RFC3339 second-precision timestamp ending in `Z` |
+| `occurred_on`, `occurred_at` | Optional factual event date/time as defined above, otherwise null; never inferred from Git |
+| `actor` | `{id: string, kind: "human"|"agent"|"migration", label: string}`; ID 1–200, label 1–100 characters, both one line |
+| `summary` | Trimmed 1–240 characters, one line, describes the knowledge change |
+| `path_before`, `path_after` | Repository-relative paths; before null only for a creation/imported baseline; after required |
+| `before`, `after` | Complete source strings including YAML; before null only at sequence 1; after always present |
+| `before_sha256`, `after_sha256` | Lowercase SHA-256 of exact UTF-8 snapshot bytes; before hash null iff before null |
+| `previous_event_id` | Previous event ID, null only at sequence 1 |
+| `idempotency_key` | UUIDv4 of command, shared by all affected records in a move transaction |
+| `request_sha256` | Digest defined in W-02 |
+| `provenance` | `{kind: "native"|"legacy-log"|"legacy-journal"|"git-backfill", source_ref: string|null, original_time: string|null}` |
+
+No event stores mutable current status/title or its eventual Git commit SHA. Those are derived from snapshots or transport metadata. Historical bodies do not get rewritten when paths move. Legacy archived events may use old metadata inside their snapshots; their wrapper is v1 and the final migrated snapshot MUST satisfy S-02. Only provenance other than `native` permits legacy snapshot schemas.
+
+Invariants: snapshot hashes match; record/event IDs are globally unique; all events in a log reference the same record ID; previous ID, sequence, previous after/current before bytes and previous path_after/current path_before match; the final after bytes and path equal the canonical record. Recorded times are nondecreasing per log (equal seconds allowed); sequence is authoritative within equal timestamps. CREATED appears only at sequence 1; IMPORTED only for migration. Existing bytes up to the previous final entry MUST be unchanged in every ordinary commit. Hashes detect inconsistency, not a malicious rewrite of hashes and snapshots together; CI compares the log prefix against the trusted base revision. A normal build validates consistency but does not claim tamper-proof history without that baseline.
+
+## W-01: One writer, transport-independent
+
+CLI and MCP MUST invoke the same domain service. Replace the old `publish.py` journal behavior; do not run both writers. Local CLI/stdio MCP runs only in a trusted checkout; it does not establish authenticated remote identity. The caller supplies local actor metadata; UI labels it as supplied provenance, not verified identity. A future authenticated gateway assigns the actor from its session and refuses impersonation. No network MCP deployment is part of this change.
+
+Tools: `knowledge_read`, `knowledge_create`, `knowledge_update`, `knowledge_move`, `knowledge_archive`, `knowledge_reopen`. Read input is `{record_id}` and returns `{record_id, path, content, version, head}`. `version` is the latest event ID. Unauthorized/missing records share `NOT_FOUND` outwardly. Mutation common fields: `idempotency_key`, `actor`, `summary`, `expected_head`, optional `occurred_on`/`occurred_at`; current-record commands also require `record_id` and `expected_version`. `expected_head` is the repository's full commit SHA; both head and version must match.
+
+| Command | Additional input | Event and constraints |
+|---|---|---|
+| create | `path`, `content` without `id`/`schema_version` | Writer adds ID/version and defaults; CREATED; occupied path rejects |
+| update | Full replacement `content` | UPDATED; same ID/path, cannot cross into or out of deprecated; byte-identical content rejects `NO_CHANGE` |
+| move | `destination` | MOVED; content changes only for relative-link repairs; no-op path rejects |
+| archive | None | ARCHIVED; change status only to deprecated; already deprecated rejects NO_CHANGE |
+| reopen | `status`: draft/stable/completed | REOPENED; only valid from deprecated |
+
+Update may change other metadata including visibility only after publication authorization below. Requests cannot inject event timestamps, event IDs, sequence, hashes or provenance. Public repository destinations reject private content regardless of metadata defaults. Publishing a previously private record requires explicit `publish_current: true` plus publisher scope; this flag is allowed on create/update only and is included in the request digest. It is not authorization to expose old private snapshots. Deny by default if repository privacy or authorization context is unknown. Transport auth implementation remains ADR 0001 scope, but local trusted execution must enforce destination policy.
+
+## W-02: Atomicity, concurrency and retries
+
+1. Validate request shape/size (maximum 2 MiB JSON), authorization, and canonicalize its semantic fields. Digest SHA-256 of UTF-8 JSON with keys recursively lexicographically sorted, no insignificant whitespace, non-ASCII literal, no floats. Include command, IDs, paths, expected refs, actor, summary, occurrence fields, content and publication flag; omit idempotency key itself. Absent optional values normalize to null; only documented defaults normalize otherwise.
+2. Under an exclusive repository writer lock, find any committed receipt by idempotency key across all logs BEFORE stale-head/no-change checks. Same digest returns the original record/event/operation IDs with `already_committed`; different digest returns `IDEMPOTENCY_CONFLICT`. Receipts are derived from logs, so process restart loses nothing. An ordinary retry must repeat the original request, including its expected refs.
+3. Validate head/version, complete affected chains, schema, current record equality and all links. Compute all changed records, required indexes and events in memory. Allocate IDs once for this attempt; choose one UTC timestamp for its transaction. System clock earlier than the affected last event rejects `CLOCK_SKEW`; never backdate or silently adjust.
+4. Prepare a clean isolated temporary Git worktree at expected_head. Apply changes there and stage exact paths. Run staged OKF validation AND v1 chain/schema/baseline-prefix validation. Any error leaves the shared branch unchanged. Do not commit unrelated working files.
+5. Create one Git commit containing records, logs and indexes. Publish it with compare-and-swap on the branch using expected_head. If remote publication is requested, the remote CAS is the commit point; an unpushed local commit is not reported as published. A concurrent winner yields `CONFLICT` and no partial branch update. No automatic rebase/retry with changed expected refs.
+6. Return only after verifying the committed branch contains the event IDs. Release lock; discard temporary worktree. A crash after CAS but before response is recovered by step 2. Lock covers local workers; CAS covers independent clones. No asynchronous outbox or eventual history reconciliation is allowed.
+
+Success object: `{status: "committed"|"already_committed", record_id, event_id, operation_id, version, head, record_url, event_url, diff_url, publication: "pending"}`. For a retried operation, head is the original commit containing those events, found from Git or its durable deployment receipt; publication can be `visible` only after an actual matching generation is verified. The logs remain sufficient to rebuild history without Git, but locating original transport commits requires Git/receipt metadata. Commit success and web publication are distinct.
+
+Error object: `{code, message, field_errors: [{field, message}], current_head?, current_version?, retryable}`. Codes: `VALIDATION_ERROR`, `NOT_FOUND`, `PUBLICATION_DENIED`, `CONFLICT`, `IDEMPOTENCY_CONFLICT`, `INTEGRITY_ERROR`, `NO_CHANGE`, `CLOCK_SKEW`, `WRITE_FAILED`. Only authorized conflicts expose current refs. No error contains private snapshots. On uncertain transport outcome return WRITE_FAILED with `retryable: true` and instruct retry of the SAME key; never allocate a new key automatically. Validation/no-change/denial/integrity errors are not retryable without changing input or repairing the cause.
+
+## W-03: Links, moves and archive
+
+Canonical internal links use `record:<uuid>` (optional `#heading-slug`) and UI resolves them to record routes. Existing relative Markdown links remain supported: resolve against that snapshot's path, then migration alias map/current ID map. Broken current internal links fail validation. Heading fragments use lowercase Unicode letters/digits, spaces to hyphens, removed punctuation, duplicates suffixed `-2`, `-3`; missing current fragments fail validation. Historical missing destinations show Unavailable in this view without rewriting snapshots. Standard relative links to structural indexes remain valid.
+
+Move atomically relocates record and sibling log, appends MOVED, regenerates indexes and rewrites current inbound/outbound relative links whose meaning would change. Each additionally modified canonical record gets UPDATED with the same operation_id/key/digest and summary `Update links after moving <title>` (truncate title to keep 240-character limit). All affected records need write permission and must pass chain validation. Structural index edits do not generate events. No partial move if any backlink cannot be updated. Stable `record:` links need no rewriting. Historical paths remain in events, enabling old-path resolution. If an old path is reused, legacy path lookup becomes ambiguous and shows a choice of record titles; it must never silently redirect to the wrong record.
+
+Hard delete and history restore are unsupported; requests return VALIDATION_ERROR. Archive keeps content and history, preserves identity and existing links. Privacy erasure or retention changes require a separate reviewed procedure; do not pretend archive erases public Git history.
+
+## W-04: Creation serialization and capability boundaries
+
+Creation accepts frontmatter without generated fields, parses it under S-02, then emits keys in this order: id, schema_version, type, title, description (if supplied), status, visibility, project_id (if supplied), tags (if supplied), occurred_on, occurred_at, reminders, sources, then x_* keys lexicographically. Optional absent fields stay absent except default status/visibility. Use a YAML emitter with quoted strings, decimal integers, no aliases/tags, two-space nested indentation and block mappings; preserve body bytes after the frontmatter delimiter. This generated content is returned to the caller and stored verbatim in CREATED. Updates are full source replacement already satisfying encoding/schema, so the writer does not reformat their YAML. Examples in documentation are not a mandate to reserialize historical bytes.
+
+Read/write permission is checked for every affected ID, not only the requested record. The local trusted adapter receives explicit repository mode (public/private) and allowed operations from its launch configuration; unknown configuration fails closed. A future authenticated service supplies this capability context independently of caller JSON. Publication policy approval is a separate reviewed repository change; publish_current does not auto-add IDs or events to the allowlist. Therefore a committed public-marked record can legitimately remain Publication pending until allowlisted and deployed. The writer must return that state accurately.

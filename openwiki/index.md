@@ -10,3 +10,4 @@ okf_version: "0.2"
 * [Projects](projects/)
 * [Journal](journal/)
 * [Concepts](concepts/)
+* [Implementation design](design/)
