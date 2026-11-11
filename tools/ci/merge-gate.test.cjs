@@ -92,3 +92,18 @@ test("core workflow run tied to exact commit and PR", () => {
   assert.equal(gate.chooseRun([{...base,head_sha:"b".repeat(40)}],pr),null);
   assert.equal(gate.chooseRun([{...base,pull_requests:[{number:100}]}],pr),null);
 });
+
+test("branch protected flag alone never passes enforced rules inspection", () => {
+  const required=[
+    {type:"pull_request"},
+    {type:"non_fast_forward"},
+    {type:"required_status_checks",parameters:{required_status_checks:[
+      {context:"validate-openwiki"},{context:"knowledge-merge-gate"}]}}
+  ];
+  assert.deepEqual(gate.validateProtection({protected:true},required),[]);
+  assert.ok(gate.validateProtection({protected:true},[]).length);
+  assert.ok(gate.validateProtection({protected:false},required).length);
+  assert.ok(gate.validateProtection({protected:true},required.slice(0,2)).length);
+  assert.ok(gate.validateProtection({protected:true},required.slice(1)).length);
+  assert.ok(gate.validateProtection({protected:true},required.filter(r=>r.type!=="non_fast_forward")).length);
+});
