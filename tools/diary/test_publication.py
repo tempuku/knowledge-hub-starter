@@ -19,7 +19,7 @@ if not OUT.is_dir():
 STATIC = {
     "index.html", "app.js", "style.css", "sw.js", "manifest.webmanifest",
     "apple-touch-icon.png", "icon-192.png", "icon-512.png",
-    "data/calendar.json",
+    "data/calendar.json", "data/reminders.json",
 }
 SHARDED = (
     re.compile(r"data/days/\d{4}-\d{2}-\d{2}\.json"),

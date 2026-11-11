@@ -3,7 +3,7 @@ type: concept
 title: Diary diff demo
 description: A public test source for inspecting changes in the diary.
 visibility: public
-status: stable
+status: completed
 tags: [knowledge-hub, demo, history]
 ---
 

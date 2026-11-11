@@ -40,6 +40,41 @@ def utc_timestamp(value: str) -> datetime:
     return datetime.fromisoformat(value[:-1] + "+00:00")
 
 
+def record_metadata(file: Path) -> dict:
+    match = FRONT.match(file.read_text(encoding="utf-8"))
+    return yaml.safe_load(match.group(1)) if match else {}
+
+
+def parse_reminders(meta: dict, record: str) -> list[dict]:
+    """A reminder is [ISO date/datetime or inclusive range, text]."""
+    reminders = meta.get("reminders", []) or []
+    if not isinstance(reminders, list):
+        raise ValueError(f"reminders must be a list: {record}")
+    result = []
+    for item in reminders:
+        if not isinstance(item, (list, tuple)) or len(item) != 2 or not isinstance(item[1], str) or not item[1].strip():
+            raise ValueError(f"Expected [date_or_range, text]: {record}")
+        when, label = item
+        values = when if isinstance(when, list) else [when]
+        if len(values) not in (1, 2):
+            raise ValueError(f"Invalid reminder date range: {record}")
+        normalized = []
+        for value in values:
+            if isinstance(value, (date, datetime)):
+                value = value.isoformat()
+            if not isinstance(value, str):
+                raise ValueError(f"Invalid reminder date: {record}")
+            try:
+                parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                normalized.append(parsed.date().isoformat())
+            except ValueError:
+                normalized.append(date.fromisoformat(value).isoformat())
+        if len(normalized) == 2 and normalized[0] > normalized[1]:
+            raise ValueError(f"Reversed reminder date range: {record}")
+        result.append({"start": normalized[0], "end": normalized[-1], "text": label.strip(), "record": record})
+    return result
+
+
 def build(output: Path, public_only: bool) -> tuple[int, int]:
     if output.resolve() == ROOT.resolve() or ROOT.resolve().is_relative_to(output.resolve()):
         raise ValueError("Output path cannot be the project root or its parent")
@@ -64,6 +99,14 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
     native_records = {p.relative_to(ROOT).as_posix()[:-7] + ".md"
                       for p in (ROOT / "openwiki").rglob("*.log.md")}
     count = 0
+    reminder_events = []
+    for record_file in sorted((ROOT / "openwiki").rglob("*.md")):
+        if record_file.name in {"index.md", "log.md"} or record_file.name.endswith(".log.md"):
+            continue
+        meta = record_metadata(record_file)
+        if public_only and meta.get("visibility") != "public":
+            continue
+        reminder_events.extend(parse_reminders(meta, record_file.relative_to(ROOT).as_posix()))
     for file in sorted(NOTES.rglob("*.md")):
         rel = file.relative_to(NOTES).as_posix()
         match = NOTE.fullmatch(rel)
@@ -186,7 +229,9 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             summary = {"id": record_id, "date": day, "title": title,
                        "timestamp": timestamp.isoformat(timespec="microseconds"),
                        "description": description, "project": record,
-                       "status": "stable", "tags": ["history"], "links": [], "has_change": True}
+                       "status": current_meta.get("status", "stable"),
+                       "source_file": record if current_meta.get("visibility") == "public" else None,
+                       "tags": ["history"], "links": [], "has_change": True}
             by_day[day].append(summary)
             write_json(output / "data" / "entries" / (record_id + ".json"), {
                 **summary, "body": after,
@@ -212,6 +257,7 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
         "days": calendar,
         "total": count,
     })
+    write_json(output / "data" / "reminders.json", {"events": reminder_events})
     return count, len(calendar)
 
 

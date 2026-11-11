@@ -32,3 +32,26 @@ Read and maintain [architecture decision records](adr/) before changing how know
 ## Phase 1: public read-only web diary
 
 The initial four **project-planning** diary records dated 2026-11-09 are approved for public reading and marked `visibility: public`. They are available through the [hosted day/week/month diary](https://tempuku.github.io/knowledge-hub-starter/) without login. The public deployment still uses `--public-only`; future records are not automatically published. A frontmatter `visibility: private` flag does **not** protect files stored in this public Git repository. Do not add sensitive or personal notes to this repository while private storage and authenticated editing from [ADR 0001](adr/0001-private-records-authenticated-app.md) remain unimplemented.
+
+
+## Record lifecycle and important dates
+
+Use the existing single `status` field. `status: completed` displays a green Completed label in the diary; do not add a separate `record_status` field. Native history headings link to the canonical source file when public.
+
+Optional `reminders` is a list of **[date or inclusive date range, text]** pairs in the canonical record's YAML frontmatter. Quote dates to preserve ISO formatting. Use ISO 8601 dates or timestamps (timezone recommended); the calendar groups timestamps by their written date. Ranges use a nested two-element list. For example:
+
+```yaml
+status: completed
+reminders:
+  - ["2026-12-01T16:00:00+01:00", "Submit milestone report"]
+  - [["2026-12-05", "2026-12-07"], "Review window"]
+```
+
+The static public calendar exports reminders only from currently public records. These are displayed as important dates, **not push notifications or scheduled alerts**. Do not place private deadlines in public records.
+
+
+## Discussion-first feature workflow (default)
+
+Before implementing **any new feature**, create a GitHub issue containing a user problem, proposed behavior, explicit non-goals, and a task checklist. Discuss and agree on UI, schema/API changes, security/privacy, edge cases, acceptance criteria, and how the deployed feature will be verified. Record the decision in the issue **before** writing implementation code. Only then open a draft PR, implement, validate against representative data, and verify the live site before closing the issue. Keep unchecked TODO items visible until verified; a passing build is not equivalent to a working deployment.
+
+**Reference issue:** [Read-only record diff viewer, #21](https://github.com/tempuku/knowledge-hub-starter/issues/21). It explicitly excludes restoring prior states or rollback. Existing history is for inspection, not recovery controls.

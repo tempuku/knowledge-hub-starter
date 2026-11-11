@@ -8,6 +8,7 @@
   const total = document.getElementById('total');
   const sidebarDays = document.getElementById('sidebar-days');
   let calendar = [];
+  let reminders = [];
   let mode = 'week';
   const json = async (url) => {
     const response = await fetch(url, {cache: 'no-cache'});
@@ -48,17 +49,18 @@
       for (const record of records) {
         const article = document.createElement('article'); article.className = 'note';
         const title = document.createElement('h3');
-        const recordName = record.has_change ? document.createElement('button') : null;
-        if (recordName) {
-          recordName.type = 'button';
-          recordName.className = 'record-name';
-          recordName.textContent = record.title;
-          recordName.setAttribute('aria-expanded', 'false');
-          title.append(recordName);
-        } else {
-          title.textContent = record.title;
-        }
+        title.textContent = record.title;
         article.append(title);
+        if (record.source_file) {
+          const source = document.createElement('a');
+          source.className = 'record-file-link';
+          source.href = 'https://github.com/tempuku/knowledge-hub-starter/blob/main/' + record.source_file;
+          source.target = '_blank';
+          source.rel = 'noopener noreferrer';
+          source.textContent = 'File: ' + record.source_file;
+          article.append(source);
+        }
+        if (record.status === 'completed') article.append(span('Completed', 'record-status completed'));
         if (record.description) {const p = document.createElement('p'); p.textContent = record.description; article.append(p);}
         if (record.timestamp) article.append(span(record.timestamp.slice(11, 16) + ' UTC', 'chip'));
         if (record.project) article.append(span(record.project, 'chip'));
@@ -84,7 +86,7 @@
           button.onclick = async () => {
             if (!full) {
               buttons.forEach(item => { item.disabled = true; });
-              if (recordName) recordName.disabled = true;
+
               details.hidden = false;
               details.textContent = 'Loading entry…';
               try {
@@ -94,7 +96,7 @@
                 return;
               } finally {
                 buttons.forEach(item => { item.disabled = false; });
-                if (recordName) recordName.disabled = false;
+
               }
             }
             activeView = activeView === view ? null : view;
@@ -104,7 +106,7 @@
               item.textContent = selected ? views[i].close : views[i].label;
               item.setAttribute('aria-expanded', String(selected));
             });
-            if (recordName) recordName.setAttribute('aria-expanded', String(activeView === views[1]));
+
             if (!activeView) return;
             details.textContent = '';
             const body = document.createElement('pre');
@@ -126,10 +128,6 @@
           };
           return button;
         });
-        if (recordName) {
-          recordName.setAttribute('aria-controls', details.id);
-          recordName.onclick = () => buttons[1].click();
-        }
         controls.append(...buttons);
         article.append(controls, details);
         const sourceLinks = (record.links || []).filter(item => !/^https?:\/\/(?:www\.)?github\.com(?:[/:?#]|$)/i.test(item.url));
@@ -193,6 +191,7 @@
     const count = selected.reduce((sum, d) => sum + d.count, 0);
     total.textContent = `${count} ${count === 1 ? 'entry' : 'entries'}`;
     highlightSidebar();
+    renderReminders();
     if (!selected.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'No records for this date range.'; timeline.append(p); return; }
     for (const [i, item] of selected.entries()) {
       const section = document.createElement('section'); section.className = 'day';
@@ -207,6 +206,42 @@
       // Show the week at a glance. In Month view, load only the first day.
       if (mode !== 'month' || i === 0) header.click();
     }
+  };
+  const renderReminders = () => {
+    const host = document.getElementById('reminder-calendar');
+    if (!host) return;
+    host.textContent = '';
+    const selectedMonth = (input.value || new Date().toISOString().slice(0, 10)).slice(0, 7);
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const heading = document.createElement('h2');
+    heading.textContent = 'Important dates · ' + new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString('en-US', {month:'long', year:'numeric', timeZone:'UTC'});
+    host.append(heading);
+    const grid = document.createElement('div'); grid.className = 'reminder-grid';
+    const first = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+    const offset = (first + 6) % 7;
+    const days = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    for (let i = 0; i < offset; i++) grid.append(document.createElement('span'));
+    for (let d = 1; d <= days; d++) {
+      const day = selectedMonth + '-' + String(d).padStart(2, '0');
+      const hits = reminders.filter(item => item.start <= day && item.end >= day);
+      const cell = document.createElement('button');
+      cell.type = 'button'; cell.className = 'reminder-day' + (hits.length ? ' has-reminder' : '');
+      cell.textContent = String(d);
+      cell.title = hits.map(item => item.text).join('; ');
+      cell.setAttribute('aria-label', day + (hits.length ? ': ' + cell.title : ''));
+      cell.onclick = () => { input.value = day; mode = 'day'; render(); };
+      grid.append(cell);
+    }
+    host.append(grid);
+    const list = document.createElement('ul'); list.className = 'reminder-list';
+    for (const event of reminders.filter(item => item.start.slice(0, 7) <= selectedMonth && item.end.slice(0, 7) >= selectedMonth)) {
+      const item = document.createElement('li');
+      const dates = document.createElement('strong');
+      dates.textContent = event.start === event.end ? event.start : event.start + ' – ' + event.end;
+      item.append(dates, document.createTextNode(' · ' + event.text));
+      list.append(item);
+    }
+    host.append(list);
   };
   modeButtons.forEach(button => button.addEventListener('click', () => {
     mode = button.dataset.mode;
@@ -224,6 +259,7 @@
       });
     });
   }
+  json('./data/reminders.json').then(data => { reminders = data.events || []; renderReminders(); }).catch(() => {});
   json('./data/calendar.json').then(data => {
     calendar = data.days || [];
     renderSidebar();
