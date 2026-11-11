@@ -60,7 +60,7 @@
           source.textContent = 'File: ' + record.source_file;
           article.append(source);
         }
-        if (record.record_status === 'completed') article.append(span('Completed', 'record-status completed'));
+        if (record.status === 'completed') article.append(span('Completed', 'record-status completed'));
         if (record.description) {const p = document.createElement('p'); p.textContent = record.description; article.append(p);}
         if (record.timestamp) article.append(span(record.timestamp.slice(11, 16) + ' UTC', 'chip'));
         if (record.project) article.append(span(record.project, 'chip'));
