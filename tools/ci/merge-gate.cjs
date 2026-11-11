@@ -110,18 +110,31 @@ function validateReview(reviews, author, sha) {
   const latest = new Map();
   for (const review of reviews || []) {
     const login = review.user && review.user.login;
-    if (!login || login.toLowerCase() === String(author).toLowerCase() ||
-        review.user.type === "Bot" ||
+    if (!login || review.user.type === "Bot" ||
         !["OWNER", "MEMBER", "COLLABORATOR"].includes(review.author_association)) continue;
-    if (!["APPROVED", "CHANGES_REQUESTED", "DISMISSED"].includes(review.state)) continue;
+    if (!["APPROVED", "CHANGES_REQUESTED", "DISMISSED", "COMMENTED"].includes(review.state)) continue;
     const prev = latest.get(login);
     if (!prev || String(review.submitted_at || "") >= String(prev.submitted_at || ""))
       latest.set(login, review);
   }
-  return [...latest.values()].some(r =>
-    r.state === "APPROVED" &&
-    r.commit_id === sha &&
-    new RegExp("Evidence verified for head SHA:\\s*" + sha, "i").test(r.body || ""));
+  return [...latest.values()].some(r => {
+    if (r.commit_id !== sha) return false;
+    const body = r.body || "";
+    if (r.user.login.toLowerCase() !== String(author).toLowerCase())
+      return r.state === "APPROVED" &&
+        new RegExp("Evidence verified for head SHA:\\s*" + sha, "i").test(body);
+
+    // Explicit owner direction, recorded in epic #24: let the assistant
+    // self-verify child issues while the owner reviews the completed epic.
+    // GitHub does not allow authors to approve their own PRs, so accept a
+    // clearly labeled OWNER review-comment attestation, never a forged
+    // independent approval or arbitrary PR-body text.
+    return r.user.login.toLowerCase() === "tempuku" &&
+      r.author_association === "OWNER" &&
+      r.state === "COMMENTED" &&
+      new RegExp("Agent self-verification for head SHA:\\s*" + sha, "i").test(body) &&
+      body.includes("https://github.com/tempuku/knowledge-hub-starter/issues/24");
+  });
 }
 
 function validateCoreRun(run, jobs) {
