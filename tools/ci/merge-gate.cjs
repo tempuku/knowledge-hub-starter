@@ -111,7 +111,8 @@ function validateReview(reviews, author, sha) {
   for (const review of reviews || []) {
     const login = review.user && review.user.login;
     if (!login || login.toLowerCase() === String(author).toLowerCase() ||
-        review.user.type === "Bot") continue;
+        review.user.type === "Bot" ||
+        !["OWNER", "MEMBER", "COLLABORATOR"].includes(review.author_association)) continue;
     if (!["APPROVED", "CHANGES_REQUESTED", "DISMISSED"].includes(review.state)) continue;
     const prev = latest.get(login);
     if (!prev || String(review.submitted_at || "") >= String(prev.submitted_at || ""))
