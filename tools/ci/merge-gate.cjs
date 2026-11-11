@@ -136,6 +136,30 @@ function validateCoreRun(run, jobs) {
     .map(name => "Core CI required step missing/skipped/failed: " + name);
 }
 
+
+function validateProtection(branch, rules) {
+  const failures = [];
+  // The effective-rules endpoint lists rules applied to this specific branch.
+  // Mere branch.protected=true is insufficient: required CI and PR policy must
+  // be checked independently instead of assuming any protection is enough.
+  if (!branch || branch.protected !== true)
+    failures.push("main is not protected by an active GitHub ruleset");
+  if (!Array.isArray(rules))
+    return [...failures, "Cannot inspect the effective branch rules"];
+  if (!rules.some(r => r.type === "pull_request"))
+    failures.push("main does not require a PR before merging");
+  if (!rules.some(r => r.type === "non_fast_forward"))
+    failures.push("main does not prevent force-pushes");
+  const contexts = new Set(rules.filter(r => r.type === "required_status_checks")
+    .flatMap(r => r.parameters?.required_status_checks || [])
+    .map(c => c.context));
+  for (const ctx of ["validate-openwiki", CONTEXT]) {
+    if (!contexts.has(ctx))
+      failures.push("main does not require status " + ctx);
+  }
+  return failures;
+}
+
 function chooseRun(runs, pr) {
   const same = (runs || []).filter(r =>
     r.head_sha === pr.head.sha && r.event === "pull_request" &&
@@ -165,8 +189,12 @@ async function evaluate({github, owner, repo, pr}) {
       issueBody:issue.body, sha
     }));
   }
-  const branch = (await github.rest.repos.getBranch({owner,repo,branch:"main"})).data;
-  if (!branch.protected) errors.push("main has no branch protection or active ruleset");
+  const [branch, applied] = await Promise.all([
+    github.rest.repos.getBranch({owner,repo,branch:"main"}),
+    github.request("GET /repos/{owner}/{repo}/rules/branches/{branch}",
+      {owner,repo,branch:"main"})
+  ]);
+  errors.push(...validateProtection(branch.data,applied.data));
   const reviews = await github.paginate(github.rest.pulls.listReviews, {
     owner,repo,pull_number:pr.number,per_page:100
   });
@@ -233,4 +261,4 @@ async function run({github,context,core}) {
 }
 
 module.exports = {BASELINE,CONTEXT,REQUIRED_STEPS,requiredChecks,parseEvidence,
-  validateBody,validateReview,validateCoreRun,chooseRun,evaluate,run};
+  validateBody,validateReview,validateCoreRun,validateProtection,chooseRun,evaluate,run};
