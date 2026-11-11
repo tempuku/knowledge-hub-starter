@@ -58,15 +58,16 @@ test("missing design traceability or reviewer decision fails", () => {
 });
 test("independent approved review must attest to this exact head", () => {
   const make = (login,commit_id,state="APPROVED",message="Evidence verified for head SHA: " + SHA) =>
-    ({user:{login,type:"User"},state,commit_id,submitted_at:"2026-11-11T12:00:00Z",body:message});
+    ({user:{login,type:"User"},author_association:"COLLABORATOR",state,commit_id,submitted_at:"2026-11-11T12:00:00Z",body:message});
   assert.equal(gate.validateReview([make("reviewer",SHA)],"author",SHA),true);
   assert.equal(gate.validateReview([make("author",SHA)],"author",SHA),false);
   assert.equal(gate.validateReview([make("reviewer","b".repeat(40))],"author",SHA),false);
   assert.equal(gate.validateReview([make("reviewer",SHA,"CHANGES_REQUESTED")],"author",SHA),false);
   assert.equal(gate.validateReview([make("reviewer",SHA,"APPROVED","LGTM")],"author",SHA),false);
+  assert.equal(gate.validateReview([{...make("reviewer",SHA),author_association:"NONE"}],"author",SHA),false);
 });
 test("latest decision from reviewer overrides earlier approval", () => {
-  const r={user:{login:"reviewer",type:"User"},commit_id:SHA,body:"Evidence verified for head SHA: "+SHA};
+  const r={user:{login:"reviewer",type:"User"},author_association:"COLLABORATOR",commit_id:SHA,body:"Evidence verified for head SHA: "+SHA};
   const reviews=[
     {...r,state:"APPROVED",submitted_at:"2026-11-11T12:00:00Z"},
     {...r,state:"CHANGES_REQUESTED",submitted_at:"2026-11-11T12:00:01Z"}
