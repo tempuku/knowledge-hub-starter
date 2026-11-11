@@ -1,0 +1,29 @@
+name: Auto-ready implementation PR after exact-head CI
+
+# Privileged metadata-only workflow from trusted main. Never checkout PR code.
+on:
+  workflow_run:
+    workflows: ["Validate OKF and diary"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  mark-ready:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout trusted main only
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Mark only successful exact-head PR ready for review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const autoReady = require(process.env.GITHUB_WORKSPACE + "/tools/ci/auto-ready.cjs");
+            await autoReady.run({github,context,core});
