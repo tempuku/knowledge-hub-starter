@@ -108,19 +108,21 @@ test("branch protected flag alone never passes enforced rules inspection", () =>
   assert.ok(gate.validateProtection({protected:true},required.filter(r=>r.type!=="non_fast_forward")).length);
 });
 
-test("delegated owner-agent self-review requires a genuine exact-head review comment", () => {
-  const self={
+test("author agent self-review cannot substitute for independent approval", () => {
+  const authorReview={
     user:{login:"tempuku",type:"User"},author_association:"OWNER",
     state:"COMMENTED",commit_id:SHA,submitted_at:"2026-11-11T13:00:00Z",
     body:"Agent self-verification for head SHA: "+SHA+
       "\nhttps://github.com/tempuku/knowledge-hub-starter/issues/24"
   };
-  assert.equal(gate.validateReview([self],"tempuku",SHA),true);
-  assert.equal(gate.validateReview([{...self,commit_id:"b".repeat(40)}],"tempuku",SHA),false);
-  assert.equal(gate.validateReview([{...self,body:"Looks good"}],"tempuku",SHA),false);
-  assert.equal(gate.validateReview([{...self,state:"CHANGES_REQUESTED"}],"tempuku",SHA),false);
-  assert.equal(gate.validateReview([{...self,author_association:"NONE"}],"tempuku",SHA),false);
-  assert.equal(gate.validateReview([{...self,user:{login:"other",type:"User"}}],"other",SHA),false);
+  assert.equal(gate.validateReview([authorReview],"tempuku",SHA),false);
+  assert.equal(gate.validateReview([{...authorReview,state:"APPROVED"}],"tempuku",SHA),false);
+  const independent={...authorReview,user:{login:"collaborator",type:"User"},
+    author_association:"COLLABORATOR",state:"APPROVED",
+    body:"Evidence verified for head SHA: "+SHA};
+  assert.equal(gate.validateReview([independent],"tempuku",SHA),true);
+  assert.equal(gate.validateReview([{...independent,commit_id:"b".repeat(40)}],"tempuku",SHA),false);
+  assert.equal(gate.validateReview([{...independent,state:"COMMENTED"}],"tempuku",SHA),false);
 });
 
 test("multi-word pending ledger values cannot pass as evidence", () => {
