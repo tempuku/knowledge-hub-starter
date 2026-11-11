@@ -52,25 +52,15 @@ should link the exact SHA. Do not use this template as evidence of completion.
 | C1 | <head-sha> | <command> | <fixture-revision> | <expected> | <observed> | <artifact-url> | <limitations> |
 | C2 | <head-sha> | <command> | <fixture-revision> | <expected> | <observed> | <artifact-url> | <limitations> |
 
-## Review attestation
+## Independent approval
 
-A reviewer must inspect the code diff, each acceptance checkbox and its real
-evidence for this exact head SHA. A non-author independent GitHub APPROVED
-review is accepted with this review-body line:
+A **non-author independent reviewer** must inspect the full diff, every
+issue acceptance checkbox and all reproducible evidence on this exact SHA.
+They must submit a genuine GitHub APPROVED review including:
 
     Evidence verified for head SHA: <exact-40-character-PR-head-SHA>
 
-The owner has alternatively authorized **agent self-verification of child issues**
-and reserved their own end-to-end review for [epic #24](https://github.com/tempuku/knowledge-hub-starter/issues/24).
-For a PR authored through the owner's GitHub account, the assistant must submit
-a genuine GitHub review **COMMENT** on the exact SHA, clearly describing its
-limitations, including the exact lines:
-
-    Agent self-verification for head SHA: <exact-40-character-PR-head-SHA>
-    https://github.com/tempuku/knowledge-hub-starter/issues/24
-
-Only an actual authenticated owner-account GitHub review comment may satisfy
-this delegation; PR body assertions or bot impersonation do not. Change the
-"Reviewer decision" field to "Approved" ONLY after completing that review and
-linking the evidence. New commits invalidate old verification. This exception
-does not waive any CI, privacy, branch-enforcement, or real-test requirement.
+Only then update the PR's "Reviewer decision" field to "Approved" and
+link the actual review. Agent self-verification is permitted for preparation
+and documenting evidence under epic #24, **not a substitute for independent
+GitHub approval**. Any new commit invalidates stale review and evidence.
