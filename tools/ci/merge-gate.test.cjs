@@ -31,7 +31,7 @@ function body(sha=SHA) {
     "| Check | Head | Command | Fixture revision | Expected | Observed | Artifact | Limits |",
     "| --- | --- | --- | --- | --- | --- | --- | --- |",
     "| C1 | "+sha+" | node --test tools/ci/merge-gate.test.cjs | fixture-v1-at-sha | Checked issue requirements | Parsed both checks | https://github.com/tempuku/knowledge-hub-starter/actions/runs/1 | Synthetic parser assertion only |",
-    "| C2 | "+sha+" | node --test tools/ci/merge-gate.test.cjs | fixture-v1-at-sha | Reject unchecked items | Unchecked items blocked | https://github.com/tempuku/knowledge-hub-starter/actions/runs/1 | Synthetic parser assertion only |"
+    "| C2 | "+sha+" | node --test tools/ci/merge-gate.test.cjs | fixture-v1-at-sha | Reject unchecked items | Rejected unchecked checklist accurately | https://github.com/tempuku/knowledge-hub-starter/actions/runs/1 | Synthetic parser assertion only |"
   ].join("\n");
 }
 
