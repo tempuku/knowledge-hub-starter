@@ -1,0 +1,84 @@
+---
+type: guide
+title: Read models, publication and performance contract
+status: draft
+---
+
+# Read models, publication and performance contract
+
+Normative target; see [source schemas](records-and-writes.md) and [UI routes](ui-ux.md).
+
+## P-01: Rebuildable generation
+
+Build from one immutable Git revision, never a changing working tree. Validate all source records/logs before export. Read logs once; do not reread each canonical file for every event. Produce output in a new staging directory. Failure publishes nothing and preserves the last valid generation. A release publishes a complete immutable generation, then switches the small root manifest last. Never overwrite individual live day files in place.
+
+Source of current record data is the canonical file. Source of Diary and History is exclusively the log. Root/directory indexes and build/CI operations generate no activity rows. An ordinary record created and then edited twice produces three changes and one distinct record; there is no second note row. Optional occurrence metadata is displayed but never substitutes for recorded_at in the Diary. UTC is the fixed diary timezone for v1 and must be labelled. The source hierarchy has no effect on date grouping.
+
+Within a record, sequence orders events. Across records, descending `(recorded_at, sequence, event_id)` orders Diary deterministically; dates descend. UUID tie-break is lexical and has no implied causality. Full rebuilds from the same revision and exporter version must produce identical content bytes; wall-clock publication metadata is stored outside deterministic content.
+
+## P-02: Files and JSON interfaces
+
+All JSON is UTF-8 with `schema_version: 1` at the outer object, valid finite JSON values, fixed two-space formatting and trailing LF. Unknown output schema versions cause a visible Update required error, not partial interpretation. Paths below are under `data/g/<generation>/`, where generation is the SHA-256 of source tree hash + exporter version + publication policy digest, joined by LF. Public/private builds necessarily have different generations.
+
+| Path | Payload contract |
+|---|---|
+| `data/manifest.json` (outside generation) | `{schema_version, generation, source_revision, exporter_version, policy_digest, published_at, mode: public/private, root}`; published_at UTC; root is generation-relative URL |
+| `catalog.json` | `{schema_version, record_count, event_count, projects: [{id,title}], areas: [{path,count}], months: [{month,change_count,record_count}]}`; counts only eligible data |
+| `calendar/YYYY.json` | `{schema_version, year, days: [{date,change_count,record_count}]}` sorted descending; only nonempty dates |
+| `days/YYYY-MM-DD/index.json` | `{schema_version,date,change_count,record_count,pages:[{number,url,count}]}` |
+| `days/YYYY-MM-DD/N.json` | `{schema_version,items:[EventSummary],next: number|null}`; N starts at 1 |
+| `records/catalog/N.json` | `{schema_version,items:[RecordSummary],next: number|null}` sorted by current title case-folded then ID |
+| `records/<id>.meta.json` | `{schema_version,...RecordSummary,detail_bytes}`; permits direct-route load guarding without downloading body |
+| `records/<id>.json` | `{schema_version,...RecordSummary,content,path,version,links:[{target_id,fragment,label,available}],history_index}`; content includes frontmatter; renderer hides frontmatter by default |
+| `history/<record-id>/index.json` | `{schema_version,record_id,event_count,pages:[{number,url,count}]}` |
+| `history/<record-id>/N.json` | `{schema_version,items:[EventSummary],next}` newest sequence first |
+| `events/<event-id>.meta.json` | `{schema_version,...EventSummary}`; permits direct-route load guarding |
+| `events/<event-id>.json` | `{schema_version,event,revision_metadata,diff}`; event is exact eligible S-03 object; diff specified below |
+| `reminders/YYYY-MM.json` | `{schema_version,month,items:[{id,record_id,title,status,when,text,start_date,end_date}]}`; repeats spanning ranges in each intersecting month |
+| `search/manifest.json` | `{schema_version,shards:[{prefix,url}],record_count}` |
+| `search/<prefix>.json` | `{schema_version,terms:{token:[{record_id,fields:[title/description/tag/body]}]}}` |
+| `aliases.json` | `{schema_version,paths:{old_path:[record_id]},entries:{legacy_entry_id:event_id}}`; export eligible targets only |
+
+RecordSummary is `{id,title,description,type,status,project_id,tags,area,updated_at,version,content_bytes,detail_bytes}`. Content bytes measure UTF-8 source; detail_bytes measures the generated record JSON. The record JSON itself omits detail_bytes to avoid a self-referential size; its metadata/catalog supply it. Area is the containing directory relative to openwiki; updated_at is the final event time. EventSummary is `{id,record_id,operation_id,sequence,action,recorded_at,occurred_on,occurred_at,summary,title,status,project_id,tags,actor_label,provenance_kind,type,area,detail_bytes}`. Event detail does not repeat detail_bytes; summaries measure its exact generated size. Event title/status/project/tags come from its AFTER snapshot, not the current record; legacy missing status displays Unknown rather than inventing draft. Only public actor labels approved in publication policy are exported; otherwise label is Contributor. Raw internal actor IDs are omitted from public event detail as a projection-specific redaction, with `actor.id: "redacted"` and `actor.kind` retained; source events are never changed.
+
+Pagination is max 50 items and max 128 KiB uncompressed per page, whichever is reached first; split before adding the next item. One EventSummary must fit 16 KiB or the build fails. Page count is explicit, never assumed from count/50. Catalog and history use the same budgets. JSON source counts and UI totals MUST match the eligible event/record sets, not loaded page counts. Empty day requests render empty state through absent date metadata, not HTTP 404 errors.
+
+Diff is `{format: "unified", context_lines: 3, text: string}` computed from exact before/after lines, without whitespace normalization. A creation compares empty text to after. Metadata lines participate. A pure move with no content change has empty diff text and the UI displays the two paths. No arbitrary two-revision comparison or restore controls in v1. Both snapshots remain available in event detail for Previous/This revision tabs.
+
+Reminder ID is SHA-256 of record ID + LF + canonical JSON of the tuple; editing a tuple changes its ID. Preserve original when value and timestamp offset. Sort by start date/time (date-only first on the same date), title case-folded, reminder ID. Calendar data excludes deprecated records by default; their reminders remain visible within the archived record itself and when Include archived is explicitly selected (export contains status and UI filters it).
+
+## P-03: Search and filters
+
+Search indexes current eligible record title, description, tags and body only; no history snapshots, YAML noise, source URLs or archived-only defaults. Retain deprecated records in shards so Include archived can reveal them. Normalize NFC and lowercase; tokenize maximal Unicode letter/number sequences, keep tokens of 2–64 characters. Queries use the same rules and AND matching of distinct tokens. No stemming, fuzzy matching, prefix matching or hidden semantic search in v1. Empty/tokenless query is the filtered Records list, with hint Enter at least two letters or numbers for text search.
+
+Partition tokens by first two hex digits of SHA-256(token), giving at most 256 shards; fetch only shards required by the query. Rank matched records by summed per-token highest field weight: title 8, tag 4, description 2, body 1; tie-break updated_at descending then ID. One occurrence and repeated occurrences have the same weight. Render 50 results per Load more. Filters: project ID, area prefix on segment boundary, type, status, tag (one of each in v1), Include archived. Filters combine with AND. Default excludes deprecated unless explicit status=deprecated. Area selection includes descendant areas. All filtering/counting uses eligible metadata, never hidden records.
+
+Index full body at build time; browser never fetches bodies to search. Shards over 512 KiB uncompressed trigger build failure and a design amendment for deeper partitioning, not silent truncation. Query fetches at most eight tokens; more returns an input validation message. Debounce typing 250 ms; stale responses cannot overwrite newer query state. Search only labels/snippets from title/description; full text highlighting inside records is out of scope.
+
+## P-04: Publication boundary
+
+Public release requires current record visibility=public AND explicit record-ID allowlist membership in versioned `config/publication.json`. This target config is introduced by implementation, not this documentation change. Its schema is `{schema_version:1,record_ids:[uuid],event_ids:[uuid],actor_labels:[string]}` with unique sorted lists and no wildcard. Private deployment uses its authorization-scoped source set and cannot be served publicly. Unknown mode or absent public policy fails closed.
+
+An event is publicly eligible only when its record is currently eligible, its event ID is explicitly allowlisted, AFTER snapshot visibility is public, and BEFORE is null or also explicitly public. Never expose a private-before/public-after transition, even if allowlisted. Never publish a diff whose before snapshot is private. Historical references, actor information, titles and reminder metadata are subject to the same boundary. A public record may appear in Records with no public history; UI says No published history. Internal record links to ineligible targets display plain Unavailable in this view without target title, ID or path in the public payload. Relative source links are rewritten through the eligible ID map; raw Source views are only exported after allowlist review confirms their full bytes are approved (public visibility alone is insufficient review).
+
+Public projection is not an anonymizer: an approved public record that embeds private prose or URLs must be rejected during publication review; the build cannot infer sensitivity. Automated checks must detect references to known private IDs/paths in exported bytes and fail. Publication policy changes are reviewed Git changes, not implicit writer side effects. Changing current visibility to private removes current data, all history, aliases and reminders from the next public generation. It cannot retract prior downloads, Git history or caches; show this limitation at publication authorization, not as a claim of revocation.
+
+No counts, IDs, timing metadata or aliases for ineligible records appear in public artifacts. Public event_count counts only published events. Internal/public builds MUST be audited separately. The public demo must never receive private source or private build artifacts as deploy inputs.
+
+## P-05: Caching, failure and complexity
+
+Fetch manifest network-first, timeout 10 seconds. An explicitly labelled cached public generation may be used offline; do not combine pages from different generations. Pin generation for an open session; a newer manifest displays Update available. Refresh switches generation, retains route, and reloads its data. Missing pinned generation triggers one manifest refresh; if still unavailable show Retry, never replace with silently empty data. Private API/data bypass service worker and browser application cache; no private offline mode in v1. Public offline cache holds only visited shell/metadata/content; it is not a backup or guaranteed storage.
+
+Full rebuild is the v1 baseline: O(total source/history bytes + sorting), with per-record streaming parsing and output pages. Browser initial Diary fetch is bounded to manifest, catalog, selected year's calendar, selected days' metadata and first pages; never all bodies or all history. Concurrent data requests at most four. Month mode initially opens only newest nonempty day; week opens seven selected days at most. Record pages fetch current record and first history page only when History selected. Today loads only summaries for its defined sections. Search loads catalog pages lazily as required by results/filtering; a filtered count may show Calculating until all necessary metadata loads, not a false zero.
+
+History size grows with record bytes × revisions; full before/after duplication is deliberately accepted. Logs over 64 MiB generate a maintenance warning in build report; there is no silent truncation or compaction and no hard history limit in v1. Splitting logs, content-addressed snapshots, a database or incremental build requires an amended schema and migration design. Measure before choosing those changes.
+
+Performance acceptance uses a committed deterministic fixture generator: 10,000 records, 100,000 events, 2 KiB average snapshot, 365 diary dates, nested depth 8, 1,000 events on the busiest fixture day in addition to distributed events, and 1,000 reminders. Record exact fixture counts in the report (the busy-day events are included in the 100,000). Full build target ≤120 seconds and peak RSS ≤1 GiB on a documented 4-core/8-GiB runner; measure three clean runs, report median. On a browser throttled to 10 Mbit/s, 100 ms RTT and 4× CPU slowdown, Diary first usable list ≤2 seconds after manifest response; first-open record ≤1 second after its data response. Report transfer bytes separately. These are required acceptance targets, not measured claims. If failed, optimize within this contract or amend it explicitly; do not silently reduce fixture size.
+
+## P-06: Metadata loading and counts
+
+`records/catalog/index.json` contains `{schema_version,record_count,pages:[{number,url,count}]}`. Fetch current metadata pages as needed for catalogs, Projects, Today and filters, with four-request concurrency. No record body is needed. For a filtered Diary range, fetch all selected days' summary pages to calculate the exact filtered change count and distinct record-ID count; display Calculating until complete, then paginate the matching rows locally at 50. Unfiltered day counts use generated day metadata; week/month distinct-record counts still require union of selected event record IDs and must not sum daily distinct counts. The unfiltered list is usable while that union is calculated. Do not show approximate counts as exact. Filtering a large period may require more metadata than the default first page; this tradeoff is explicit and measured separately from initial unfiltered loading.
+
+For direct record/event routes fetch the small `.meta.json` first, then detail automatically only when detail_bytes ≤256 KiB. Otherwise ask Load full content or Load full revision. Current-record history links are constructed from ID even before body download. Title/status/details remain navigable when a large body is not yet loaded. Build computes detail bytes before summaries; there are no recursive payload-size fields.
+
+The deterministic fixture uses fixed UUIDs and base time, cycles six types and four statuses, distributes 1,000 events on the first UTC day and the remaining 99,000 evenly over 364 days, with per-record sequences ordered across dates. It includes public/private transitions, deprecated records, UTF-8 titles, full-depth paths and reminder ranges. The generator must pad snapshots to average 2 KiB without exceeding S-02 limits and record exact total source bytes; none of these are user records. With 10,000 records, not every record has the same event count; every record has at least one. Search budgets are validated on this same fixture.

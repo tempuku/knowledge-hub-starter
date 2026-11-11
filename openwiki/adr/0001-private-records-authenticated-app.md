@@ -16,6 +16,8 @@ sources:
 
 # ADR 0001: Public app, private records, authenticated reading and editing
 
+Storage/UI addendum: [the implementation design](../design/overview.md) supersedes the date-directory source convention in section 6 and fixes the record/log writer contract. Historical rollout descriptions below remain evidence of earlier behavior, not current authoring instructions.
+
 - **Date:** 2026-11-09
 - **Decision status:** Accepted as the target architecture; **implementation pending**.
 - **Scope:** [Knowledge Hub](../projects/knowledge-hub.md), including the diary and future Projects, Search and Timeline views.
@@ -38,7 +40,7 @@ The user wants to keep an internet-accessible, installable iPad application, pro
 3. **Authenticated production site:** Put the actual private application behind **Cloudflare Access** (or an equivalently enforced login gate) using an HTTPS hostname. Serve the frontend and backend/API through the same authenticated origin where practical. The current GitHub Pages site remains an optional public demo; **Pages alone is not private hosting**.
 4. **Server-side API:** Implement a **Cloudflare Worker** (or equivalent backend) that validates authenticated identity and authorization **on every private read and write**, including API endpoints; do not rely on client navigation state or a hidden URL for security. Do not ship GitHub credentials to browser JavaScript, HTML, assets or service workers.
 5. **Git-backed editing:** The backend uses a narrowly scoped GitHub App installation or equivalent short-lived server-side credential with **Contents read/write permission only on the private data repository**. It reads and writes atomic Markdown concepts, validates OKF metadata and relative indexes, uses Git blob SHA/conditional updates to detect conflicts, and commits edits with an audit trail. Treat concurrent edits and authorization failures as explicit user-visible errors.
-6. **Diary browsing:** Continue to represent events as individual `openwiki/journal/YYYY/MM/DD/<slug>.md` concepts with `occurred_on` in frontmatter. Index and paginate by day, week and month; fetch only relevant metadata and lazily load entry bodies. `log.md` remains optional scoped human-readable history, **not** a growing HTML database.
+6. **Diary browsing (storage decision superseded):** The [hierarchical record design](../design/overview.md) replaces date-folder source storage with subject-area records and sibling logs. The diary projects recorded changes into paginated day/week/month indexes and lazy-loads bodies. Factual occurrence metadata remains distinct. Existing dated files are preserved until the reviewed migration. All authentication and private-storage requirements in this ADR remain in force.
 7. **Device support:** Keep the early-iOS 5–6 visual style and JavaScript compatible with **Safari 12 / iOS 12.5.x** for the original iPad Air. Validate on physical hardware before declaring that device supported.
 
 ### Authentication and security requirements

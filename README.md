@@ -2,10 +2,14 @@
 
 A Git-backed home for ideas, projects, decisions and a browsable diary. The current first phase is a **public, read-only web diary**. Uses Google's **Open Knowledge Format v0.2** (not OKF 2.0).
 
-## What is in this starter
+## Implementation design
+
+The owner-selected target is **hierarchical records + per-record logs + a generated diary**, with no separately authored date-folder diary. Read the [design baseline](openwiki/design/overview.md), [UI/UX contract](openwiki/design/ui-ux.md), [migration](openwiki/design/migration.md) and [acceptance matrix](openwiki/design/acceptance.md) before implementing. This is a documentation baseline; code and source migration remain pending. [Issue #24](https://github.com/tempuku/knowledge-hub-starter/issues/24) tracks implementation.
+
+## What is in this starter (current, transitional)
 
 - `openwiki/`: source-of-truth OKF bundle, one concept/diary record per Markdown file.
-- `openwiki/journal/YYYY/MM/DD/`: date-partitioned immutable records; optional scoped `log.md` remains small.
+- `openwiki/journal/YYYY/MM/DD/`: existing legacy dated records, preserved until the reviewed migration. This is not the target authoring layout.
 - `tools/diary/build.py`: static web exporter. It builds a tiny calendar, daily metadata JSON shards and one lazy-loadable JSON document per record. The browser never downloads or parses a giant `log.md`.
 - `site/`: one shared browser application with day/week/month modes, styled in **early iOS 5–6** (glossy blue navigation, grouped lists, beveled segmented controls, subtle linen textures). The theme uses CSS only: a single-column iPhone layout under 720px and a split-view, classic early-iPad library/diary layout for tablets and desktop (sidebar dates synchronize with the diary).
 - `.github/workflows/validate-openwiki.yml`, `.githooks/pre-commit`, `tools/okf/`: validation adapted from `tempuku/ivanovo_models`.
@@ -84,15 +88,13 @@ python3 tools/diary/test_ui.py
 
 The tests serve the generated `dist/` folder on localhost and never publish private entries. CI additionally runs `node --check site/app.js` and tests the separate `--public-only` export.
 
-## Add a dated record
+## Authoring and migration
 
-Create `openwiki/journal/2026/11/09/my-note.md` using the same frontmatter shape as the examples. Register it in that day's `index.md`, commit, and rebuild. `occurred_on` is a user-defined local calendar date (YYYY-MM-DD); it is distinct from `generated.at`, commits, or the date a note was last edited.
-
-Use a new file for a new decision or event, not another paragraph in a global journal log. Git history records edits and who changed them; it is not the only source of diary events.
+The [record/write contract](openwiki/design/records-and-writes.md) defines the target authoring path: subject-area record plus atomic sibling log. Existing tools are transitional and do not yet implement that schema. Preserve existing dated notes; do not move them manually or create a second diary copy of a record. Follow the [migration plan](openwiki/design/migration.md) for the native-only cutover. Factual occurrence dates remain independent of recorded change time and Git commits.
 
 ## Preview scale
 
-`dist/data/calendar.json` contains only dates and counts. `dist/data/days/YYYY-MM-DD.json` contains only count/pagination metadata; `dist/data/days/YYYY-MM-DD/N.json` contains up to 50 title/summary items; `dist/data/entries/<record-id>.json` is fetched **only on opening the record**. Day/week/month views fetch data for the selected dates. For exceptionally busy dates, pagination can be added without changing OKF source structure.
+`dist/data/calendar.json` contains only dates and counts. `dist/data/days/YYYY-MM-DD.json` contains only count/pagination metadata; `dist/data/days/YYYY-MM-DD/N.json` contains up to 50 title/summary items; `dist/data/entries/<record-id>.json` is fetched **only on opening the record**. Day/week/month views fetch data for the selected dates. The current builder already paginates busy days. Target byte budgets and generation/versioning are specified in the design.
 
 ## Source references
 

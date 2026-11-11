@@ -9,6 +9,10 @@ tags: [ci, validation, knowledge-hub]
 
 The `Validate OKF and diary` workflow must run on pull requests, pushes to `main`, and manual dispatch. Keep the `validate-openwiki` job enabled. Its checks cover staged OKF pages and links, diary exports, JavaScript syntax, iOS 12 source compatibility, Chromium and WebKit interactions, and the public export allowlist. Browser checks use a local server and do not publish records.
 
+## Target validation additions (not yet implemented)
+
+The [acceptance contract](design/acceptance.md) requires v1 record/event schemas, complete chain and trusted-base prefix validation, real writer/MCP transaction tests, deterministic generation/publication checks, migration reconciliation and UI/performance evidence. Existing OKF/browser checks do not establish those guarantees. Keep current checks enabled while implementing the target.
+
 ## Repair of the paused pipeline
 
 The workflow had a temporary unconditional `if: false` on its only job. GitHub reported those runs as skipped, so they provided no validation. The [last failed validation run before the pause](https://github.com/tempuku/knowledge-hub-starter/actions/runs/42869097404) expected the old `records` counter text while the app displayed `changes`. Later changes updated the counter tests to the current `entries` label, but two additional regressions remained on the current main branch:
