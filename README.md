@@ -6,6 +6,10 @@ A Git-backed home for ideas, projects, decisions and a browsable diary. The curr
 
 The owner-selected target is **hierarchical records + per-record logs + a generated diary**, with no separately authored date-folder diary. Read the [design baseline](openwiki/design/overview.md), [UI/UX contract](openwiki/design/ui-ux.md), [migration](openwiki/design/migration.md) and [acceptance matrix](openwiki/design/acceptance.md) before implementing. This is a documentation baseline; code and source migration remain pending. [Issue #24](https://github.com/tempuku/knowledge-hub-starter/issues/24) tracks implementation.
 
+## Pull request evidence and merge policy
+
+[Issue #26](https://github.com/tempuku/knowledge-hub-starter/issues/26) defines the implementation merge gate. See the [merge-gate specification and mandatory GitHub branch configuration](docs/merge-gate.md). The PR template must carry one checked issue validation row and one SHA-bound evidence row per required issue checkbox; core CI and independent non-author GitHub APPROVED review on the exact head must pass. Agent self-verification may prepare evidence but cannot replace independent review. A green workflow alone cannot protect `main` from direct pushes. Do not claim enforcement until a required-check ruleset/branch protection has been verified.
+
 ## What is in this starter (current, transitional)
 
 - `openwiki/`: source-of-truth OKF bundle, one concept/diary record per Markdown file.
