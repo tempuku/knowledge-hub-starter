@@ -168,7 +168,6 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
             "description": meta.get("description", ""),
             "project": meta.get("project", ""),
             "status": meta.get("status", "stable"),
-            "record_status": meta.get("record_status", "active"),
             "tags": meta.get("tags", []),
             "links": links,
         }
@@ -231,7 +230,6 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
                        "timestamp": timestamp.isoformat(timespec="microseconds"),
                        "description": description, "project": record,
                        "status": current_meta.get("status", "stable"),
-                       "record_status": current_meta.get("record_status", "active"),
                        "source_file": record if current_meta.get("visibility") == "public" else None,
                        "tags": ["history"], "links": [], "has_change": True}
             by_day[day].append(summary)
