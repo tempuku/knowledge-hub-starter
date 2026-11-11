@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { posix as path } from "node:path";
-import { validateOkfFrontmatter } from "./frontmatter.ts";
+import { validateKnowledgeFrontmatter } from "./knowledge-frontmatter.mjs";
 
 const files = new Set(git("ls-files", "--cached", "-z").split("\0").filter(Boolean));
 const markdown = [...files].filter(file => file.startsWith("openwiki/") && file.endsWith(".md") && !file.endsWith(".log.md"));
@@ -23,7 +23,7 @@ let concepts = 0;
 for (const file of markdown) {
   if (["index.md", "log.md"].includes(path.basename(file))) continue;
   const content = git("show", ":" + file);
-  const result = validateOkfFrontmatter(content);
+  const result = validateKnowledgeFrontmatter(content);
   assert.ok(result.valid, file + ": " + JSON.stringify(result.issues));
   for (const [, target] of content.matchAll(/\]\(([^)]+)\)/g)) {
     if (/^(?:[a-z]+:|#)/i.test(target)) continue;

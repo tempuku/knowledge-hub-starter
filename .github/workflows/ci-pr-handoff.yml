@@ -8,7 +8,7 @@ on:
 # workflow_run is privileged: never check out or execute PR code here.
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
   issues: write
 
 jobs:
