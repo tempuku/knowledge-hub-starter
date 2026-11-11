@@ -168,14 +168,18 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
 
     def test_history_switches_between_diff_and_full_record(self):
         page = self.open_page(390, 844)
-        expect(page.locator('#timeline a[href*="github.com"]')).to_have_count(0)
         history = page.locator(".note").filter(has_text="#history").first
         open_record = history.get_by_role("button", name="Open", exact=True)
         show_diff = history.get_by_role("button", name="Show diff")
-        record_name = history.locator("h3").get_by_role("button")
+        source = history.get_by_role("link", name="File: ")
+        expect(source).to_be_visible()
+        expect(source).to_have_attribute(
+            "href", "https://github.com/tempuku/knowledge-hub-starter/blob/main/"
+            + source.inner_text().removeprefix("File: "))
+        expect(source).to_have_attribute("rel", "noopener noreferrer")
         expect(open_record).to_be_visible()
         expect(show_diff).to_be_visible()
-        expect(record_name).to_have_attribute("aria-expanded", "false")
+        expect(open_record).to_have_attribute("aria-expanded", "false")
         expect(history.locator(".body")).to_have_count(0)
         with page.expect_response(lambda response: "/data/entries/log-" in response.url) as fetched:
             show_diff.click()
@@ -184,12 +188,12 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         expect(history.locator(".diff-added").first).to_be_visible()
         open_record.click()
         expect(history.locator(".body")).to_have_text(record)
-        expect(record_name).to_have_attribute("aria-expanded", "true")
+        expect(history.get_by_role("button", name="Close", exact=True)).to_have_attribute("aria-expanded", "true")
         expect(show_diff).to_have_attribute("aria-expanded", "false")
         expect(history.locator(".diff-added")).to_have_count(0)
         history.get_by_role("button", name="Close", exact=True).click()
         expect(history.locator(".body")).to_be_hidden()
-        record_name.click()
+        open_record.click()
         expect(history.locator(".body")).to_have_text(record)
         expect(history.get_by_role("button", name="Close", exact=True)).to_have_attribute("aria-expanded", "true")
 

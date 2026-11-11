@@ -15,8 +15,6 @@ concurrency:
 
 jobs:
   validate-openwiki:
-    # TEMPORARY: requested pause of automated tests; restore before release.
-    if: ${{ false }}
     name: validate-openwiki
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -33,6 +31,8 @@ jobs:
           cache-dependency-path: tools/okf/package-lock.json
       - name: Install pinned OKF validator
         run: sh tools/okf/setup.sh
+      - name: Test Knowledge Hub frontmatter validation
+        run: node --test tools/okf/knowledge-frontmatter.test.mjs
       - name: Validate all staged OpenWiki pages and links
         run: sh .githooks/pre-commit
       - name: Set up Python
