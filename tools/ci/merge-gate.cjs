@@ -39,7 +39,7 @@ function parseEvidence(body) {
 function validDetail(value) {
   const s = normalized(value);
   return s.length >= 5 &&
-    !/^(?:tbd|todo|pending|placeholder|not run|unchecked|none|n\/a|example|-)$/i.test(s) &&
+    !/^(?:tbd|todo|pending\b|placeholder\b|unverified\b|not (?:yet )?(?:measured|verified|validated|tested|run)\b|unchecked\b|none$|n\/a$|example\b|-+$)/i.test(s) &&
     !/<(?:fill|issue|sha|url|command|fixture|result|details|link|id)[^>]*>/i.test(s);
 }
 
