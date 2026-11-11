@@ -36,12 +36,12 @@ The initial four **project-planning** diary records dated 2026-11-09 are approve
 
 ## Record lifecycle and important dates
 
-Keep the OKF schema `status: draft|stable|deprecated` separate from the new lifecycle field `record_status: active|completed`. The diary displays completed records with a green status label. Native history headings link to the canonical source file when public.
+Use the existing single `status` field. `status: completed` displays a green Completed label in the diary; do not add a separate `record_status` field. Native history headings link to the canonical source file when public.
 
 Optional `reminders` is a list of **[date or inclusive date range, text]** pairs in the canonical record's YAML frontmatter. Quote dates to preserve ISO formatting. Use ISO 8601 dates or timestamps (timezone recommended); the calendar groups timestamps by their written date. Ranges use a nested two-element list. For example:
 
 ```yaml
-record_status: active
+status: completed
 reminders:
   - ["2026-12-01T16:00:00+01:00", "Submit milestone report"]
   - [["2026-12-05", "2026-12-07"], "Review window"]
