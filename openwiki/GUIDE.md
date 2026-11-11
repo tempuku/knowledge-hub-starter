@@ -32,3 +32,19 @@ Read and maintain [architecture decision records](adr/) before changing how know
 ## Phase 1: public read-only web diary
 
 The initial four **project-planning** diary records dated 2026-11-09 are approved for public reading and marked `visibility: public`. They are available through the [hosted day/week/month diary](https://tempuku.github.io/knowledge-hub-starter/) without login. The public deployment still uses `--public-only`; future records are not automatically published. A frontmatter `visibility: private` flag does **not** protect files stored in this public Git repository. Do not add sensitive or personal notes to this repository while private storage and authenticated editing from [ADR 0001](adr/0001-private-records-authenticated-app.md) remain unimplemented.
+
+
+## Record lifecycle and important dates
+
+Keep the OKF schema `status: draft|stable|deprecated` separate from the new lifecycle field `record_status: active|completed`. The diary displays completed records with a green status label. Native history headings link to the canonical source file when public.
+
+Optional `reminders` is a list of **[date or inclusive date range, text]** pairs in the canonical record's YAML frontmatter. Quote dates to preserve ISO formatting. Use ISO 8601 dates or timestamps (timezone recommended); the calendar groups timestamps by their written date. Ranges use a nested two-element list. For example:
+
+```yaml
+record_status: active
+reminders:
+  - ["2026-12-01T16:00:00+01:00", "Submit milestone report"]
+  - [["2026-12-05", "2026-12-07"], "Review window"]
+```
+
+The static public calendar exports reminders only from currently public records. These are displayed as important dates, **not push notifications or scheduled alerts**. Do not place private deadlines in public records.
