@@ -49,19 +49,17 @@
       for (const record of records) {
         const article = document.createElement('article'); article.className = 'note';
         const title = document.createElement('h3');
-        const recordName = record.source_file ? document.createElement('a') : null;
-        if (recordName) {
-          recordName.href = 'https://github.com/tempuku/knowledge-hub-starter/blob/main/' + record.source_file;
-          recordName.target = '_blank';
-          recordName.rel = 'noopener noreferrer';
-          recordName.className = 'record-name';
-          recordName.textContent = record.title;
-
-          title.append(recordName);
-        } else {
-          title.textContent = record.title;
-        }
+        title.textContent = record.title;
         article.append(title);
+        if (record.source_file) {
+          const source = document.createElement('a');
+          source.className = 'record-file-link';
+          source.href = 'https://github.com/tempuku/knowledge-hub-starter/blob/main/' + record.source_file;
+          source.target = '_blank';
+          source.rel = 'noopener noreferrer';
+          source.textContent = 'File: ' + record.source_file;
+          article.append(source);
+        }
         if (record.record_status === 'completed') article.append(span('Completed', 'record-status completed'));
         if (record.description) {const p = document.createElement('p'); p.textContent = record.description; article.append(p);}
         if (record.timestamp) article.append(span(record.timestamp.slice(11, 16) + ' UTC', 'chip'));
