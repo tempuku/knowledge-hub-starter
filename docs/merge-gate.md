@@ -20,9 +20,45 @@ A successful GitHub Action, a green PR template or a commit status **does not st
 3. Keep workflow permissions narrow: gate has contents/read, actions/read, pull-requests/read and statuses/write. Do not add checkout of a contributor's head ref to pull_request_target or workflow_run. Protect changes to gate files with review.
 4. Verify **main** reports protected and inspect the actual active rule's required checks and bypass actors in GitHub Settings → Rules → Rulesets (a classic-only protection rule is insufficient for this gate's current effective-rules verification). Recording a configuration screenshot without checking the active rules is insufficient. Also try direct push with a disposable test branch/identity and confirm it is refused.
 
-The connected GitHub integration can write repository files, issues and PRs, but **does not expose a branch-protection/ruleset write endpoint**. Do not claim the configuration has been applied through a PR. On November 11, 2026, the branch metadata returned protected=false and the rulesets collection was empty. Recheck after an administrator configures enforcement; this snapshot is not proof of the future state.
+The connected GitHub integration can write repository files, issues and PRs, but **does not expose a branch-protection/ruleset write endpoint**. This is an administrator-only action through GitHub Settings or an appropriately authorized GitHub CLI session. Do not claim the configuration has been applied through a PR. On November 11, 2026, the branch metadata returned protected=false and the rulesets collection was empty. Recheck after an administrator configures enforcement; this snapshot is not proof of the future state.
 
 Because the privileged workflow reads trusted **main** code, it becomes active only after that workflow is present on main. Before the first release, arrange a reviewed, auditable bootstrap of the trust policy; **do not** declare issue #26 merged/closed merely because its draft PR or mocked policy fixtures passed. Record any bootstrap exception explicitly in #24 and verify the final rules immediately after activation. Do not silently weaken or remove a required status to achieve the initial merge.
+
+## Exact ruleset configuration
+
+The reviewed, declarative ruleset request is
+[\`tools/ci/main-ruleset.json\`](../../tools/ci/main-ruleset.json).
+It targets only \`main\`, has **no bypass actors**, requires pull requests,
+refuses force-push/deletion, and requires the two status contexts.
+The owner-authorized agent review is enforced through the
+\`knowledge-merge-gate\` status, rather than GitHub's native review count.
+
+A repository administrator authenticated with a token having
+**Administration: write** may apply it through the official GitHub CLI:
+
+~~~sh
+gh auth status
+gh api --method POST repos/tempuku/knowledge-hub-starter/rulesets \
+  --input tools/ci/main-ruleset.json
+gh api repos/tempuku/knowledge-hub-starter/rules/branches/main
+gh api repos/tempuku/knowledge-hub-starter/rulesets
+~~~
+
+Equivalent UI: repository **Settings → Rules → Rulesets → New branch ruleset**.
+Choose active enforcement, branch \`main\`, require a PR, no bypass roles,
+block force pushes/deletion, and require \`validate-openwiki\` plus
+\`knowledge-merge-gate\`. No separate human approval is required under the
+owner-authorized agent self-review procedure; do not weaken the verified
+review-attestation status check.
+
+**Bootstrap ordering:** The privileged status workflow cannot operate until
+its trusted code exists on \`main\`. Activating the ruleset *before* installing
+that code will intentionally block every PR, including the bootstrap PR.
+Any one-time bootstrap must be expressly approved as an amendment in #24,
+must be limited to the reviewed implementation, and must be followed by
+ruleset activation and live positive/negative tests **before issue #26 closes
+or any dependent DAG PR merges**. Do not claim an unenforced checkout is
+an active gate.
 
 ## Reproducible tests and required real evidence
 
