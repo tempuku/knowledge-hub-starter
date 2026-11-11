@@ -117,24 +117,12 @@ function validateReview(reviews, author, sha) {
     if (!prev || String(review.submitted_at || "") >= String(prev.submitted_at || ""))
       latest.set(login, review);
   }
-  return [...latest.values()].some(r => {
-    if (r.commit_id !== sha) return false;
-    const body = r.body || "";
-    if (r.user.login.toLowerCase() !== String(author).toLowerCase())
-      return r.state === "APPROVED" &&
-        new RegExp("Evidence verified for head SHA:\\s*" + sha, "i").test(body);
-
-    // Explicit owner direction, recorded in epic #24: let the assistant
-    // self-verify child issues while the owner reviews the completed epic.
-    // GitHub does not allow authors to approve their own PRs, so accept a
-    // clearly labeled OWNER review-comment attestation, never a forged
-    // independent approval or arbitrary PR-body text.
-    return r.user.login.toLowerCase() === "tempuku" &&
-      r.author_association === "OWNER" &&
-      r.state === "COMMENTED" &&
-      new RegExp("Agent self-verification for head SHA:\\s*" + sha, "i").test(body) &&
-      body.includes("https://github.com/tempuku/knowledge-hub-starter/issues/24");
-  });
+  return [...latest.values()].some(r =>
+    r.commit_id === sha &&
+    r.user.login.toLowerCase() !== String(author).toLowerCase() &&
+    r.state === "APPROVED" &&
+    new RegExp("Evidence verified for head SHA:\\s*" + sha, "i").test(r.body || "")
+  );
 }
 
 function validateCoreRun(run, jobs) {
