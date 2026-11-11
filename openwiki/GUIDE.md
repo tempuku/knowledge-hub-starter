@@ -48,3 +48,10 @@ reminders:
 ```
 
 The static public calendar exports reminders only from currently public records. These are displayed as important dates, **not push notifications or scheduled alerts**. Do not place private deadlines in public records.
+
+
+## Discussion-first feature workflow (default)
+
+Before implementing **any new feature**, create a GitHub issue containing a user problem, proposed behavior, explicit non-goals, and a task checklist. Discuss and agree on UI, schema/API changes, security/privacy, edge cases, acceptance criteria, and how the deployed feature will be verified. Record the decision in the issue **before** writing implementation code. Only then open a draft PR, implement, validate against representative data, and verify the live site before closing the issue. Keep unchecked TODO items visible until verified; a passing build is not equivalent to a working deployment.
+
+**Reference issue:** [Read-only record diff viewer, #21](https://github.com/tempuku/knowledge-hub-starter/issues/21). It explicitly excludes restoring prior states or rollback. Existing history is for inspection, not recovery controls.
