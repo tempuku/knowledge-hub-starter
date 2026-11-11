@@ -52,14 +52,25 @@ should link the exact SHA. Do not use this template as evidence of completion.
 | C1 | <head-sha> | <command> | <fixture-revision> | <expected> | <observed> | <artifact-url> | <limitations> |
 | C2 | <head-sha> | <command> | <fixture-revision> | <expected> | <observed> | <artifact-url> | <limitations> |
 
-## Independent approval
+## Review attestation
 
-A non-author reviewer must inspect the changed diff, every checklist item and
-real evidence, then approve this **exact PR head SHA** in GitHub with the review
-body line:
+A reviewer must inspect the code diff, each acceptance checkbox and its real
+evidence for this exact head SHA. A non-author independent GitHub APPROVED
+review is accepted with this review-body line:
 
     Evidence verified for head SHA: <exact-40-character-PR-head-SHA>
 
-Only then update the PR's "Reviewer decision" field to "Approved" and link
-the review here. A GitHub review on an older commit is NOT approval.
-The automated gate reads reviews from GitHub, not just this text.
+The owner has alternatively authorized **agent self-verification of child issues**
+and reserved their own end-to-end review for [epic #24](https://github.com/tempuku/knowledge-hub-starter/issues/24).
+For a PR authored through the owner's GitHub account, the assistant must submit
+a genuine GitHub review **COMMENT** on the exact SHA, clearly describing its
+limitations, including the exact lines:
+
+    Agent self-verification for head SHA: <exact-40-character-PR-head-SHA>
+    https://github.com/tempuku/knowledge-hub-starter/issues/24
+
+Only an actual authenticated owner-account GitHub review comment may satisfy
+this delegation; PR body assertions or bot impersonation do not. Change the
+"Reviewer decision" field to "Approved" ONLY after completing that review and
+linking the evidence. New commits invalidate old verification. This exception
+does not waive any CI, privacy, branch-enforcement, or real-test requirement.
