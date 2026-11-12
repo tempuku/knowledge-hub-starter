@@ -38,7 +38,7 @@ class ServiceFixtures(unittest.TestCase):
         self.capability = {"repository_mode": "private",
                            "operations": ["read", "create", "update"],
                            "publisher_scope": False}
-        self.writer = GitRecordWriter(self.root, self.capability)
+        self.writer = self.make_writer(self.root, self.capability)
         self.path = "openwiki/notes/sample.md"
         self.source = '---\ntype: note\ntitle: "Sample"\n---\n\nBody\n'
         self.request = {
@@ -47,6 +47,39 @@ class ServiceFixtures(unittest.TestCase):
             "summary": "Create sample", "expected_head": self.head,
             "path": self.path, "content": self.source,
         }
+
+    @staticmethod
+    def check_staged_okf(workspace):
+        # Real staged checker on a disposable Git repository, not a mock.
+        script = Path(__file__).resolve().parents[2] / "tools" / "okf" / "verify.mjs"
+        result = subprocess.run(["node", str(script)], cwd=workspace,
+                                capture_output=True, text=True)
+        if result.returncode:
+            raise AssertionError("Staged OKF rejected: " + result.stdout[-800:] +
+                                 " " + result.stderr[-800:])
+
+    def make_writer(self, root, capability, **kwargs):
+        return GitRecordWriter(root, capability,
+                               staged_checker=self.check_staged_okf, **kwargs)
+
+    def test_missing_staged_checker_is_fail_closed(self):
+        # Without the callback or the repository's real pre-commit script,
+        # a writer must not silently skip staged OKF validation.
+        writer = GitRecordWriter(self.root, self.capability)
+        with self.assertRaises(WriterError) as failure:
+            writer.write(self.request)
+        self.assertEqual(failure.exception.code, "WRITE_FAILED")
+        self.assertEqual(git(self.root, "rev-parse", "main"), self.head)
+
+    def test_staged_checker_rejection_is_atomic(self):
+        def deny(_workspace):
+            raise ValueError("Injected OKF rejection")
+        writer = GitRecordWriter(self.root, self.capability,
+                                 staged_checker=deny)
+        with self.assertRaises(WriterError) as failure:
+            writer.write(self.request)
+        self.assertEqual(failure.exception.code, "INTEGRITY_ERROR")
+        self.assertEqual(git(self.root, "rev-parse", "main"), self.head)
 
     def create(self):
         return self.writer.write(self.request)
@@ -101,11 +134,11 @@ class ServiceFixtures(unittest.TestCase):
             "publisher_scope": False,
         }):
             with self.subTest(capability=capability):
-                denied = GitRecordWriter(self.root, capability)
+                denied = self.make_writer(self.root, capability)
                 with self.assertRaises(WriterError) as error:
                     denied.read(first["record_id"])
                 self.assertEqual(error.exception.code, "NOT_FOUND")
-        public = GitRecordWriter(self.root, {
+        public = self.make_writer(self.root, {
             "repository_mode": "public", "operations": ["read"],
             "publisher_scope": False,
         })
@@ -114,7 +147,7 @@ class ServiceFixtures(unittest.TestCase):
         self.assertEqual(error.exception.code, "NOT_FOUND")
 
     def test_public_default_private_denied(self):
-        public = GitRecordWriter(self.root, {**self.capability,
+        public = self.make_writer(self.root, {**self.capability,
                                              "repository_mode": "public",
                                              "publisher_scope": True})
         with self.assertRaises(WriterError) as err:
@@ -128,7 +161,7 @@ class ServiceFixtures(unittest.TestCase):
                 def fail(point):
                     if point == failure:
                         raise RuntimeError("Injected failure")
-                writer = GitRecordWriter(self.root, self.capability, fault=fail)
+                writer = self.make_writer(self.root, self.capability, fault=fail)
                 with self.assertRaises(RuntimeError):
                     writer.write(self.request)
                 self.assertEqual(git(self.root, "rev-parse", "main"), self.head)
@@ -168,7 +201,7 @@ class ServiceFixtures(unittest.TestCase):
     def test_clock_skew_rejects_update(self):
         first = self.create()
         source = self.writer.read(first["record_id"])["content"]
-        past = GitRecordWriter(self.root, self.capability,
+        past = self.make_writer(self.root, self.capability,
                                clock=lambda: datetime(2000, 1, 1, tzinfo=timezone.utc))
         with self.assertRaises(WriterError) as err:
             past.write({
@@ -192,7 +225,7 @@ class ServiceFixtures(unittest.TestCase):
             ["git", "show", "main:" + self.path[:-3] + ".log.md"], cwd=self.root)
         recorded = parse_log(prior_log, self.path)[0]["recorded_at"]
         timestamp = datetime.fromisoformat(recorded.replace("Z", "+00:00"))
-        fixed = GitRecordWriter(self.root, self.capability, clock=lambda: timestamp)
+        fixed = self.make_writer(self.root, self.capability, clock=lambda: timestamp)
         results = [first]
         for number in (1, 2):
             request = {
@@ -221,7 +254,7 @@ class ServiceFixtures(unittest.TestCase):
         def lose_response(point):
             if point == "published":
                 raise ConnectionError("Injected response loss after CAS")
-        writer = GitRecordWriter(self.root, self.capability, fault=lose_response)
+        writer = self.make_writer(self.root, self.capability, fault=lose_response)
         with self.assertRaises(ConnectionError):
             writer.write(self.request)
         original_commit = git(self.root, "rev-parse", "refs/heads/main")
@@ -247,14 +280,14 @@ class ServiceFixtures(unittest.TestCase):
             def lose_local_ref(point):
                 if point == "remote_published":
                     raise ConnectionError("Injected failure after remote CAS")
-            faulty = GitRecordWriter(checkout, self.capability,
+            faulty = self.make_writer(checkout, self.capability,
                                      remote="origin", fault=lose_local_ref)
             with self.assertRaises(ConnectionError):
                 faulty.write(request)
             remote_commit = git(origin, "rev-parse", "refs/heads/main")
             self.assertNotEqual(remote_commit, base)
             self.assertEqual(git(checkout, "rev-parse", "refs/heads/main"), base)
-            recovered = GitRecordWriter(checkout, self.capability,
+            recovered = self.make_writer(checkout, self.capability,
                                         remote="origin").write(request)
             self.assertEqual(recovered["status"], "already_committed")
             self.assertEqual(recovered["head"], remote_commit)
@@ -273,8 +306,8 @@ class ServiceFixtures(unittest.TestCase):
                                 str(origin), str(clone)], check=True)
             base = git(a, "rev-parse", "refs/heads/main")
             self.assertEqual(base, git(b, "rev-parse", "refs/heads/main"))
-            writer_a = GitRecordWriter(a, self.capability, remote="origin")
-            writer_b = GitRecordWriter(b, self.capability, remote="origin")
+            writer_a = self.make_writer(a, self.capability, remote="origin")
+            writer_b = self.make_writer(b, self.capability, remote="origin")
             request = {**self.request, "expected_head": base}
             winner = writer_a.write(request)
             with self.assertRaises(WriterError) as failure:
