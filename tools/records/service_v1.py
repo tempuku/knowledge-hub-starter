@@ -158,6 +158,27 @@ class GitRecordWriter:
             reject("INTEGRITY_ERROR", "Duplicate record ID")
         return found[0] if found else None
 
+    def list_records(self, include_archived=False):
+        """Browse current records without exposing deprecated items by default."""
+        if (type(include_archived) is not bool or
+                type(self.capability) is not dict or
+                self.capability.get("repository_mode") not in ("private", "public") or
+                "read" not in self.capability.get("operations", [])):
+            reject("NOT_FOUND", "Record collection not available")
+        from extended_v1 import _current_records
+        with self._lock():
+            records, _ = _current_records(self, self._head())
+            visible = []
+            for path, (meta, _) in sorted(records.items()):
+                if meta["status"] == "deprecated" and not include_archived:
+                    continue
+                if (self.capability["repository_mode"] == "public" and
+                        meta["visibility"] != "public"):
+                    continue
+                visible.append({"record_id": meta["id"], "path": path,
+                                "title": meta["title"], "status": meta["status"]})
+            return visible
+
     def read(self, record_id):
         # Authorization is a trusted launch capability, never caller-supplied.
         # A missing/unknown capability must not permit reading private records.
@@ -191,6 +212,9 @@ class GitRecordWriter:
         normalized = normalized_request(request)
         # Authorization before revealing any committed receipt.
         require_capability(normalized, self.capability)
+        if normalized["command"] in ("move", "archive", "reopen"):
+            from extended_v1 import execute
+            return execute(self, normalized)
         with self._lock():
             head = self._head()
             # A remote CAS may have succeeded while the local ref update failed.
