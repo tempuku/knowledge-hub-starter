@@ -111,6 +111,38 @@ class ServiceFixtures(unittest.TestCase):
                     writer.write(self.request)
                 self.assertEqual(git(self.root, "rev-parse", "main"), self.head)
 
+    def test_duplicate_titles_and_eight_level_hierarchy(self):
+        first = self.create()
+        second_path = "openwiki/ideas/a/b/c/d/e/f/g/another.md"
+        result = self.writer.write({
+            **self.request, "idempotency_key": str(uuid.uuid4()),
+            "expected_head": first["head"], "path": second_path,
+        })
+        self.assertNotEqual(first["record_id"], result["record_id"])
+        self.assertNotEqual(first["event_id"], result["event_id"])
+        self.assertEqual(self.writer.read(result["record_id"])["path"], second_path)
+        self.assertEqual(git(self.root, "rev-parse", "main"), result["head"])
+
+    def test_stale_version_and_no_change_do_not_commit(self):
+        first = self.create()
+        original = self.writer.read(first["record_id"])["content"]
+        update = {
+            **self.request, "command": "update",
+            "record_id": first["record_id"], "expected_version": first["event_id"],
+            "expected_head": first["head"], "content": original,
+            "idempotency_key": str(uuid.uuid4()),
+        }
+        with self.assertRaises(WriterError) as err:
+            self.writer.write(update)
+        self.assertEqual(err.exception.code, "NO_CHANGE")
+        with self.assertRaises(WriterError) as err:
+            self.writer.write({
+                **update, "content": original.replace("Body\n", "Changed\n"),
+                "expected_version": str(uuid.uuid4()),
+            })
+        self.assertEqual(err.exception.code, "CONFLICT")
+        self.assertEqual(git(self.root, "rev-parse", "main"), first["head"])
+
     def test_clock_skew_rejects_update(self):
         first = self.create()
         source = self.writer.read(first["record_id"])["content"]
