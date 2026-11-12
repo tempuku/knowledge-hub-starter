@@ -64,7 +64,7 @@ class ServiceFixtures(unittest.TestCase):
                          {**first, "status": "already_committed"})
         updated = read["content"].replace("Body\n", "New body\n")
         second = self.writer.write({
-            **self.request, "command": "update", "record_id": first["record_id"],
+            **{k: v for k, v in self.request.items() if k != "path"}, "command": "update", "record_id": first["record_id"],
             "expected_version": first["event_id"], "expected_head": first["head"],
             "content": updated,
         } | {"idempotency_key": str(uuid.uuid4())})
@@ -127,7 +127,7 @@ class ServiceFixtures(unittest.TestCase):
         first = self.create()
         original = self.writer.read(first["record_id"])["content"]
         update = {
-            **self.request, "command": "update",
+            **{k: v for k, v in self.request.items() if k != "path"}, "command": "update",
             "record_id": first["record_id"], "expected_version": first["event_id"],
             "expected_head": first["head"], "content": original,
             "idempotency_key": str(uuid.uuid4()),
@@ -150,7 +150,7 @@ class ServiceFixtures(unittest.TestCase):
                                clock=lambda: datetime(2000, 1, 1, tzinfo=timezone.utc))
         with self.assertRaises(WriterError) as err:
             past.write({
-                **self.request, "command": "update",
+                **{k: v for k, v in self.request.items() if k != "path"}, "command": "update",
                 "record_id": first["record_id"],
                 "expected_version": first["event_id"],
                 "expected_head": first["head"],
