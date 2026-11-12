@@ -20,12 +20,12 @@ class RecordPageTests(unittest.TestCase):
         first = build_record_pages(rows)
         self.assertEqual(first, build_record_pages(list(reversed(rows))))
         items = json.loads(first["records/catalog/1.json"])["items"]
-        self.assertEqual([item["id"] for item in items], ["c", "b", "a"])
+        self.assertEqual([item['id'] for item in items], ["c", "b", "a"])
         for item in items:
-            self.assertEqual(item["detail_bytes"], len(first[f'records/{item["id"]}.json']))
-            self.assertEqual(json.loads(first[f'records/{item["id"]}.meta.json"])["detail_bytes"],
+            self.assertEqual(item["detail_bytes"], len(first[f'records/{item['id']}.json']))
+            self.assertEqual(json.loads(first[f'records/{item['id']}.meta.json"])["detail_bytes"],
                              item["detail_bytes"])
-            self.assertNotIn("detail_bytes", json.loads(first[f'records/{item["id"]}.json"]))
+            self.assertNotIn("detail_bytes", json.loads(first[f'records/{item['id']}.json"]))
 
     def test_pagination_51_records(self):
         rows = [record(f"r{i:03}", f"Title {i:03}") for i in range(51)]
