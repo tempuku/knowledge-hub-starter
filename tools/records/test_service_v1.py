@@ -180,7 +180,7 @@ class ServiceFixtures(unittest.TestCase):
                 "expected_head": results[-1]["head"],
                 "expected_version": results[-1]["event_id"],
                 "idempotency_key": str(uuid.uuid4()),
-                "content": original.replace("Body\\n", f"Revision {number}\\n"),
+                "content": original.replace("Body\n", f"Revision {number}\n"),
             }
             results.append(fixed.write(request))
         log = subprocess.check_output(
