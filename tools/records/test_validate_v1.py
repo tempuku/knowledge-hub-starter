@@ -2,6 +2,7 @@
 import copy
 import importlib.util
 import json
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -74,6 +75,7 @@ class ValidatorFixtures(unittest.TestCase):
         file.write_text(data, encoding="utf-8")
 
     def install(self, events=None):
+        shutil.rmtree(self.root / 'openwiki', ignore_errors=True)
         events = [self.event] if events is None else events
         self.write(self.path, events[-1]["after"])
         log = "# Record history\n\n" + "\n".join(
