@@ -277,8 +277,25 @@ class GitRecordWriter:
                     git(workspace, "add", "--", path, log_path, *self._changed_indexes(workspace))
                     self._fault("staged")
                     repository(workspace, base=head, strict_indexes=True)
-                    if self.staged_checker:
-                        self.staged_checker(workspace)
+                    # The existing staged OKF checker is a second mandatory
+                    # validator, not a best-effort optional hook.
+                    if self.staged_checker is not None:
+                        if not callable(self.staged_checker):
+                            reject("WRITE_FAILED", "Invalid staged OKF checker")
+                        try:
+                            self.staged_checker(workspace)
+                        except Exception as exc:
+                            raise WriterError(
+                                "INTEGRITY_ERROR", "Staged OKF validation failed"
+                            ) from exc
+                    else:
+                        checker = workspace / ".githooks" / "pre-commit"
+                        if not checker.is_file():
+                            reject("WRITE_FAILED", "Required staged OKF checker is missing")
+                        checked = subprocess.run(["sh", str(checker)], cwd=workspace,
+                                                 capture_output=True)
+                        if checked.returncode:
+                            reject("INTEGRITY_ERROR", "Staged OKF validation failed")
                     self._fault("validated")
                     git(workspace, "-c", "user.name=Knowledge Writer",
                         "-c", "user.email=writer@localhost.invalid",
