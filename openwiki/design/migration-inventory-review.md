@@ -1,3 +1,9 @@
+---
+type: guide
+title: Migration inventory review
+status: draft
+---
+
 # Migration inventory review — issue #35
 
 **Frozen base:** `de749bed9053dd4bc9f96fee3cb7f816e5bdebcb` (merged #30).
