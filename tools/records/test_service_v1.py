@@ -99,6 +99,13 @@ class ServiceFixtures(unittest.TestCase):
         self.assertEqual(first["publication"], "pending")
         self.assertNotEqual(first["head"], self.head)
         self.assertEqual(first["head"], git(self.root, "rev-parse", "main"))
+        created_paths = set(git(self.root, "diff-tree", "--no-commit-id",
+                                "--name-only", "-r", first["head"]).splitlines())
+        self.assertEqual(created_paths, {
+            self.path, self.path[:-3] + ".log.md", "openwiki/index.md",
+            "openwiki/notes/index.md"
+        })
+        self.assertFalse(any("/journal/" in path for path in created_paths))
         read = self.writer.read(first["record_id"])
         self.assertEqual(read["version"], first["event_id"])
         self.assertEqual(read["head"], first["head"])
@@ -111,6 +118,11 @@ class ServiceFixtures(unittest.TestCase):
             "content": updated,
         } | {"idempotency_key": str(uuid.uuid4())})
         self.assertEqual(second["status"], "committed")
+        updated_paths = set(git(self.root, "diff-tree", "--no-commit-id",
+                                "--name-only", "-r", second["head"]).splitlines())
+        self.assertEqual(updated_paths, {
+            self.path, self.path[:-3] + ".log.md"
+        })
         self.assertEqual(self.writer.read(first["record_id"])["content"], updated)
         events = parse_log(subprocess.check_output(
             ["git", "show", "main:" + self.path[:-3] + ".log.md"], cwd=self.root),
