@@ -168,6 +168,10 @@ class GitRecordWriter:
                 path = normalized["path"]
                 if git(self.root, "cat-file", "-e", head + ":" + path, check=False) is not None:
                     reject("VALIDATION_ERROR", "Record path already exists")
+                existing_paths = git(self.root, "ls-tree", "-r", "--name-only",
+                                     head, "--", "openwiki").splitlines()
+                if any(p.casefold() == path.casefold() for p in existing_paths):
+                    reject("VALIDATION_ERROR", "Case-insensitive record path collision")
                 record_id = str(uuid.uuid4())
                 before = None
                 after = create_source(normalized["content"], record_id)
@@ -212,6 +216,10 @@ class GitRecordWriter:
                 git(self.root, "worktree", "add", "--detach", str(workspace), head)
                 try:
                     destination = workspace / path
+                    for component in (workspace / Path(*Path(path).parts[:i])
+                                      for i in range(1, len(Path(path).parts) + 1)):
+                        if component.is_symlink():
+                            reject("VALIDATION_ERROR", "Symlink at record path component")
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     destination.write_text(after, encoding="utf-8", newline="")
                     log_path = path[:-3] + ".log.md"
@@ -224,7 +232,7 @@ class GitRecordWriter:
                     self._reindex_target(workspace, path)
                     git(workspace, "add", "--", path, log_path, *self._changed_indexes(workspace))
                     self._fault("staged")
-                    repository(workspace, base=head)
+                    repository(workspace, base=head, strict_indexes=True)
                     if self.staged_checker:
                         self.staged_checker(workspace)
                     self._fault("validated")
@@ -309,9 +317,7 @@ class GitRecordWriter:
 
     def _response(self, event, head, status):
         path = event["path_after"]
-        base = "https://github.com/" + git(self.root, "config", "--get",
-                                            "knowledge.repository", check=False) if False else None
-        # URLs are relative and transport-neutral; the adapter may resolve them
+         # URLs are relative and transport-neutral; the adapter may resolve them
         # against its configured repository URL.
         return {"status": status, "record_id": event["record_id"],
                 "event_id": event["id"], "operation_id": event["operation_id"],
