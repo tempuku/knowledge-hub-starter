@@ -80,7 +80,14 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
         raise ValueError("Output path cannot be the project root or its parent")
     if output.exists():
         shutil.rmtree(output)
-    shutil.copytree(SITE, output)
+    if public_only:
+        # Fail closed: new source-side UI files must never silently become
+        # public deployment assets. Copy only explicitly reviewed legacy assets.
+        output.mkdir(parents=True)
+        for name in ("index.html", "app.js", "style.css", "sw.js", "manifest.webmanifest"):
+            shutil.copy2(SITE / name, output / name)
+    else:
+        shutil.copytree(SITE, output)
     if public_only:
         # Private project/repository links belong to the private source copy,
         # not a public preview even when no journal entries are published.
