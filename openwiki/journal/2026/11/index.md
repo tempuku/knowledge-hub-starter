@@ -2,3 +2,4 @@
 
 * [November 9](09/)
 * [November 10](10/)
+* [November 12](12/)
