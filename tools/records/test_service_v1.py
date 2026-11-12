@@ -36,7 +36,7 @@ class ServiceFixtures(unittest.TestCase):
         git(self.root, "commit", "-qm", "initial")
         self.head = git(self.root, "rev-parse", "HEAD")
         self.capability = {"repository_mode": "private",
-                           "operations": ["create", "update"],
+                           "operations": ["read", "create", "update"],
                            "publisher_scope": False}
         self.writer = GitRecordWriter(self.root, self.capability)
         self.path = "openwiki/notes/sample.md"
@@ -90,6 +90,28 @@ class ServiceFixtures(unittest.TestCase):
             self.writer.write({**self.request, "idempotency_key": str(uuid.uuid4())})
         self.assertEqual(err.exception.code, "CONFLICT")
         self.assertEqual(git(self.root, "rev-parse", "main"), first["head"])
+
+    def test_read_denies_untrusted_and_unauthorized_context(self):
+        first = self.create()
+        for capability in ({}, {
+            "repository_mode": "private", "operations": ["update"],
+            "publisher_scope": False,
+        }, {
+            "repository_mode": "unknown", "operations": ["read"],
+            "publisher_scope": False,
+        }):
+            with self.subTest(capability=capability):
+                denied = GitRecordWriter(self.root, capability)
+                with self.assertRaises(WriterError) as error:
+                    denied.read(first["record_id"])
+                self.assertEqual(error.exception.code, "NOT_FOUND")
+        public = GitRecordWriter(self.root, {
+            "repository_mode": "public", "operations": ["read"],
+            "publisher_scope": False,
+        })
+        with self.assertRaises(WriterError) as error:
+            public.read(first["record_id"])
+        self.assertEqual(error.exception.code, "NOT_FOUND")
 
     def test_public_default_private_denied(self):
         public = GitRecordWriter(self.root, {**self.capability,
