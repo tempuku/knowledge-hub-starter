@@ -13,6 +13,33 @@ The `Validate OKF and diary` workflow must run on pull requests, pushes to `main
 
 The [acceptance contract](design/acceptance.md) requires v1 record/event schemas, complete chain and trusted-base prefix validation, real writer/MCP transaction tests, deterministic generation/publication checks, migration reconciliation and UI/performance evidence. Existing OKF/browser checks do not establish those guarantees. Keep current checks enabled while implementing the target.
 
+## Protected evidence merge gate — verified November 12, 2026
+
+This milestone is recorded in the [November 12 diary entry](journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.md), [original implementation issue #26](https://github.com/tempuku/knowledge-hub-starter/issues/26) and [completed remediation issue #42](https://github.com/tempuku/knowledge-hub-starter/issues/42).
+
+### Enforced contract
+
+The active [main ruleset #27036674](https://github.com/tempuku/knowledge-hub-starter/rules/27036674) requires pull requests and successful `validate-openwiki` **and** `knowledge-merge-gate` statuses, with no bypass actors. Force pushes and deletion are denied by the ruleset. Mandatory independent GitHub approval was explicitly removed by the [owner-approved epic #24 amendment](https://github.com/tempuku/knowledge-hub-starter/issues/24#issuecomment-6819748012); the platform has zero required approving reviews.
+
+The trusted-main [evidence merge gate](../tools/ci/merge-gate.cjs) checks the **current PR head SHA**, exact linked implementation issue, pinned design baseline, all verbatim checked issue acceptance items, one reproducible SHA-bound `C1…Cn` evidence row per item, concrete artifact URLs, privacy/regression/limitations assessments, current complete `Validate OKF and diary` job with no skipped required steps, and effective main branch rules. A reviewer-decision field and non-author GitHub APPROVED review are **not** required. A structurally complete evidence table alone cannot prove that its claims are true; the agent must inspect actual runs and artifacts. Never weaken the fail-closed gate or replace observed CI with a synthetic unit-test fixture.
+
+### Real merge-enforcement tests
+
+- **Negative:** [PR #43](https://github.com/tempuku/knowledge-hub-starter/pull/43), head `0267ba1eef8a1844165997bd336e7fef56944608`, posted `knowledge-merge-gate=failure` in [run #43195488164](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43195488164). GitHub reported `mergeable_state=blocked`; the disposable PR was closed unmerged.
+- **Positive:** [PR #49](https://github.com/tempuku/knowledge-hub-starter/pull/49), head `4216cf7d7a6840c1c3747c132eb6bdfc677252d8`, passed [exact-head CI #43195669350](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43195669350), including policy, Chromium, WebKit and public-only export, and [gate #43196217578](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43196217578). GitHub reported `mergeable_state=clean`; the PR squash-merged as [f5d11dd](https://github.com/tempuku/knowledge-hub-starter/commit/f5d11dd6cbe0c6d629afdc2902bb594a61542499) without human GitHub approval.
+
+### Native GitHub Actions Draft → Ready, after CI
+
+The trusted-main [auto-ready workflow](../.github/workflows/auto-ready.yml) listens to completion of `Validate OKF and diary`, not merely a PR being opened. Its [helper](../tools/ci/auto-ready.cjs) only transitions an **open same-repository draft PR targeting main** if that completed `pull_request` run succeeded at the **exact current head SHA**. It checks out trusted main, keeps `persist-credentials: false` and never executes submitted PR code, approves a review or merges the PR.
+
+[Initial run #43195928527](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43195928527) failed the `markPullRequestReadyForReview` GraphQL mutation with `Resource not accessible by integration` despite `pull-requests: write` and `contents: read`. [PR #51](https://github.com/tempuku/knowledge-hub-starter/pull/51) added `contents: write` to the trusted workflow token, while retaining `pull-requests: write`; this **expands permissions** and therefore must remain confined to the trusted-main, metadata-only workflow.
+
+**Live result:** [PR #53](https://github.com/tempuku/knowledge-hub-starter/pull/53) began as a draft. Its [exact-head CI #43199159208](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43199159208) passed all required steps; [GitHub Actions run #43199420378](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43199420378) logged promotion at commit `bc3f19b61a4254fd8ce8088314adc29d5b8c8a26`, and the GitHub PR timeline reported `ready_for_review` by `github-actions[bot]`. Its [gate #43200352150](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43200352150) passed and it squash-merged as [65a3cc1](https://github.com/tempuku/knowledge-hub-starter/commit/65a3cc1a9204ac94b3a17052afdf09500a6ebe69).
+
+A successful auto-ready operation is **not** permission to merge; the separate evidence gate and current-head CI must pass. When either fails, fix the PR, update SHA-bound evidence and rerun checks rather than asking the owner for routine Ready or approval clicks. The workflow does not auto-merge; authorized agents or maintainers may merge only when GitHub permits it.
+
+**Known limits:** The observed native promotion was for a same-repository PR, not an untrusted fork. No disposable direct-push denial attempt, physical iPad verification, live Cloudflare deployment or completion of the remaining Knowledge Hub implementation DAG is claimed. The checked ruleset establishes configured protection; the tested PRs establish positive/negative merge enforcement.
+
 ## Repair of the paused pipeline
 
 The workflow had a temporary unconditional `if: false` on its only job. GitHub reported those runs as skipped, so they provided no validation. The [last failed validation run before the pause](https://github.com/tempuku/knowledge-hub-starter/actions/runs/42869097404) expected the old `records` counter text while the app displayed `changes`. Later changes updated the counter tests to the current `entries` label, but two additional regressions remained on the current main branch:
@@ -28,7 +55,7 @@ The staged checker also exposed a newer schema mismatch: [the guide](GUIDE.md) a
 
 The separate `Return to PR when CI completes` workflow handles completed validation runs. It needs `pull-requests: write` to create or update its PR conversation comment; `issues: write` with `pull-requests: read` returned `403 Resource not accessible by integration` in [this handoff run](https://github.com/tempuku/knowledge-hub-starter/actions/runs/42975069303).
 
-Keep its existing same-repository, current-head and open-PR checks. This privileged workflow must never check out or run PR code. Its comment records a CI result; a reviewer still evaluates the current changes and checks before merging.
+Keep its existing same-repository, current-head and open-PR checks. This privileged workflow must never check out or run PR code. Its comment records a CI result but does not authorize merging; an agent or maintainer verifies current-head evidence and both required statuses. Mandatory independent GitHub review is no longer required under the owner-approved amendment linked above.
 
 ## Verification
 
