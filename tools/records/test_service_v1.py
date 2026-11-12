@@ -70,10 +70,16 @@ class ServiceFixtures(unittest.TestCase):
         } | {"idempotency_key": str(uuid.uuid4())})
         self.assertEqual(second["status"], "committed")
         self.assertEqual(self.writer.read(first["record_id"])["content"], updated)
-        events = parse_log((self.root / self.path[:-3]).with_suffix(".log.md").read_bytes(),
-                           self.path)
+        events = parse_log(subprocess.check_output(
+            ["git", "show", "main:" + self.path[:-3] + ".log.md"], cwd=self.root),
+            self.path)
         self.assertEqual([e["sequence"] for e in events], [1, 2])
-        self.assertEqual(repository(self.root, base=self.head)["events"], 2)
+        with tempfile.TemporaryDirectory() as checkout:
+            git(self.root, "worktree", "add", "--detach", checkout, second["head"])
+            try:
+                self.assertEqual(repository(Path(checkout), base=self.head)["events"], 2)
+            finally:
+                git(self.root, "worktree", "remove", "--force", checkout)
 
     def test_same_key_changed_request_and_stale_head(self):
         first = self.create()
