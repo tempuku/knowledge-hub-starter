@@ -41,7 +41,7 @@ class PolicyTests(unittest.TestCase):
 
     def test_private_before_public_after_never_exported(self):
         def snap(visibility):
-            return "---\\nschema_version: 1\\nvisibility: " + visibility + "\\n---\\nbody\\n"
+            return "---\nschema_version: 1\nvisibility: " + visibility + "\n---\nbody\n"
         rid = RID
         event = {"id": EID, "record_id": rid, "before": snap("private"),
                  "after": snap("public"), "actor": {"id": "secret-actor",
@@ -57,7 +57,7 @@ class PolicyTests(unittest.TestCase):
     def test_revocation_excludes_current_and_history(self):
         policy = self.valid()
         policy["record_ids"] = []
-        record = {"id": RID, "content": "---\\nvisibility: public\\n---\\nbody\\n"}
+        record = {"id": RID, "content": "---\nvisibility: public\n---\nbody\n"}
         records, histories, summaries = select_public([record], {RID: []}, {}, policy)
         self.assertEqual((records, histories, summaries), ([], {}, {}))
 
