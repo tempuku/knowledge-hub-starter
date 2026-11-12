@@ -63,6 +63,42 @@ class LinkPlanningFixtures(unittest.TestCase):
         self.assertEqual(changed, source)
         self.assertEqual(targets, set())
 
+    def test_fenced_code_not_rewritten(self):
+        source = ("# Text\n\n" +
+                  chr(96)*3 + "md\n" +
+                  "[Do not touch](../notes/old.md)\n" +
+                  chr(96)*3 + "\n\n" +
+                  "[Real](../notes/old.md)\n")
+        rewritten, linked = repair_relative_links(
+            source,
+            before_path="openwiki/ideas/ref.md",
+            after_path="openwiki/ideas/ref.md",
+            moved_paths={"openwiki/notes/old.md": "openwiki/projects/new.md"},
+            current_sources={
+                "openwiki/ideas/ref.md": source,
+                "openwiki/projects/new.md": "# New\n",
+            }
+        )
+        self.assertIn("[Do not touch](../notes/old.md)", rewritten)
+        self.assertIn("[Real](../projects/new.md)", rewritten)
+        self.assertEqual(linked, {"openwiki/projects/new.md"})
+
+    def test_unsafe_uri_and_dangling_stable_id_fail_closed(self):
+        for link in (
+            "javascript:alert",
+            "record:123e4567-e89b-42d3-a456-426614174000#missing",
+            "record:invalid-uuid",
+        ):
+            with self.subTest(link=link), self.assertRaises(IntegrityError):
+                source = "# Intro\n\n[Other](" + link + ")\n"
+                repair_relative_links(
+                    source, before_path="openwiki/notes/a.md",
+                    after_path="openwiki/notes/a.md", moved_paths={},
+                    current_sources={"openwiki/notes/a.md": source},
+                    record_ids={"123e4567-e89b-42d3-a456-426614174000":
+                                "openwiki/notes/a.md"}
+                )
+
     def test_unsafe_and_missing_links_fail_closed(self):
         source_path = "openwiki/notes/old.md"
         for source in (
