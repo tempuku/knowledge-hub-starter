@@ -232,6 +232,35 @@ class ServiceFixtures(unittest.TestCase):
         self.assertEqual(git(self.root, "rev-parse", "refs/heads/main"), original_commit)
         self.assertEqual(len(git(self.root, "rev-list", "refs/heads/main").splitlines()), 2)
 
+    def test_remote_cas_receipt_survives_lost_local_ref_update(self):
+        """S8/S11: remote publication is authoritative despite a stale clone."""
+        with tempfile.TemporaryDirectory() as temp:
+            origin = Path(temp) / "origin.git"
+            checkout = Path(temp) / "client"
+            subprocess.run(["git", "clone", "--quiet", "--bare",
+                            str(self.root), str(origin)], check=True)
+            subprocess.run(["git", "clone", "--quiet", "--branch", "main",
+                            str(origin), str(checkout)], check=True)
+            base = git(checkout, "rev-parse", "refs/heads/main")
+            request = {**self.request, "expected_head": base}
+
+            def lose_local_ref(point):
+                if point == "remote_published":
+                    raise ConnectionError("Injected failure after remote CAS")
+            faulty = GitRecordWriter(checkout, self.capability,
+                                     remote="origin", fault=lose_local_ref)
+            with self.assertRaises(ConnectionError):
+                faulty.write(request)
+            remote_commit = git(origin, "rev-parse", "refs/heads/main")
+            self.assertNotEqual(remote_commit, base)
+            self.assertEqual(git(checkout, "rev-parse", "refs/heads/main"), base)
+            recovered = GitRecordWriter(checkout, self.capability,
+                                        remote="origin").write(request)
+            self.assertEqual(recovered["status"], "already_committed")
+            self.assertEqual(recovered["head"], remote_commit)
+            self.assertEqual(git(origin, "rev-parse", "refs/heads/main"), remote_commit)
+            self.assertEqual(git(checkout, "rev-parse", "refs/heads/main"), base)
+
     def test_remote_cas_rejects_second_independent_clone(self):
         """S10: only one clone can advance a shared remote from the same base."""
         with tempfile.TemporaryDirectory() as temp:
