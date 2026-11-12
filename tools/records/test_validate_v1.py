@@ -150,7 +150,7 @@ class ValidatorFixtures(unittest.TestCase):
         self.install()
         p.write_text(p.read_text() + "unmatched text\n")
         self.git("add", "-A")
-        self.assert_invalid("malformed section")
+        self.assert_invalid("expected blank line between events")
 
     def test_hash_sequence_previous_and_chain_fail(self):
         bad = copy.deepcopy(self.event)
