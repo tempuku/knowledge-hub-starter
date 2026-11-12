@@ -293,7 +293,7 @@ class GitRecordWriter:
                 # Preserve historical indexes with unrelated prose; those are
                 # migration input and must not be silently rewritten.
                 if index.as_posix().endswith("/openwiki/index.md"):
-                    if not old.startswith('---\\nokf_version: "0.2"\\n---\\n'):
+                    if not old.startswith('---\nokf_version: "0.2"\n---\n'):
                         reject("INTEGRITY_ERROR", "Unexpected root index format")
             index.write_text(_index_content(parent.as_posix(), entries),
                              encoding="utf-8")
