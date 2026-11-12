@@ -259,3 +259,75 @@ def append_log(log_text, event):
     except IntegrityError as exc:
         reject("INTEGRITY_ERROR", str(exc))
     return text
+
+
+def receipt_from_logs(logs, normalized):
+    """Recover a durable operation receipt from canonical committed logs.
+
+    logs maps current sibling paths to exact UTF-8 bytes, read from a trusted
+    committed Git tree. Call this *before* stale-head or no-change validation.
+    A shared operation may produce multiple events in the move phase; this
+    create/update slice rejects ambiguous multi-record receipts.
+    """
+    key = normalized["idempotency_key"]
+    expected = request_digest(normalized)
+    matches = []
+    for path, source in logs.items():
+        try:
+            events = parse_log(source, path)
+        except (IntegrityError, UnicodeError) as exc:
+            reject("INTEGRITY_ERROR", "Cannot read committed record history: " + str(exc))
+        for event in events:
+            if event["idempotency_key"] == key:
+                try:
+                    validate_event(event, path)
+                except IntegrityError as exc:
+                    reject("INTEGRITY_ERROR", str(exc))
+                if event["request_sha256"] != expected:
+                    reject("IDEMPOTENCY_CONFLICT",
+                           "Idempotency key was committed with different request fields")
+                matches.append(event)
+    if not matches:
+        return None
+    operation_ids = {e["operation_id"] for e in matches}
+    if len(operation_ids) != 1:
+        reject("INTEGRITY_ERROR", "One idempotency key maps to multiple operations")
+    if len(matches) != 1:
+        reject("INTEGRITY_ERROR", "Multiple-record receipt requires move transaction handler")
+    return matches[0]
+
+
+def require_capability(normalized, capability):
+    """Enforce trusted adapter capabilities; never trust flags in caller JSON.
+
+    A public repository cannot contain private snapshots, even when a caller
+    requests publication. A future publishing allowlist is a separate concern.
+    """
+    if type(capability) is not dict or set(capability) != {
+        "repository_mode", "operations", "publisher_scope"
+    }:
+        reject("PUBLICATION_DENIED", "Trusted repository capability is unavailable")
+    mode = capability["repository_mode"]
+    operations = capability["operations"]
+    if mode not in ("public", "private") or type(operations) not in (list, tuple, set):
+        reject("PUBLICATION_DENIED", "Trusted repository capability is invalid")
+    if normalized["command"] not in operations:
+        reject("PUBLICATION_DENIED", "Operation not permitted by trusted adapter")
+    if type(capability["publisher_scope"]) is not bool:
+        reject("PUBLICATION_DENIED", "Publisher authorization is invalid")
+    if normalized["publish_current"] and not capability["publisher_scope"]:
+        reject("PUBLICATION_DENIED", "Publisher scope is required")
+    if mode == "public":
+        # Even explicit publish_current cannot authorize exposing prior
+        # private history. Only already-public snapshots can be written.
+        if normalized["command"] == "create":
+            meta, _ = frontmatter(normalized["content"])
+            if meta.get("visibility", "private") != "public":
+                reject("PUBLICATION_DENIED", "Private records cannot enter a public Git repository")
+            if not normalized["publish_current"]:
+                reject("PUBLICATION_DENIED", "Explicit publication is required in a public repository")
+        else:
+            meta, _ = frontmatter(normalized["content"])
+            if meta.get("visibility") != "public":
+                reject("PUBLICATION_DENIED", "Private records cannot enter a public Git repository")
+    return True
