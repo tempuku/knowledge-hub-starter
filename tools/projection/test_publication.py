@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from deterministic import ProjectionError
-from publication import load_policy, validate_policy
+from publication import load_policy, validate_policy, select_public, audit_public
 
 RID = "123e4567-e89b-42d3-a456-426614174000"
 EID = "123e4567-e89b-42d3-a456-426614174001"
@@ -38,6 +38,33 @@ class PolicyTests(unittest.TestCase):
         for variant in variants:
             with self.subTest(variant=variant), self.assertRaises(ProjectionError):
                 validate_policy(json.dumps(variant).encode())
+
+    def test_private_before_public_after_never_exported(self):
+        def snap(visibility):
+            return "---\\nschema_version: 1\\nvisibility: " + visibility + "\\n---\\nbody\\n"
+        rid = RID
+        event = {"id": EID, "record_id": rid, "before": snap("private"),
+                 "after": snap("public"), "actor": {"id": "secret-actor",
+                 "kind": "agent", "label": "Unapproved"}, "provenance":
+                 {"kind": "native", "source_ref": None, "original_time": None}}
+        record = {"id": rid, "content": snap("public")}
+        records, histories, summaries = select_public([record], {rid: [event]},
+            {EID: {"id": EID, "record_id": rid}}, self.valid())
+        self.assertEqual(len(records), 1)
+        self.assertEqual(histories[rid], [])
+        self.assertEqual(summaries, {})
+
+    def test_revocation_excludes_current_and_history(self):
+        policy = self.valid()
+        policy["record_ids"] = []
+        record = {"id": RID, "content": "---\\nvisibility: public\\n---\\nbody\\n"}
+        records, histories, summaries = select_public([record], {RID: []}, {}, policy)
+        self.assertEqual((records, histories, summaries), ([], {}, {}))
+
+    def test_public_byte_audit_detects_ids_and_paths(self):
+        for leak in ('private-id', 'openwiki/notes/secret.md'):
+            with self.assertRaises(ProjectionError):
+                audit_public({"catalog.json": json.dumps({"x": leak}).encode()}, {leak})
 
     def test_duplicate_json_keys_rejected(self):
         with self.assertRaises(ProjectionError):
