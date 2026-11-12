@@ -86,6 +86,15 @@ class ServiceFixtures(unittest.TestCase):
 
     def test_create_read_update_and_retry(self):
         first = self.create()
+        self.assertEqual(set(first), {
+            "status", "record_id", "event_id", "operation_id", "version",
+            "head", "record_url", "event_url", "diff_url", "publication"
+        })
+        self.assertEqual(first["record_url"], self.path)
+        self.assertEqual(first["version"], first["event_id"])
+        self.assertEqual(first["event_url"],
+                         self.path[:-3] + ".log.md#" + first["event_id"])
+        self.assertEqual(first["diff_url"], first["head"])
         self.assertEqual(first["status"], "committed")
         self.assertEqual(first["publication"], "pending")
         self.assertNotEqual(first["head"], self.head)
