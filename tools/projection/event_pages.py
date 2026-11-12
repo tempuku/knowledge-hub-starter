@@ -50,8 +50,6 @@ def build_event_pages(histories: dict[str, list[dict]], summaries: dict[str, dic
     calendar = defaultdict(list)
     seen = set()
     for rid, events in sorted(histories.items()):
-        if not events:
-            raise ProjectionError("empty history")
         for event in events:
             eid = event["id"]
             if eid in seen or event["record_id"] != rid or eid not in summaries:
