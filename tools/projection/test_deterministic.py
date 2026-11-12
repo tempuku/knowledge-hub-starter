@@ -66,6 +66,30 @@ class DeterministicProjectionTests(unittest.TestCase):
             with self.assertRaises(projection.ProjectionError):
                 projection.write_staging(Path(directory) / "stage", {"../leak.json": b"x"})
 
+    def test_staging_rejects_path_collisions_without_creating_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            stage = Path(directory) / "stage"
+            with self.assertRaises(projection.ProjectionError):
+                projection.write_staging(stage, {"a.json": b"1", "A.json": b"2"})
+            self.assertFalse(stage.exists())
+            with self.assertRaises(projection.ProjectionError):
+                projection.write_staging(stage, {"a": b"1", "a/b": b"2"})
+            self.assertFalse(stage.exists())
+
+    def test_staging_rejects_windows_and_dot_paths(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for path in ("a\\\\b", "./a", "a/../b"):
+                stage = Path(directory) / "stage"
+                with self.assertRaises(projection.ProjectionError):
+                    projection.write_staging(stage, {path: b"1"})
+                self.assertFalse(stage.exists())
+
+    def test_staging_writes_valid_nested_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            stage = Path(directory) / "stage"
+            projection.write_staging(stage, {"days/2026-11-12/1.json": b"{}\\n"})
+            self.assertEqual((stage / "days/2026-11-12/1.json").read_bytes(), b"{}\\n")
+
 
 if __name__ == "__main__":
     unittest.main()
