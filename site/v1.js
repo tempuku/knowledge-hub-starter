@@ -100,6 +100,8 @@ const render = async () => {
           section.append(b);
         }
       }
+    } else if(["records","projects","today","calendar"].includes(route)){
+      await renderCollection(route,params,current);
     } else {
       heading("Not found");
       panel(link("Back to Diary","/diary"));
@@ -130,6 +132,114 @@ async function loadDay(day,section){
     section.append(box);
   }catch(e){section.append(el("p",e.message,"error"));}
 }
+
+const tokenize = text => [...new Set((text.normalize("NFC").toLowerCase().match(/[^\W_]+/gu)||[])
+  .filter(t=>t.length>=2&&t.length<=64))];
+const archived = record => record.status==="deprecated";
+async function allRecords(current){
+  const index=await data("records/catalog/index.json");
+  const items=[];
+  for(const page of index.pages){
+    const result=await data(page.url);
+    if(current!==token)return [];
+    items.push(...result.items);
+  }
+  return items;
+}
+async function renderCollection(route,params,current){
+  const records=await allRecords(current);
+  if(current!==token)return;
+  const includeArchived=params.get("archived")==="1";
+  const visible=records.filter(r=>includeArchived||!archived(r));
+  heading({records:"Records / Search",projects:"Projects",today:"Today",calendar:"Calendar"}[route]);
+  const nav=panel();
+  const archive=el("label");
+  const toggle=el("input");toggle.type="checkbox";toggle.checked=includeArchived;
+  toggle.onchange=()=>{params.set("archived",toggle.checked?"1":"0");
+    location.hash="/"+route+"?"+params.toString();};
+  archive.append(toggle,document.createTextNode(" Include archived"));nav.append(archive);
+  if(route==="records"){
+    const search=el("input");search.type="search";search.placeholder="Search records";
+    search.setAttribute("aria-label","Search records");
+    search.value=params.get("q")||"";
+    nav.append(search);
+    let searchSerial=0;
+    const output=panel();
+    const show=async()=>{
+      const serial=++searchSerial;
+      const terms=tokenize(search.value);
+      if(terms.length>8){output.replaceChildren(el("p","Maximum eight search tokens"));return;}
+      let matched=visible.map(r=>({record:r,score:0}));
+      if(terms.length){
+        const shards=new Map();
+        const manifest=await data("search/manifest.json");
+        const published=new Set(manifest.shards.map(s=>s.prefix));
+        // WebCrypto is required for the deterministic SHA-256 shard interface.
+        for(const term of terms){
+          const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(term));
+          if(serial!==searchSerial||current!==token)return;
+          const prefix=Array.from(new Uint8Array(digest)).slice(0,1).map(b=>b.toString(16).padStart(2,"0")).join("");
+          if(!shards.has(prefix))shards.set(prefix,published.has(prefix)?await data("search/"+prefix+".json"):{terms:{}});
+        }
+        const hits=new Map();
+        for(const term of terms){
+          const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(term));
+          const prefix=new Uint8Array(digest)[0].toString(16).padStart(2,"0");
+          const entries=shards.get(prefix).terms[term]||[];
+          const currentHits=new Map(entries.map(e=>[e.record_id,Math.max(...e.fields.map(f=>({title:8,tag:4,description:2,body:1}[f]||0)))]));
+          for(const id of [...hits.keys()])if(!currentHits.has(id))hits.delete(id);
+          if(hits.size===0&&term===terms[0])for(const [id,score] of currentHits)hits.set(id,score);
+          else for(const [id,score] of currentHits)if(hits.has(id))hits.set(id,hits.get(id)+score);
+        }
+        matched=matched.filter(x=>hits.has(x.record.id)).map(x=>({...x,score:hits.get(x.record.id)}));
+      }
+      if(serial!==searchSerial||current!==token)return;
+      matched.sort((a,b)=>b.score-a.score||b.record.updated_at.localeCompare(a.record.updated_at)||a.record.id.localeCompare(b.record.id));
+      output.replaceChildren(el("p",matched.length+" matching records"));
+      let offset=0;
+      const more=el("button","Load more");
+      more.onclick=()=>{
+        for(const {record} of matched.slice(offset,offset+50)){
+          const p=el("p");p.append(link(record.title,"/record/"+record.id),el("small"," · "+record.status+" · "+record.area));output.append(p);
+        }
+        offset+=50;
+        more.hidden=offset>=matched.length;
+      };
+      output.append(more);more.click();
+    };
+    let timer;
+    search.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{
+      params.set("q",search.value);history.replaceState(null,"","#/records?"+params.toString());show();
+    },250);};
+    await show();
+  } else if(route==="projects"){
+    const projects=visible.filter(r=>r.type==="project");
+    if(!projects.length)panel(el("p","No published projects"));
+    for(const project of projects){
+      const section=panel(el("h2",project.title),link("Open project","/record/"+project.id));
+      const children=visible.filter(r=>r.project_id===project.id);
+      section.append(el("p",children.length+" linked records"));
+      for(const child of children){const p=el("p");p.append(link(child.title,"/record/"+child.id));section.append(p);}
+    }
+  } else if(route==="today"){
+    const day=new Date().toISOString().slice(0,10);
+    panel(el("p","Today · "+day+" (UTC)"));
+    const month=await data("reminders/"+day.slice(0,7)+".json").catch(e=>{if(e.message==="HTTP 404")return {items:[]};throw e;});
+    const hits=month.items.filter(r=>r.start_date<=day&&r.end_date>=day&&visible.some(x=>x.id===r.record_id));
+    if(!hits.length)panel(el("p","No reminders today"));
+    for(const item of hits){const p=panel(el("p",item.text));p.append(link(item.title,"/record/"+item.record_id));}
+  } else if(route==="calendar"){
+    const month=params.get("month")||new Date().toISOString().slice(0,7);
+    const input=el("input");input.type="month";input.value=month;
+    input.onchange=()=>{params.set("month",input.value);location.hash="/calendar?"+params.toString();};
+    nav.append(input);
+    const reminders=await data("reminders/"+month+".json").catch(e=>{if(e.message==="HTTP 404")return {items:[]};throw e;});
+    const items=reminders.items.filter(r=>visible.some(x=>x.id===r.record_id));
+    if(!items.length)panel(el("p","No published reminders this month"));
+    for(const item of items){const p=panel(el("p",item.start_date+" – "+item.end_date+" · "+item.text));p.append(link(item.title,"/record/"+item.record_id));}
+  }
+}
+
 window.addEventListener("hashchange",render);
 window.addEventListener("popstate",render);
 render();
