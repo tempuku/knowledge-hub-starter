@@ -28,7 +28,7 @@ def git(root, *args, check=True):
                             stderr=subprocess.PIPE)
     if check and result.returncode:
         raise WriterError("WRITE_FAILED", "Git operation failed", retryable=False)
-    return result.stdout.decode("utf-8").strip() if result.returncode == 0 else None
+    return result.stdout.decode("utf-8").rstrip("\n") if result.returncode == 0 else None
 
 
 def _index_content(directory, entries, previous=None):
