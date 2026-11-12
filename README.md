@@ -8,7 +8,7 @@ The owner-selected target is **hierarchical records + per-record logs + a genera
 
 ## Pull request evidence and merge policy
 
-[Issue #26](https://github.com/tempuku/knowledge-hub-starter/issues/26) defines the implementation merge gate. See the [merge-gate specification and mandatory GitHub branch configuration](docs/merge-gate.md). The PR template must carry one checked issue validation row and one SHA-bound evidence row per required issue checkbox; core CI and independent non-author GitHub APPROVED review on the exact head must pass. Agent self-verification may prepare evidence but cannot replace independent review. A green workflow alone cannot protect `main` from direct pushes. Do not claim enforcement until a required-check ruleset/branch protection has been verified.
+[Issue #26](https://github.com/tempuku/knowledge-hub-starter/issues/26) defines the implementation merge gate. See the [merge-gate specification and mandatory GitHub branch configuration](docs/merge-gate.md). The PR template must carry one checked issue validation row and one SHA-bound evidence row per required issue checkbox; core CI, genuine SHA-bound evidence, privacy/regression checks and the active main ruleset's two required statuses must pass. Independent GitHub review is not required under the [owner-approved #24 amendment](https://github.com/tempuku/knowledge-hub-starter/issues/24#issuecomment-6819748012); agents verify and merge accepted PRs autonomously. A green workflow alone cannot protect `main` from direct pushes. Do not claim enforcement until a required-check ruleset/branch protection has been verified.
 
 ## What is in this starter (current, transitional)
 

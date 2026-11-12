@@ -97,32 +97,12 @@ function validateBody({body, issueNumber, issueBody, sha}) {
         failures.push("C" + i + ": missing concrete evidence/report URL");
     }
   }
-  for (const field of ["Privacy/security/integrity", "Regression impact", "Known limitations", "Reviewer decision"]) {
+  for (const field of ["Privacy/security/integrity", "Regression impact", "Known limitations"]) {
     const m = md.match(new RegExp("^\\s*" + field.replace(/\//g,"\\/") + ":\\s*(.+)$", "mi"));
     if (!m || !validDetail(m[1])) failures.push("Missing explicit " + field + " assessment");
   }
-  if (!/Reviewer decision:\s*approved\b/i.test(md))
-    failures.push("Reviewer decision is not approved in the PR record");
-  return failures;
-}
 
-function validateReview(reviews, author, sha) {
-  const latest = new Map();
-  for (const review of reviews || []) {
-    const login = review.user && review.user.login;
-    if (!login || review.user.type === "Bot" ||
-        !["OWNER", "MEMBER", "COLLABORATOR"].includes(review.author_association)) continue;
-    if (!["APPROVED", "CHANGES_REQUESTED", "DISMISSED", "COMMENTED"].includes(review.state)) continue;
-    const prev = latest.get(login);
-    if (!prev || String(review.submitted_at || "") >= String(prev.submitted_at || ""))
-      latest.set(login, review);
-  }
-  return [...latest.values()].some(r =>
-    r.commit_id === sha &&
-    r.user.login.toLowerCase() !== String(author).toLowerCase() &&
-    r.state === "APPROVED" &&
-    new RegExp("Evidence verified for head SHA:\\s*" + sha, "i").test(r.body || "")
-  );
+  return failures;
 }
 
 function validateCoreRun(run, jobs) {
@@ -196,11 +176,6 @@ async function evaluate({github, owner, repo, pr}) {
       {owner,repo,branch:"main"})
   ]);
   errors.push(...validateProtection(branch.data,applied.data));
-  const reviews = await github.paginate(github.rest.pulls.listReviews, {
-    owner,repo,pull_number:pr.number,per_page:100
-  });
-  if (!validateReview(reviews, pr.user.login, sha))
-    errors.push("No independent GitHub approval explicitly reviewing evidence on the exact head SHA");
   const runResponse = await github.rest.actions.listWorkflowRuns({
     owner,repo,workflow_id:"validate-openwiki.yml",event:"pull_request",
     head_sha:sha,per_page:100
@@ -248,7 +223,7 @@ async function run({github,context,core}) {
     } catch(e) {
       outcome = {ok:false,errors:["Gate API evaluation failed closed: " + e.message],sha:pr.head.sha};
     }
-    const description = outcome.ok ? "Evidence, independent approval and CI verified" :
+    const description = outcome.ok ? "SHA-bound evidence, required CI and main rules verified" :
       (outcome.errors[0] || "Unknown merge-gate failure").slice(0,130);
     await github.rest.repos.createCommitStatus({
       owner,repo,sha:pr.head.sha,context:CONTEXT,
@@ -262,4 +237,4 @@ async function run({github,context,core}) {
 }
 
 module.exports = {BASELINE,CONTEXT,REQUIRED_STEPS,requiredChecks,parseEvidence,
-  validateBody,validateReview,validateCoreRun,validateProtection,chooseRun,evaluate,run};
+  validateBody,validateCoreRun,validateProtection,chooseRun,evaluate,run};

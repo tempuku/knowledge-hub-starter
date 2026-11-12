@@ -4,8 +4,9 @@
 > the linked issue verbatim (including its mandatory gate); change each to [x]
 > only after the result is demonstrated. Never assert a mock is real evidence.
 > **One numbered C-row per issue checkbox**, in exactly the same order.
-> Each row must include real, current-head evidence. A pending reviewer decision,
-> unchecked item, unverified scenario or stale SHA intentionally blocks merging.
+> Each row must include real, current-head evidence. Unchecked items,
+> unverified scenarios or stale SHA intentionally block merging. No independent
+> approval is required by the owner-approved issue #24 policy amendment.
 >
 > Gate specification: [issue #26](https://github.com/tempuku/knowledge-hub-starter/issues/26)
 > and [A-04 acceptance](https://github.com/tempuku/knowledge-hub-starter/blob/5befec6cc67486327fa36b22f54f22db59cceecb/openwiki/design/acceptance.md#a-04-implementation-evidence-and-completion).
@@ -27,8 +28,6 @@ Privacy/security/integrity: <explicit review of public/private boundaries, trust
 Regression impact: <list affected existing checks and exact outcomes>
 
 Known limitations: <specific known gaps; if none, say why>
-
-Reviewer decision: Pending - <reviewer and unverified items>
 
 ## Validation checklist
 
@@ -52,15 +51,12 @@ should link the exact SHA. Do not use this template as evidence of completion.
 | C1 | <head-sha> | <command> | <fixture-revision> | <expected> | <observed> | <artifact-url> | <limitations> |
 | C2 | <head-sha> | <command> | <fixture-revision> | <expected> | <observed> | <artifact-url> | <limitations> |
 
-## Independent approval
+## Autonomous verification and optional owner review
 
-A **non-author independent reviewer** must inspect the full diff, every
-issue acceptance checkbox and all reproducible evidence on this exact SHA.
-They must submit a genuine GitHub APPROVED review including:
-
-    Evidence verified for head SHA: <exact-40-character-PR-head-SHA>
-
-Only then update the PR's "Reviewer decision" field to "Approved" and
-link the actual review. Agent self-verification is permitted for preparation
-and documenting evidence under epic #24, **not a substitute for independent
-GitHub approval**. Any new commit invalidates stale review and evidence.
+Independent GitHub APPROVED reviews are **not mandatory** under the
+[owner-approved policy amendment](https://github.com/tempuku/knowledge-hub-starter/issues/24#issuecomment-6819748012).
+The assistant must verify every checkbox and current-head evidence row, inspect
+privacy/regression implications, and check exact-head CI and both required
+GitHub status contexts before squash merge. Optional human review of epic #24
+is welcome but is not an implementation-PR blocker. Never report synthetic
+unit tests as live merge-enforcement proof.
