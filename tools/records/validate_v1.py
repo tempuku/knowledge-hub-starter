@@ -23,6 +23,7 @@ AREAS = {"projects", "ideas", "notes", "concepts", "adr", "design"}
 STATUSES = {"draft", "stable", "completed", "deprecated"}
 ACTIONS = {"CREATED", "UPDATED", "MOVED", "ARCHIVED", "REOPENED", "IMPORTED"}
 PROVENANCE = {"native", "legacy-log", "legacy-journal", "git-backfill"}
+WINDOWS_RESERVED = {"con", "prn", "aux", "nul"} | {"com" + str(i) for i in range(1, 10)} | {"lpt" + str(i) for i in range(1, 10)}
 KEBAB = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 SHA = re.compile(r"[0-9a-f]{64}\Z")
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
@@ -141,12 +142,12 @@ def safe_path(value, label, kind="record"):
     parts = value.split("/")
     require(len(parts) >= 3 and parts[1] in AREAS and len(parts[1:-1]) <= 8,
             f"{label}: invalid area or depth")
-    require(all(KEBAB.fullmatch(seg) for seg in parts[1:-1]),
+    require(all(KEBAB.fullmatch(seg) and seg not in WINDOWS_RESERVED for seg in parts[1:-1]),
             f"{label}: unsafe directory segment")
     suffix = ".log.md" if kind == "log" else ".md"
     require(parts[-1].endswith(suffix), f"{label}: invalid extension")
     slug = parts[-1][:-len(suffix)]
-    require(KEBAB.fullmatch(slug) and slug not in {"index", "log"},
+    require(KEBAB.fullmatch(slug) and slug not in {"index", "log"} | WINDOWS_RESERVED,
             f"{label}: reserved or invalid slug")
     return value
 
