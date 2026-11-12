@@ -91,7 +91,7 @@ class ValidatorFixtures(unittest.TestCase):
     def check(self, base=None, strict=False):
         return v1.repository(self.root, base=base, strict_indexes=strict)
 
-    def fail(self, needle=None, base=None):
+    def assert_invalid(self, needle=None, base=None):
         with self.assertRaises(v1.IntegrityError) as context:
             self.check(base=base)
         if needle:
@@ -120,11 +120,11 @@ class ValidatorFixtures(unittest.TestCase):
         self.record = self.record.replace("title: Example", "title: One\ntitle: Two")
         self.event = self.make_event(self.record)
         self.install()
-        self.fail("duplicate key")
+        self.assert_invalid("duplicate key")
         self.record = self.source(self.record_id, extra="tags: &some [a]\nx_safe: *some\n")
         self.event = self.make_event(self.record)
         self.install()
-        self.fail("aliases")
+        self.assert_invalid("aliases")
 
     def test_reminder_dates_offsets_and_invalid_occurrence(self):
         self.record = self.source(
@@ -139,36 +139,36 @@ class ValidatorFixtures(unittest.TestCase):
                                           "2026-11-12T12:00:00")
         self.event = self.make_event(self.record)
         self.install()
-        self.fail("offset-qualified")
+        self.assert_invalid("offset-qualified")
 
     def test_duplicate_json_keys_and_stray_text_rejected(self):
         p = self.root / (self.path[:-3] + ".log.md")
         text = p.read_text()
         p.write_text(text.replace('"sequence": 1,', '"sequence": 1,\n  "sequence": 1,'))
         self.git("add", "-A")
-        self.fail("duplicate JSON key")
+        self.assert_invalid("duplicate JSON key")
         self.install()
         p.write_text(p.read_text() + "unmatched text\n")
         self.git("add", "-A")
-        self.fail("malformed section")
+        self.assert_invalid("malformed section")
 
     def test_hash_sequence_previous_and_chain_fail(self):
         bad = copy.deepcopy(self.event)
         bad["after_sha256"] = "0"*64
         self.install([bad])
-        self.fail("after hash mismatch")
+        self.assert_invalid("after hash mismatch")
         bad = copy.deepcopy(self.event)
         bad["sequence"] = 2
         self.install([bad])
-        self.fail("broken sequence")
+        self.assert_invalid("broken sequence")
         bad = copy.deepcopy(self.event)
         bad["previous_event_id"] = new_id()
         self.install([bad])
-        self.fail("first event")
+        self.assert_invalid("first event")
         bad = copy.deepcopy(self.event)
         bad["record_id"] = new_id()
         self.install([bad])
-        self.fail("wrong record ID")
+        self.assert_invalid("wrong record ID")
 
     def test_duplicate_ids_and_missing_or_orphan_log(self):
         twin = "openwiki/ideas/example.md"
@@ -177,38 +177,38 @@ class ValidatorFixtures(unittest.TestCase):
                    (self.root / (self.path[:-3]+".log.md")).read_text()
                    .replace(self.path, twin))
         self.git("add", "-A")
-        self.fail("duplicate global record ID")
+        self.assert_invalid("duplicate global record ID")
         (self.root / twin).unlink()
         self.git("add", "-A")
-        self.fail("orphan v1")
+        self.assert_invalid("orphan v1")
         (self.root / (twin[:-3]+".log.md")).unlink()
         (self.root / (self.path[:-3]+".log.md")).unlink()
         self.git("add", "-A")
-        self.fail("missing sibling log")
+        self.assert_invalid("missing sibling log")
 
     def test_path_limits_symlink_collision_and_size(self):
         self.path = "openwiki/notes/Example.md"
         self.event["path_after"] = self.path
         self.install()
-        self.fail("reserved or invalid slug")
+        self.assert_invalid("reserved or invalid slug")
         self.path = "openwiki/notes/example.md"
         self.event["path_after"] = self.path
         self.install()
         self.write("openwiki/notes/EXAMPLE.md", "anything")
         self.git("add", "-A")
-        self.fail("case-insensitive path collision")
+        self.assert_invalid("case-insensitive path collision")
         (self.root / "openwiki/notes/EXAMPLE.md").unlink()
         self.git("add", "-A")
         link = self.root / "openwiki/notes/link.md"
         link.symlink_to("example.md")
         self.git("add", "-A")
-        self.fail("symlink at a path component")
+        self.assert_invalid("symlink at a path component")
         link.unlink()
         self.git("add", "-A")
         self.record = self.source(self.record_id, body="x"*1048576)
         self.event = self.make_event(self.record)
         self.install()
-        self.fail("exceeds 1 MiB")
+        self.assert_invalid("exceeds 1 MiB")
 
     def test_trusted_base_rejects_history_rewrite(self):
         self.git("commit", "-qm", "baseline")
@@ -216,14 +216,14 @@ class ValidatorFixtures(unittest.TestCase):
         self.assertEqual(self.check(base=base)["events"], 1)
         self.event["summary"] = "Retroactively altered history"
         self.install()
-        self.fail("history prefix rewritten", base)
+        self.assert_invalid("history prefix rewritten", base)
 
     def test_direct_record_edit_without_event_rejected(self):
         self.git("commit", "-qm", "baseline")
         base = self.git("rev-parse", "HEAD")
         self.write(self.path, self.record.replace("Body\n", "Edited without event\n"))
         self.git("add", "-A")
-        self.fail("final log snapshot", base)
+        self.assert_invalid("final log snapshot", base)
 
     def test_valid_append_after_committed_base(self):
         self.git("commit", "-qm", "baseline")
@@ -243,7 +243,7 @@ class ValidatorFixtures(unittest.TestCase):
         base = self.git("rev-parse", "HEAD")
         self.write("openwiki/notes/invalid-new.md", "---\ntitle: Old\n---\n")
         self.git("add", "-A")
-        self.fail("new record must use v1", base)
+        self.assert_invalid("new record must use v1", base)
 
 
 if __name__ == "__main__":
