@@ -59,3 +59,83 @@ def load_policy(root: Path, mode: str, *, revision_bytes: bytes | None = None):
     if revision_bytes is None:
         raise ProjectionError("missing immutable public policy")
     return validate_policy(revision_bytes)
+
+
+def _visibility(snapshot: str | None) -> str | None:
+    if snapshot is None:
+        return None
+    # Reuse canonical frontmatter parsing, never infer visibility from body text.
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "records"))
+    from validate_v1 import frontmatter
+    try:
+        metadata, _ = frontmatter(snapshot)
+    except (ValueError, TypeError) as exc:
+        raise ProjectionError("invalid publication snapshot") from exc
+    value = metadata.get("visibility")
+    if value not in ("public", "private"):
+        raise ProjectionError("missing or invalid snapshot visibility")
+    return value
+
+
+def select_public(records: list[dict], histories: dict[str, list[dict]],
+                  summaries: dict[str, dict], policy: dict):
+    """Select current public records and explicitly approved public-only events.
+
+    Never pass a private-before transition to the diff generator. A public
+    record with no approved history remains visible with an empty history.
+    """
+    allowed_records = set(policy["record_ids"])
+    allowed_events = set(policy["event_ids"])
+    allowed_labels = set(policy["actor_labels"])
+    chosen_records, chosen_histories, chosen_summaries = [], {}, {}
+    for record in records:
+        rid = record["id"]
+        if rid not in allowed_records or _visibility(record["content"]) != "public":
+            continue
+        chosen_records.append(dict(record))
+        selected = []
+        for event in histories[rid]:
+            if event["id"] not in allowed_events:
+                continue
+            if _visibility(event["after"]) != "public":
+                continue
+            if event["before"] is not None and _visibility(event["before"]) != "public":
+                continue
+            redacted = dict(event)
+            redacted["actor"] = {
+                "id": "redacted", "kind": event["actor"]["kind"],
+                "label": event["actor"]["label"] if event["actor"]["label"] in allowed_labels else "Contributor",
+            }
+            # Internal provenance identifiers are never public metadata.
+            redacted["provenance"] = {"kind": event["provenance"]["kind"],
+                                      "source_ref": None, "original_time": None}
+            # Internal command identifiers are not part of public provenance.
+            redacted["idempotency_key"] = "redacted"
+            redacted["request_sha256"] = "redacted"
+            redacted["operation_id"] = "redacted"
+            selected.append(redacted)
+            summary = dict(summaries[event["id"]])
+            summary["actor_label"] = redacted["actor"]["label"]
+            summary["operation_id"] = "redacted"
+            chosen_summaries[event["id"]] = summary
+        chosen_histories[rid] = selected
+    return chosen_records, chosen_histories, chosen_summaries
+
+
+def audit_public(files: dict[str, bytes], forbidden: set[str]):
+    """Byte-level denylist audit; run against every generated artifact.
+
+    A denylist cannot establish that approved prose is safe: human review is
+    still mandatory. Reject both direct UTF-8 and JSON-escaped occurrences.
+    """
+    for path, data in files.items():
+        if not isinstance(data, bytes) or not path.endswith(".json"):
+            raise ProjectionError("unexpected public artifact")
+        for secret in forbidden:
+            if not secret:
+                continue
+            variants = (secret.encode("utf-8"), json.dumps(secret, ensure_ascii=True)[1:-1].encode("utf-8"))
+            if any(variant in data for variant in variants):
+                raise ProjectionError(f"private reference detected in public artifact: {path}")
+    return {"artifacts": sorted(files), "count": len(files)}
