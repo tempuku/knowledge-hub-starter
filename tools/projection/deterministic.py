@@ -109,3 +109,57 @@ def write_staging(destination: Path, files: dict[str, bytes]) -> None:
         path = destination / target
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(content)
+
+
+def query_search(query: str, records: list[dict], shards: dict[str, bytes],
+                 *, project_id: str | None = None, area: str | None = None,
+                 record_type: str | None = None, status: str | None = None,
+                 tag: str | None = None, include_archived: bool = False) -> list[str]:
+    """Return matching IDs ordered by P-03 ranking and deterministic tie breaks.
+
+    Filters apply to eligible current metadata, never to historical snapshots.
+    """
+    tokens = list(dict.fromkeys(tokenize(query)))
+    if len(tokens) > 8:
+        raise ProjectionError("query exceeds eight distinct tokens")
+    by_id = {record["id"]: record for record in records}
+    scores = defaultdict(int)
+    matches = None
+    for token in tokens:
+        prefix = hashlib.sha256(token.encode("utf-8")).hexdigest()[:2]
+        payload = json.loads(shards.get(prefix, json_bytes({"schema_version": 1, "terms": {}})))
+        postings = payload["terms"].get(token, [])
+        current = set()
+        for posting in postings:
+            rid = posting["record_id"]
+            if rid not in by_id:
+                raise ProjectionError("search references unknown record")
+            current.add(rid)
+            scores[rid] += max(FIELD_WEIGHTS[field] for field in posting["fields"])
+        matches = current if matches is None else matches & current
+        if not matches:
+            return []
+    candidates = matches if matches is not None else set(by_id)
+    result = []
+    for rid in candidates:
+        record = by_id[rid]
+        if record.get("status") == "deprecated" and not (
+                include_archived or status == "deprecated"):
+            continue
+        if project_id is not None and record.get("project_id") != project_id:
+            continue
+        record_area = record.get("area", "")
+        if area is not None and not (record_area == area or record_area.startswith(area.rstrip("/") + "/")):
+            continue
+        if record_type is not None and record.get("type") != record_type:
+            continue
+        if status is not None and record.get("status") != status:
+            continue
+        if tag is not None and tag not in record.get("tags", []):
+            continue
+        result.append(rid)
+    # Stable sorts implement descending score, descending timestamp, ascending ID.
+    result.sort()
+    result.sort(key=lambda rid: by_id[rid].get("updated_at", ""), reverse=True)
+    result.sort(key=lambda rid: scores[rid], reverse=True)
+    return result
