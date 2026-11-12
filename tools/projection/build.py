@@ -32,6 +32,11 @@ def publish(root: Path, destination: Path, revision: str, *, mode: str = "privat
         forbidden.update(r["id"] for r in excluded)
         forbidden.update(r["path"] for r in excluded)
         forbidden.update(e["id"] for r in excluded for e in histories[r["id"]])
+        for r in records:
+            for event in histories[r["id"]]:
+                forbidden.add(event["actor"]["id"])
+                if event["id"] not in policy["event_ids"]:
+                    forbidden.add(event["id"])
         records, histories, summaries = select_public(records, histories, summaries, policy)
     generation = generation_id(tree, EXPORTER_VERSION, policy_digest)
     destination = destination.resolve()
