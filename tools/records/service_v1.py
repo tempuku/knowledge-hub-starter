@@ -307,6 +307,15 @@ class GitRecordWriter:
                                               retryable=True)
                         reject("CONFLICT", "Local compare-and-swap rejected")
                     self._fault("published")
+                    # Treat a successful ref change as a commit point only
+                    # after verifying that the durable log still contains
+                    # precisely this operation. Never return an unverified
+                    # success receipt.
+                    verified = receipt_from_logs(self._logs(self._head()), normalized)
+                    if verified is None or verified["id"] != event["id"]:
+                        raise WriterError("WRITE_FAILED",
+                                          "Committed receipt is uncertain; retry same key",
+                                          retryable=True)
                     return self._response(event, commit, "committed")
                 finally:
                     git(self.root, "worktree", "remove", "--force", str(workspace),
