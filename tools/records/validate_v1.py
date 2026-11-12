@@ -402,7 +402,8 @@ def repository(root, base=None, strict_indexes=False):
             continue
         blob = git(root, "show", ":" + path)
         # Legacy input is NOT a v1 record. New legacy authoring is forbidden below.
-        if b"schema_version:" not in blob[:2048] and b"id:" not in blob[:2048]:
+        header = blob[:4096].split(b"\n---\n", 1)[0] if blob.startswith(b"---\n") else b""
+        if not re.search(rb"(?m)^(?:schema_version|id)\s*:", header):
             continue
         safe_path(path, path)
         meta, content = parse_record(blob, path)
