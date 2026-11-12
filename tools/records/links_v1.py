@@ -118,3 +118,43 @@ def repair_relative_links(
         return label + updated + closing
 
     return LINK.sub(rewrite, source), targets
+
+
+def resolve_historical_path(path, logs, current_records):
+    """Return an ID-based old-path resolution, or explicit ambiguous choices.
+
+    logs is a map of current sibling paths to bytes; current_records is a map
+    of current canonical paths to (record_id, title). The caller decides how
+    to display choice links. An old path reused by another record must *never*
+    silently redirect to either candidate.
+    """
+    from validate_v1 import parse_log
+    from pathlib import PurePosixPath
+
+    if not isinstance(path, str) or not path.startswith("openwiki/") or not path.endswith(".md"):
+        raise IntegrityError("Invalid historical record path")
+    candidates = {}
+    for log_path, raw in logs.items():
+        events = parse_log(raw, log_path)
+        identifier = events[-1]["record_id"]
+        current_path = events[-1]["path_after"]
+        # The ID/title comes from canonical current record, not a stale snapshot.
+        if current_path not in current_records:
+            raise IntegrityError("Historical alias has no current record")
+        current_id, title = current_records[current_path]
+        if current_id != identifier:
+            raise IntegrityError("Historical alias ID mismatch")
+        if any(e["path_before"] == path or e["path_after"] == path for e in events):
+            candidates[identifier] = {"record_id": identifier,
+                                      "path": current_path, "title": title}
+    for current_path, (identifier, title) in current_records.items():
+        if current_path == path:
+            candidates[identifier] = {"record_id": identifier,
+                                      "path": current_path, "title": title}
+    values = sorted(candidates.values(), key=lambda v: (v["title"], v["record_id"]))
+    if not values:
+        return {"kind": "not_found", "choices": []}
+    if len(values) > 1:
+        return {"kind": "ambiguous", "choices": values}
+    return {"kind": "record", "record_id": values[0]["record_id"],
+            "path": values[0]["path"]}
