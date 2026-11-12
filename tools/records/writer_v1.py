@@ -37,6 +37,9 @@ COMMON = frozenset({
 FIELDS = {
     "create": frozenset({"path", "content"}),
     "update": frozenset({"record_id", "expected_version", "content"}),
+    "move": frozenset({"record_id", "expected_version", "destination"}),
+    "archive": frozenset({"record_id", "expected_version"}),
+    "reopen": frozenset({"record_id", "expected_version", "status"}),
 }
 SHA_HEAD = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})\Z")
 FENCE = chr(96) * 3
@@ -101,8 +104,11 @@ def normalized_request(request):
     if unknown:
         reject("VALIDATION_ERROR", "Unknown request fields")
     required = {"command", "idempotency_key", "actor", "summary",
-                "expected_head", "content"} | (
-                    {"path"} if command == "create" else
+                "expected_head"} | (
+                    {"path", "content"} if command == "create" else
+                    {"record_id", "expected_version", "content"} if command == "update" else
+                    {"record_id", "expected_version", "destination"} if command == "move" else
+                    {"record_id", "expected_version", "status"} if command == "reopen" else
                     {"record_id", "expected_version"}
                 )
     if required - set(request):
@@ -118,10 +124,17 @@ def normalized_request(request):
             request["expected_head"]
         ):
             raise IntegrityError("expected_head must be a full Git commit SHA")
-        if type(request["content"]) is not str:
-            raise IntegrityError("content must be a string")
-        if len(request["content"].encode("utf-8")) > 1048576:
-            raise IntegrityError("record content exceeds 1 MiB")
+        if command in ("create", "update"):
+            if type(request["content"]) is not str:
+                raise IntegrityError("content must be a string")
+            if len(request["content"].encode("utf-8")) > 1048576:
+                raise IntegrityError("record content exceeds 1 MiB")
+        if command == "move":
+            safe_path(request["destination"], "destination")
+        if command == "reopen" and request["status"] not in ("draft", "stable", "completed"):
+            raise IntegrityError("reopen status must be draft, stable or completed")
+        if command not in ("create", "update") and "publish_current" in request:
+            raise IntegrityError("publish_current is only valid on create/update")
         actor = request["actor"]
         if type(actor) is not dict or set(actor) != {"id", "kind", "label"}:
             raise IntegrityError("actor must provide id, kind and label")
@@ -293,7 +306,15 @@ def receipt_from_logs(logs, normalized):
     if len(operation_ids) != 1:
         reject("INTEGRITY_ERROR", "One idempotency key maps to multiple operations")
     if len(matches) != 1:
-        reject("INTEGRITY_ERROR", "Multiple-record receipt requires move transaction handler")
+        if normalized["command"] != "move":
+            reject("INTEGRITY_ERROR", "Unexpected multi-record receipt")
+        primary = [e for e in matches if e["record_id"] == normalized["record_id"]]
+        if len(primary) != 1 or primary[0]["action"] != "MOVED" or any(
+                e["action"] not in ("MOVED", "UPDATED") for e in matches):
+            reject("INTEGRITY_ERROR", "Invalid multi-record move receipt")
+        return primary[0]
+    if normalized["command"] == "move" and matches[0]["action"] != "MOVED":
+        reject("INTEGRITY_ERROR", "Move receipt must identify MOVED event")
     return matches[0]
 
 
@@ -303,8 +324,10 @@ def require_capability(normalized, capability):
     A public repository cannot contain private snapshots, even when a caller
     requests publication. A future publishing allowlist is a separate concern.
     """
-    if type(capability) is not dict or set(capability) != {
+    if type(capability) is not dict or not {
         "repository_mode", "operations", "publisher_scope"
+    } <= set(capability) or set(capability) - {
+        "repository_mode", "operations", "publisher_scope", "writable_record_ids"
     }:
         reject("PUBLICATION_DENIED", "Trusted repository capability is unavailable")
     mode = capability["repository_mode"]
@@ -317,6 +340,13 @@ def require_capability(normalized, capability):
         reject("PUBLICATION_DENIED", "Publisher authorization is invalid")
     if normalized["publish_current"] and not capability["publisher_scope"]:
         reject("PUBLICATION_DENIED", "Publisher scope is required")
+    if "writable_record_ids" in capability:
+        allowed = capability["writable_record_ids"]
+        if type(allowed) not in (list, tuple, set) or any(
+                type(item) is not str for item in allowed):
+            reject("PUBLICATION_DENIED", "Invalid per-record capability scope")
+        if normalized["command"] != "create" and normalized["record_id"] not in allowed:
+            reject("PUBLICATION_DENIED", "Record write scope denied")
     if mode == "public":
         # Even explicit publish_current cannot authorize exposing prior
         # private history. Only already-public snapshots can be written.
@@ -326,8 +356,17 @@ def require_capability(normalized, capability):
                 reject("PUBLICATION_DENIED", "Private records cannot enter a public Git repository")
             if not normalized["publish_current"]:
                 reject("PUBLICATION_DENIED", "Explicit publication is required in a public repository")
-        else:
+        elif normalized["command"] == "update":
             meta, _ = frontmatter(normalized["content"])
             if meta.get("visibility") != "public":
                 reject("PUBLICATION_DENIED", "Private records cannot enter a public Git repository")
+        # Lifecycle and move operations must also verify *existing* snapshots
+        # after the trusted repository look-up, before any staging.
     return True
+
+
+def require_record_permission(capability, record_id):
+    """A move must check every backlink, not only its initiating record."""
+    allowed = capability.get("writable_record_ids")
+    if allowed is not None and record_id not in allowed:
+        reject("PUBLICATION_DENIED", "Affected record is outside trusted write scope")
