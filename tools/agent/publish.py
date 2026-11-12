@@ -57,6 +57,10 @@ def publish(request):
     meta = yaml.safe_load(match.group(1))
     if not isinstance(meta, dict) or not meta.get("type") or not meta.get("title"):
         raise ValueError("Invalid OKF metadata")
+    # The transitional legacy v0.2 adapter must NEVER be used on a v1
+    # canonical source; only the shared W-01 writer may append native events.
+    if "id" in meta or "schema_version" in meta:
+        raise ValueError("Canonical v1 records require the shared knowledge writer")
     if meta.get("visibility", "private") != "public":
         raise ValueError("Private writes require a private repository; refusing public checkout")
     if new == old:
