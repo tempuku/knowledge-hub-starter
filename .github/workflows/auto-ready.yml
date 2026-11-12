@@ -6,9 +6,12 @@ on:
     workflows: ["Validate OKF and diary"]
     types: [completed]
 
+# GitHub's markPullRequestReadyForReview GraphQL mutation requires contents: write
+# in addition to pull-requests: write. PR content remains untrusted: no PR checkout.
+# See https://github.com/marketplace/actions/mark-ready-when-ready
 permissions:
   actions: read
-  contents: read
+  contents: write
   pull-requests: write
 
 jobs:
