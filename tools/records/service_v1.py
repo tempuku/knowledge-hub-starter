@@ -102,6 +102,37 @@ class GitRecordWriter:
     def _head(self):
         return git(self.root, "rev-parse", "--verify", "refs/heads/" + self.branch)
 
+    def _remote_tip(self):
+        """Read a trusted remote tip and fetch its object without moving local refs.
+
+        This permits durable receipt replay when a prior remote CAS succeeded
+        but the local ref update or the response was lost.
+        """
+        ref = "refs/heads/" + self.branch
+        result = subprocess.run(["git", "ls-remote", "--heads", self.remote, ref],
+                                cwd=self.root, capture_output=True, text=True)
+        if result.returncode:
+            raise WriterError("WRITE_FAILED", "Trusted remote is unavailable",
+                              retryable=True)
+        entries = result.stdout.strip().splitlines()
+        if len(entries) != 1:
+            raise WriterError("WRITE_FAILED", "Trusted remote ref is missing",
+                              retryable=True)
+        parts = entries[0].split("\t")
+        if len(parts) != 2 or parts[1] != ref or not re.fullmatch(
+                r"[0-9a-f]{40}|[0-9a-f]{64}", parts[0]):
+            raise WriterError("WRITE_FAILED", "Invalid trusted remote ref",
+                              retryable=True)
+        remote_sha = parts[0]
+        if git(self.root, "cat-file", "-e", remote_sha + "^{commit}",
+               check=False) is None:
+            fetch = subprocess.run(["git", "fetch", "--no-tags", self.remote,
+                                    remote_sha], cwd=self.root, capture_output=True)
+            if fetch.returncode:
+                raise WriterError("WRITE_FAILED", "Cannot fetch remote receipt",
+                                  retryable=True)
+        return remote_sha
+
     def _logs(self, commit):
         paths = git(self.root, "ls-tree", "-r", "--name-only", commit, "--", "openwiki").splitlines()
         return {
@@ -162,12 +193,18 @@ class GitRecordWriter:
         require_capability(normalized, self.capability)
         with self._lock():
             head = self._head()
-            logs = self._logs(head)
+            # A remote CAS may have succeeded while the local ref update failed.
+            # Consult the trusted remote's committed log FIRST so a retry
+            # returns its original receipt without making a second commit.
+            remote_head = self._remote_tip() if self.remote else None
+            receipt_head = remote_head or head
+            logs = self._logs(receipt_head)
             receipt = receipt_from_logs(logs, normalized)
             if receipt:
-                # Find the original commit, not current head after later changes.
-                origin = self._receipt_commit(head, receipt["id"])
+                origin = self._receipt_commit(receipt_head, receipt["id"])
                 return self._response(receipt, origin, "already_committed")
+            if remote_head is not None and remote_head != head:
+                reject("CONFLICT", "Local branch is stale relative to remote")
             if normalized["expected_head"] != head:
                 reject("CONFLICT", "Expected repository head is stale")
             command = normalized["command"]
@@ -259,6 +296,7 @@ class GitRecordWriter:
                             reject("CONFLICT", "Remote compare-and-swap rejected")
                         # Remote is the commit point. A failed local ref update
                         # after this point is an uncertain receipt, not rollback.
+                        self._fault("remote_published")
                     result = subprocess.run([
                         "git", "update-ref", "refs/heads/" + self.branch, commit, head
                     ], cwd=self.root, capture_output=True)
