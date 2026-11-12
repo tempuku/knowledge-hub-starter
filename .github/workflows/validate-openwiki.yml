@@ -47,6 +47,12 @@ jobs:
           cache-dependency-path: tools/diary/requirements.txt
       - name: Install diary builder dependencies
         run: python -m pip install -r tools/diary/requirements.txt
+      - name: Test v1 storage schemas and histories in disposable Git repositories
+        run: python -m unittest discover -s tools/records -p 'test_*.py' -v
+      - name: Validate v1 source records and append-only trusted-base prefix
+        run: |
+          BASE="$(git merge-base HEAD origin/main)"
+          python tools/records/validate_v1.py --base "$BASE"
       - name: Build and smoke-test private diary locally in CI
         run: |
           python tools/diary/build.py
