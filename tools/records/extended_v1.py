@@ -267,12 +267,21 @@ def execute(writer, normalized):
             post = dict(existing)
             post[destination] = post.pop(old_path)
             paths = {old_path: destination}
+            id_to_path = {
+                record_meta["id"]: paths.get(path, path)
+                for path, (record_meta, _) in records.items()
+            }
+            structural_indexes = {
+                path for path in tracked if path.endswith("/index.md")
+            }
             for source_path, (record_meta, old_source) in records.items():
                 after_path = paths.get(source_path, source_path)
                 try:
                     updated, _ = repair_relative_links(
                         old_source, before_path=source_path, after_path=after_path,
-                        moved_paths=paths, current_sources=post)
+                        moved_paths=paths, current_sources=post,
+                        record_ids=id_to_path,
+                        structural_indexes=structural_indexes)
                 except IntegrityError as exc:
                     reject("INTEGRITY_ERROR", str(exc))
                 if updated == old_source and source_path != old_path:
