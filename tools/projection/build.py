@@ -13,16 +13,31 @@ from pathlib import Path
 
 from compose import build_projection
 from deterministic import ProjectionError, generation_id, json_bytes, write_staging
-from git_source import load_revision
+from git_source import load_revision, git
+from publication import load_policy, select_public, audit_public
 
 EXPORTER_VERSION = "v1-projection-0.1"
 
 
 def publish(root: Path, destination: Path, revision: str, *, mode: str = "private"):
-    if mode != "private":
-        raise ProjectionError("public publication requires #32 allowlist/privacy audit")
+    if mode not in ("private", "public"):
+        raise ProjectionError("unknown publication mode")
     commit, tree, records, histories, summaries = load_revision(root, revision)
     policy_digest = "private-v1"
+    forbidden = set()
+    if mode == "public":
+        policy_bytes = git(root, "show", f"{commit}:config/publication.json")
+        policy, policy_digest = load_policy(root, mode, revision_bytes=policy_bytes)
+        excluded = [r for r in records if r["id"] not in policy["record_ids"]]
+        forbidden.update(r["id"] for r in excluded)
+        forbidden.update(r["path"] for r in excluded)
+        forbidden.update(e["id"] for r in excluded for e in histories[r["id"]])
+        for r in records:
+            for event in histories[r["id"]]:
+                forbidden.add(event["actor"]["id"])
+                if event["id"] not in policy["event_ids"]:
+                    forbidden.add(event["id"])
+        records, histories, summaries = select_public(records, histories, summaries, policy)
     generation = generation_id(tree, EXPORTER_VERSION, policy_digest)
     destination = destination.resolve()
     generation_dir = destination / "g" / generation
@@ -30,6 +45,8 @@ def publish(root: Path, destination: Path, revision: str, *, mode: str = "privat
     if generation_dir.exists() or generation_dir.is_symlink():
         raise ProjectionError("immutable generation already exists; refusing overwrite")
     files = build_projection(records, histories, summaries)
+    if mode == "public":
+        audit_public(files, forbidden)
     write_staging(generation_dir, files)
     # Publication point: manifest is the only mutable pointer. Write and fsync
     # its sibling temporary file before replacing it atomically.
