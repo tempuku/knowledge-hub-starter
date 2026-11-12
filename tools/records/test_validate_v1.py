@@ -246,5 +246,45 @@ class ValidatorFixtures(unittest.TestCase):
         self.assert_invalid("new record must use v1", base)
 
 
+    def test_portable_path_reserved_traversal_and_byte_limit(self):
+        for candidate in (
+            "openwiki/notes/../escaped.md",
+            "openwiki/notes/./hidden.md",
+            "openwiki/notes/con.md",
+            "openwiki/notes/prn/item.md",
+            "openwiki/notes/" + "a"*230 + ".md",
+        ):
+            with self.subTest(candidate=candidate):
+                with self.assertRaises(v1.IntegrityError):
+                    v1.safe_path(candidate, "candidate")
+
+    def test_duplicate_event_ids_across_distinct_records(self):
+        twin = "openwiki/ideas/second.md"
+        second_id = new_id()
+        second_source = self.source(second_id)
+        second_event = self.make_event(second_source, record_id=second_id,
+                                       path_after=twin, id=self.event["id"])
+        self.write(twin, second_source)
+        self.write(twin[:-3] + ".log.md",
+                   "# Record history\n\n## Entry " + second_event["id"] + "\n" +
+                   chr(96)*3 + "json\n" +
+                   json.dumps(second_event, ensure_ascii=False, indent=2) +
+                   "\n" + chr(96)*3 + "\n")
+        self.write("openwiki/index.md",
+                   '---\nokf_version: "0.2"\n---\n\n# Root\n\n* [Ideas](ideas/)\n* [Notes](notes/)\n')
+        self.write("openwiki/ideas/index.md", "# Ideas\n\n* [Second](second.md)\n")
+        self.git("add", "-A")
+        self.assert_invalid("globally duplicated event ID")
+
+    def test_wrong_sibling_path_and_recorded_timestamp(self):
+        wrong = copy.deepcopy(self.event)
+        wrong["path_after"] = "openwiki/notes/not-example.md"
+        self.install([wrong])
+        self.assert_invalid("final log snapshot/path")
+        wrong = copy.deepcopy(self.event)
+        wrong["recorded_at"] = "2026-11-12T08:00:00+02:00"
+        self.install([wrong])
+        self.assert_invalid("UTC second-precision Z")
+
 if __name__ == "__main__":
     unittest.main()
