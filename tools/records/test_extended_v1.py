@@ -165,6 +165,35 @@ class LifecycleGitFixtures(unittest.TestCase):
         self.assertEqual(self.writer.read(backlink["record_id"])["version"],
                          backlink["version"])
 
+    def test_move_only_capability_cannot_modify_backlink(self):
+        _, source, backlink = self.seed_linked_move()
+        head = git(self.root, "rev-parse", "main")
+        # The target itself is movable, but inbound link repair requires
+        # explicit permission for the UPDATE operation too.
+        move_only = GitRecordWriter(self.root, {
+            **self.capability, "operations": ["read", "move"],
+        }, staged_checker=self.check_staged_okf)
+        with self.assertRaises(WriterError) as denied:
+            move_only.write(self.request(
+                "move", record_id=source["record_id"],
+                expected_version=source["version"],
+                destination="openwiki/projects/denied.md"))
+        self.assertEqual(denied.exception.code, "PUBLICATION_DENIED")
+        self.assertEqual(git(self.root, "rev-parse", "main"), head)
+        self.assertEqual(self.writer.read(backlink["record_id"])["version"],
+                         backlink["version"])
+
+    def test_unsupported_delete_restore_fail_closed(self):
+        record = self.create("openwiki/notes/a.md")
+        base = git(self.root, "rev-parse", "main")
+        for command in ("delete", "restore"):
+            with self.subTest(command=command), self.assertRaises(WriterError) as denied:
+                self.writer.write(self.request(
+                    command, record_id=record["record_id"],
+                    expected_version=record["version"]))
+            self.assertEqual(denied.exception.code, "VALIDATION_ERROR")
+        self.assertEqual(git(self.root, "rev-parse", "main"), base)
+
     def test_move_noop_collision_broken_fragment_and_invalid_path(self):
         _, source, _ = self.seed_linked_move()
         base = git(self.root, "rev-parse", "main")
