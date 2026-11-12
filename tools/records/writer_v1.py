@@ -159,6 +159,15 @@ class _QuotedDumper(yaml.SafeDumper):
     def increase_indent(self, flow=False, indentless=False):
         return super().increase_indent(flow, False)
 
+    def represent_mapping(self, tag, mapping, flow_style=None):
+        node = super().represent_mapping(tag, mapping, flow_style)
+        # The v1 repository scanner recognizes unquoted id/schema_version keys.
+        for key_node, _ in node.value:
+            if (isinstance(key_node, yaml.ScalarNode) and
+                    re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key_node.value)):
+                key_node.style = None
+        return node
+
 
 def _quoted_str(dumper, data):
     # Quoting every string value also avoids YAML 1.1 booleans and date coercion.
