@@ -27,7 +27,7 @@ KEBAB = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 SHA = re.compile(r"[0-9a-f]{64}\Z")
 DATE = re.compile(r"\d{4}-\d{2}-\d{2}\Z")
 TIME = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})\Z")
-ENTRY = re.compile(r"## Entry ([0-9a-f-]{36})\n\`\`\`json\n")
+ENTRY = re.compile(r"## Entry ([0-9a-f-]{36})\n```json\n")
 EVENT_KEYS = {
     "schema_version", "id", "record_id", "operation_id", "sequence", "action",
     "recorded_at", "occurred_on", "occurred_at", "actor", "summary",
@@ -162,8 +162,8 @@ def validate_meta(meta, body, label):
     one_line(meta["type"], label + ".type", 1, 64)
     require(KEBAB.fullmatch(meta["type"]), f"{label}: type must be kebab-case")
     one_line(meta["title"], label + ".title", 1, 200)
-    require(meta["status"] in STATUSES, f"{label}: invalid status")
-    require(meta["visibility"] in {"private", "public"}, f"{label}: invalid visibility")
+    require(type(meta["status"]) is str and meta["status"] in STATUSES, f"{label}: invalid status")
+    require(type(meta["visibility"]) is str and meta["visibility"] in {"private", "public"}, f"{label}: invalid visibility")
     if "description" in meta:
         one_line(meta["description"], label + ".description", 0, 500)
     if "project_id" in meta:
@@ -261,7 +261,7 @@ def parse_log(raw, path):
     while pos < len(text):
         match = ENTRY.match(text, pos)
         require(match is not None, f"{path}: malformed section or stray text at {pos}")
-        end = text.find("\n\`\`\`\n", match.end())
+        end = text.find("\n```\n", match.end())
         require(end != -1, f"{path}: unterminated fenced JSON")
         source = text[match.end():end]
         try:
@@ -274,7 +274,7 @@ def parse_log(raw, path):
         require(source == json.dumps(event, ensure_ascii=False, indent=2),
                 f"{path}: JSON must use canonical two-space serialization")
         events.append(event)
-        pos = end + len("\n\`\`\`\n")
+        pos = end + len("\n```\n")
         if pos < len(text):
             require(text[pos] == "\n", f"{path}: expected blank line between events")
             pos += 1
@@ -290,7 +290,7 @@ def validate_event(e, label):
         uid(e[name], f"{label}.{name}")
     require(type(e["sequence"]) is int and e["sequence"] > 0,
             f"{label}: invalid sequence")
-    require(e["action"] in ACTIONS, f"{label}: invalid action")
+    require(type(e["action"]) is str and e["action"] in ACTIONS, f"{label}: invalid action")
     require(type(e["recorded_at"]) is str and
             e["recorded_at"].endswith("Z") and TIME.fullmatch(e["recorded_at"]),
             f"{label}: recorded_at must be UTC second-precision Z")
@@ -299,7 +299,7 @@ def validate_event(e, label):
     exact_keys(e["actor"], {"id", "kind", "label"}, label + ".actor")
     one_line(e["actor"]["id"], label + ".actor.id", 1, 200)
     one_line(e["actor"]["label"], label + ".actor.label", 1, 100)
-    require(e["actor"]["kind"] in {"human", "agent", "migration"},
+    require(type(e["actor"]["kind"]) is str and e["actor"]["kind"] in {"human", "agent", "migration"},
             f"{label}: invalid actor kind")
     one_line(e["summary"], label + ".summary", 1, 240)
     if e["path_before"] is not None:
@@ -316,7 +316,7 @@ def validate_event(e, label):
             f"{label}: invalid request digest")
     exact_keys(e["provenance"], {"kind", "source_ref", "original_time"}, label + ".provenance")
     p = e["provenance"]
-    require(p["kind"] in PROVENANCE, f"{label}: invalid provenance")
+    require(type(p["kind"]) is str and p["kind"] in PROVENANCE, f"{label}: invalid provenance")
     require(p["source_ref"] is None or type(p["source_ref"]) is str,
             f"{label}: invalid provenance ref")
     require(p["original_time"] is None or type(p["original_time"]) is str,
@@ -423,8 +423,9 @@ def repository(root, base=None, strict_indexes=False):
     for record_id, meta in records.items():
         project = meta.get("project_id")
         if project is not None:
-            require(project in records and records[project]["type"] == "project",
+            require(type(project) is str and project in records and records[project]["type"] == "project",
                     f"{record_id}: unresolved/non-project project_id")
+    require(not (set(records) & event_ids), "record UUID collides with an event UUID")
     if base:
         compare_base(root, base, tracked, paths)
     if strict_indexes:
