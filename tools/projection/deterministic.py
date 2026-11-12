@@ -98,17 +98,47 @@ def paginate(items: list[dict], *, event_summaries: bool = False) -> list[bytes]
 
 
 def write_staging(destination: Path, files: dict[str, bytes]) -> None:
-    """Write only to an isolated staging directory; caller owns atomic publication."""
-    if destination.exists():
+    """Stage validated files without publishing partial output on failure.
+
+    Reject unsafe paths and collisions before touching the filesystem. On an I/O
+    failure remove the incomplete staging tree; the caller's published generation
+    and manifest are never modified.
+    """
+    import shutil
+
+    if destination.exists() or destination.is_symlink():
         raise ProjectionError("staging destination already exists")
-    destination.mkdir(parents=True)
+    validated = []
+    seen = set()
     for relative, content in sorted(files.items()):
+        if not isinstance(relative, str) or not relative or not isinstance(content, bytes):
+            raise ProjectionError("invalid staging entry")
         target = Path(relative)
-        if target.is_absolute() or ".." in target.parts or not target.parts:
+        if (target.is_absolute() or "\\\\" in relative or
+                any(part in ("", ".", "..") for part in relative.split("/")) or
+                target.as_posix() != relative):
             raise ProjectionError("invalid output path")
-        path = destination / target
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(content)
+        key = relative.casefold()
+        if key in seen:
+            raise ProjectionError("case-insensitive output path collision")
+        seen.add(key)
+        validated.append((target, content))
+    for target, _ in validated:
+        for parent in target.parents:
+            if parent == Path("."):
+                break
+            if parent.as_posix().casefold() in seen:
+                raise ProjectionError("output path conflicts with a file")
+    try:
+        destination.mkdir(parents=True)
+        for target, content in validated:
+            path = destination / target
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+    except Exception:
+        if destination.is_dir():
+            shutil.rmtree(destination)
+        raise
 
 
 def query_search(query: str, records: list[dict], shards: dict[str, bytes],
