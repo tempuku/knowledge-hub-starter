@@ -302,7 +302,7 @@ class GitRecordWriter:
             parent = parent.parent
 
     def _changed_indexes(self, workspace):
-        return [p for p in git(workspace, "status", "--porcelain", "--untracked-files=all").splitlines()
+        return [p[3:] for p in git(workspace, "status", "--porcelain", "--untracked-files=all").splitlines()
                 if p[3:].endswith("/index.md")]
 
     def _receipt_commit(self, head, event_id):
