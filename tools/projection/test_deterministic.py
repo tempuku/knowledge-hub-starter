@@ -39,6 +39,28 @@ class DeterministicProjectionTests(unittest.TestCase):
         self.assertEqual(projection.search_shards(records), projection.search_shards(list(reversed(records))))
         self.assertEqual(projection.tokenize("CAFÉ café"), ["café", "café"])
 
+
+    def test_query_and_ranking_filters(self):
+        records = [
+            {"id": "a", "title": "Blue Harbor", "description": "", "tags": ["blue"],
+             "body": "", "status": "stable", "area": "notes/a", "type": "note",
+             "updated_at": "2026-01-01T00:00:00Z"},
+            {"id": "b", "title": "Harbor", "description": "blue", "tags": [],
+             "body": "", "status": "stable", "area": "notes/b", "type": "note",
+             "updated_at": "2026-02-01T00:00:00Z"},
+            {"id": "c", "title": "Blue Harbor", "description": "", "tags": [],
+             "body": "", "status": "deprecated", "area": "archive", "type": "note",
+             "updated_at": "2026-03-01T00:00:00Z"},
+        ]
+        shards = projection.search_shards(records)
+        self.assertEqual(projection.query_search("blue harbor", records, shards), ["a", "b"])
+        self.assertEqual(projection.query_search("blue harbor", records, shards, include_archived=True), ["c", "a", "b"])
+        self.assertEqual(projection.query_search("blue harbor", records, shards, area="notes"), ["a", "b"])
+        self.assertEqual(projection.query_search("blue harbor", records, shards, tag="blue"), ["a"])
+        self.assertEqual(projection.query_search("missing harbor", records, shards), [])
+        with self.assertRaises(projection.ProjectionError):
+            projection.query_search("aa bb cc dd ee ff gg hh ii", records, shards)
+
     def test_invalid_staging_path(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(projection.ProjectionError):
