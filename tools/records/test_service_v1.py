@@ -161,5 +161,77 @@ class ServiceFixtures(unittest.TestCase):
         self.assertEqual(git(self.root, "rev-parse", "main"), first["head"])
 
 
+
+    def test_two_updates_same_recorded_second(self):
+        """S1/S2: sequence (rather than timestamp) orders all revisions."""
+        first = self.create()
+        original = self.writer.read(first["record_id"])["content"]
+        prior_log = subprocess.check_output(
+            ["git", "show", "main:" + self.path[:-3] + ".log.md"], cwd=self.root)
+        recorded = parse_log(prior_log, self.path)[0]["recorded_at"]
+        timestamp = datetime.fromisoformat(recorded.replace("Z", "+00:00"))
+        fixed = GitRecordWriter(self.root, self.capability, clock=lambda: timestamp)
+        results = [first]
+        for number in (1, 2):
+            request = {
+                **{k: v for k, v in self.request.items() if k != "path"},
+                "command": "update",
+                "record_id": first["record_id"],
+                "expected_head": results[-1]["head"],
+                "expected_version": results[-1]["event_id"],
+                "idempotency_key": str(uuid.uuid4()),
+                "content": original.replace("Body\\n", f"Revision {number}\\n"),
+            }
+            results.append(fixed.write(request))
+        log = subprocess.check_output(
+            ["git", "show", "main:" + self.path[:-3] + ".log.md"], cwd=self.root)
+        events = parse_log(log, self.path)
+        self.assertEqual([e["sequence"] for e in events], [1, 2, 3])
+        self.assertEqual([e["recorded_at"] for e in events], [recorded] * 3)
+        self.assertEqual(len({e["id"] for e in events}), 3)
+        self.assertEqual(len({e["operation_id"] for e in events}), 3)
+        self.assertEqual(events[-1]["after"], self.writer.read(first["record_id"])["content"])
+        self.assertEqual(events[1]["before"], events[0]["after"])
+        self.assertEqual(events[2]["before"], events[1]["after"])
+
+    def test_lost_response_after_cas_recovers_original_commit(self):
+        """S8/S11: a crash after ref publication has a durable log receipt."""
+        def lose_response(point):
+            if point == "published":
+                raise ConnectionError("Injected response loss after CAS")
+        writer = GitRecordWriter(self.root, self.capability, fault=lose_response)
+        with self.assertRaises(ConnectionError):
+            writer.write(self.request)
+        original_commit = git(self.root, "rev-parse", "refs/heads/main")
+        self.assertNotEqual(original_commit, self.head)
+        recovered = self.writer.write(self.request)
+        self.assertEqual(recovered["status"], "already_committed")
+        self.assertEqual(recovered["head"], original_commit)
+        self.assertEqual(git(self.root, "rev-parse", "refs/heads/main"), original_commit)
+        self.assertEqual(len(git(self.root, "rev-list", "refs/heads/main").splitlines()), 2)
+
+    def test_remote_cas_rejects_second_independent_clone(self):
+        """S10: only one clone can advance a shared remote from the same base."""
+        with tempfile.TemporaryDirectory() as temp:
+            origin = Path(temp) / "origin.git"
+            a, b = Path(temp) / "a", Path(temp) / "b"
+            subprocess.run(["git", "clone", "--quiet", "--bare",
+                            str(self.root), str(origin)], check=True)
+            for clone in (a, b):
+                subprocess.run(["git", "clone", "--quiet", "--branch", "main",
+                                str(origin), str(clone)], check=True)
+            base = git(a, "rev-parse", "refs/heads/main")
+            self.assertEqual(base, git(b, "rev-parse", "refs/heads/main"))
+            writer_a = GitRecordWriter(a, self.capability, remote="origin")
+            writer_b = GitRecordWriter(b, self.capability, remote="origin")
+            request = {**self.request, "expected_head": base}
+            winner = writer_a.write(request)
+            with self.assertRaises(WriterError) as failure:
+                writer_b.write({**request, "idempotency_key": str(uuid.uuid4())})
+            self.assertEqual(failure.exception.code, "CONFLICT")
+            self.assertEqual(git(origin, "rev-parse", "refs/heads/main"), winner["head"])
+            self.assertEqual(git(b, "rev-parse", "refs/heads/main"), base)
+            self.assertEqual(writer_a.read(winner["record_id"])["head"], winner["head"])
+
 if __name__ == "__main__":
     unittest.main()
