@@ -286,7 +286,11 @@ def execute(writer, normalized):
                     reject("INTEGRITY_ERROR", str(exc))
                 if updated == old_source and source_path != old_path:
                     continue
-                _write_permission(writer, record_meta, command)
+                # Link repair modifies other aggregates: it requires the
+                # trusted UPDATE capability as well as permission to MOVE
+                # the initiating record. Move-only scope is insufficient.
+                _write_permission(writer, record_meta,
+                                  "move" if source_path == old_path else "update")
                 history = parse_log(logs[source_path[:-3] + ".log.md"],
                                     source_path)
                 if timestamp < history[-1]["recorded_at"]:
