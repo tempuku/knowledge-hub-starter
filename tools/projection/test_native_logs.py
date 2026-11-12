@@ -9,7 +9,7 @@ from deterministic import ProjectionError
 
 
 def uid(i):
-    return str(uuid.UUID(int=(1 << 76) | (2 << 62) | i))
+    return str(uuid.UUID(int=(4 << 76) | (2 << 62) | i))
 
 
 def digest(value):
