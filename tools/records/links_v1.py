@@ -92,7 +92,13 @@ def repair_relative_links(
         label, target, closing = match.group("prefix", "target", "suffix")
         if target.startswith("//"):
             raise IntegrityError("Protocol-relative links are not permitted")
-        if EXTERNAL.match(target) or target.startswith("#"):
+        if target.startswith("#"):
+            if target[1:] not in heading_fragments(current_sources[after_path]):
+                raise IntegrityError("Same-record heading fragment is absent")
+            return match.group(0)
+        if EXTERNAL.match(target):
+            # Stable record IDs and external links are position-independent.
+            # Their target checks remain the transaction service's duty.
             return match.group(0)
         if "#" in target:
             path_part, fragment = target.split("#", 1)
