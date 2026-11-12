@@ -268,39 +268,37 @@ class GitRecordWriter:
                         check=False)
 
     def _reindex_target(self, workspace, record_path):
-        # A newly-created folder is supported; existing legacy indexes cannot
-        # be overwritten without migration. Only add missing target indexes.
-        parent = Path(record_path).parent
-        while str(parent) != "openwiki":
-            index = workspace / parent / "index.md"
-            if index.exists():
-                break
-            entries = set()
-            for child in (workspace / parent).iterdir():
-                if child.name.endswith(".log.md") or child.name == "index.md":
-                    continue
-                if child.is_dir():
-                    entries.add(child.name + "/")
-                elif child.name.endswith(".md"):
-                    entries.add(child.name)
-            index.write_text(_index_content(parent.as_posix(), entries),
-                             encoding="utf-8")
-            parent = parent.parent
-        # For target indexes, preserve all existing entries and add missing
-        # direct child. Existing legacy index content is not regenerated.
-        child = Path(record_path).name
+        # Rebuild exact sorted direct-child links only along the affected
+        # ancestry. Never overwrite a legacy index that still carries content
+        # requiring the separate migration.
         parent = Path(record_path).parent
         while True:
-            index = workspace / parent / "index.md"
+            folder = workspace / parent
+            folder.mkdir(parents=True, exist_ok=True)
+            index = folder / "index.md"
+            entries = set()
+            for child in folder.iterdir():
+                if child.is_symlink():
+                    reject("INTEGRITY_ERROR", "Symlink in structural index directory")
+                if child.is_dir():
+                    entries.add(child.name + "/")
+                elif child.is_file() and child.name.endswith(".md") and (
+                        child.name not in ("index.md", "log.md") and
+                        not child.name.endswith(".log.md")):
+                    entries.add(child.name)
             if index.exists():
-                text = index.read_text(encoding="utf-8")
-                if ("(" + child + ")") not in text:
-                    index.write_text(text.rstrip() + "\n* [" +
-                                     child.rstrip("/").replace("-", " ").title() +
-                                     "](" + child + ")\n", encoding="utf-8")
+                old = index.read_text(encoding="utf-8")
+                if "journal/" in old:
+                    reject("INTEGRITY_ERROR", "Legacy indexes require reviewed migration")
+                # Preserve historical indexes with unrelated prose; those are
+                # migration input and must not be silently rewritten.
+                if index.as_posix().endswith("/openwiki/index.md"):
+                    if not old.startswith('---\\nokf_version: "0.2"\\n---\\n'):
+                        reject("INTEGRITY_ERROR", "Unexpected root index format")
+            index.write_text(_index_content(parent.as_posix(), entries),
+                             encoding="utf-8")
             if str(parent) == "openwiki":
                 break
-            child = parent.name + "/"
             parent = parent.parent
 
     def _changed_indexes(self, workspace):
