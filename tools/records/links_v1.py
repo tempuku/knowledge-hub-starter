@@ -71,7 +71,9 @@ def _resolve(source_path: str, target: str):
 
 def repair_relative_links(
     source: str, *, before_path: str, after_path: str,
-    moved_paths: dict[str, str], current_sources: dict[str, str]
+    moved_paths: dict[str, str], current_sources: dict[str, str],
+    record_ids: dict[str, str] | None = None,
+    structural_indexes: set[str] | None = None,
 ) -> tuple[str, set[str]]:
     """Rebase relative links through a proposed atomic move plan.
 
@@ -96,9 +98,21 @@ def repair_relative_links(
             if target[1:] not in heading_fragments(current_sources[after_path]):
                 raise IntegrityError("Same-record heading fragment is absent")
             return match.group(0)
+        if target.startswith("record:"):
+            identifier, _, fragment = target[len("record:"):].partition("#")
+            if record_ids is not None:
+                from validate_v1 import uid
+                uid(identifier, "record link")
+                path = record_ids.get(identifier)
+                if path not in current_sources:
+                    raise IntegrityError("Unresolved canonical record-ID link")
+                if fragment and fragment not in heading_fragments(current_sources[path]):
+                    raise IntegrityError("Unresolved canonical record heading")
+            return match.group(0)
         if EXTERNAL.match(target):
-            # Stable record IDs and external links are position-independent.
-            # Their target checks remain the transaction service's duty.
+            # Never treat script/file/data schemes as safe external links.
+            if not target.startswith(("http://", "https://", "mailto:")):
+                raise IntegrityError("Unsupported external Markdown link scheme")
             return match.group(0)
         if "#" in target:
             path_part, fragment = target.split("#", 1)
@@ -109,15 +123,31 @@ def repair_relative_links(
         previous = _resolve(before_path, path_part)
         destination = moved_paths.get(previous, previous)
         if destination not in current_sources:
-            raise IntegrityError("Broken current relative record link")
-        if fragment and fragment not in heading_fragments(current_sources[destination]):
+            if destination not in (structural_indexes or set()) or fragment:
+                raise IntegrityError("Broken current relative record link")
+        elif fragment and fragment not in heading_fragments(current_sources[destination]):
             raise IntegrityError("Heading fragment is absent from current target")
         targets.add(destination)
         relative = posixpath.relpath(destination, posixpath.dirname(after_path))
         updated = relative + ("#" + fragment if fragment else "")
         return label + updated + closing
 
-    return LINK.sub(rewrite, source), targets
+    # Markdown code fences are literal text, not links to rewrite.
+    result = []
+    in_fence = False
+    marker = None
+    for line in source.splitlines(keepends=True):
+        stripped = line.lstrip()
+        if stripped.startswith((chr(96) * 3, "~" * 3)):
+            kind = stripped[0]
+            if not in_fence:
+                in_fence, marker = True, kind
+            elif kind == marker:
+                in_fence, marker = False, None
+            result.append(line)
+        else:
+            result.append(line if in_fence else LINK.sub(rewrite, line))
+    return "".join(result), targets
 
 
 def resolve_historical_path(path, logs, current_records):
