@@ -128,6 +128,55 @@ class WriterPrimitiveFixtures(unittest.TestCase):
                           v1.parse_record(new_source.encode(), self.path)[0],
                           new_source, set())
 
+    def test_receipt_replay_and_changed_key_payload(self):
+        _, event = self.first()
+        log = writer.append_log(None, event).encode("utf-8")
+        normalized = writer.normalized_request(self.request)
+        self.assertEqual(writer.receipt_from_logs(
+            {self.path[:-3] + ".log.md": log}, normalized
+        )["id"], self.event_id)
+        self.assertIsNone(writer.receipt_from_logs({}, normalized))
+        changed = writer.normalized_request({
+            **self.request, "summary": "Different summary",
+        })
+        with self.assertRaises(writer.WriterError) as error:
+            writer.receipt_from_logs({self.path[:-3] + ".log.md": log}, changed)
+        self.assertEqual(error.exception.code, "IDEMPOTENCY_CONFLICT")
+
+    def test_receipt_duplicate_operation_rejected(self):
+        _, event = self.first()
+        second = dict(event, id=uid(), operation_id=uid())
+        logs = {
+            "openwiki/notes/a.log.md": writer.append_log(None, event).encode(),
+            "openwiki/notes/b.log.md": writer.append_log(None, second).encode(),
+        }
+        with self.assertRaises(writer.WriterError) as error:
+            writer.receipt_from_logs(logs, writer.normalized_request(self.request))
+        self.assertEqual(error.exception.code, "INTEGRITY_ERROR")
+
+    def test_public_capability_fails_closed(self):
+        normalized = writer.normalized_request(self.request)
+        denied = {"repository_mode": "public", "operations": ["create"],
+                  "publisher_scope": True}
+        with self.assertRaises(writer.WriterError) as error:
+            writer.require_capability(normalized, denied)
+        self.assertEqual(error.exception.code, "PUBLICATION_DENIED")
+        with self.assertRaises(writer.WriterError):
+            writer.require_capability(normalized, None)
+        allowed = {"repository_mode": "private", "operations": ["create"],
+                   "publisher_scope": False}
+        self.assertTrue(writer.require_capability(normalized, allowed))
+        publish = writer.normalized_request({**self.request, "publish_current": True})
+        with self.assertRaises(writer.WriterError):
+            writer.require_capability(publish, allowed)
+        public = writer.normalized_request({
+            **self.request,
+            "content": self.source.replace("title: ", "visibility: public\n"
+                                           "title: "),
+            "publish_current": True,
+        })
+        self.assertTrue(writer.require_capability(public, denied))
+
     def test_real_git_validator_accepts_generated_files(self):
         after, event = self.first()
         with tempfile.TemporaryDirectory() as temp:
