@@ -128,6 +128,13 @@ class GitRecordWriter:
         return found[0] if found else None
 
     def read(self, record_id):
+        # Authorization is a trusted launch capability, never caller-supplied.
+        # A missing/unknown capability must not permit reading private records.
+        if (type(self.capability) is not dict or
+                self.capability.get("repository_mode") not in ("public", "private") or
+                type(self.capability.get("operations")) not in (list, tuple, set) or
+                "read" not in self.capability["operations"]):
+            reject("NOT_FOUND", "Record not found")
         try:
             uuid.UUID(record_id)
         except (ValueError, TypeError):
