@@ -114,7 +114,7 @@ def write_staging(destination: Path, files: dict[str, bytes]) -> None:
         if not isinstance(relative, str) or not relative or not isinstance(content, bytes):
             raise ProjectionError("invalid staging entry")
         target = Path(relative)
-        if (target.is_absolute() or "\\\\" in relative or
+        if (target.is_absolute() or chr(92) in relative or
                 any(part in ("", ".", "..") for part in relative.split("/")) or
                 target.as_posix() != relative):
             raise ProjectionError("invalid output path")
