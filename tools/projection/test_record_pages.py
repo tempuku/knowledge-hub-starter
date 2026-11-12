@@ -22,7 +22,7 @@ class RecordPageTests(unittest.TestCase):
         items = json.loads(first["records/catalog/1.json"])["items"]
         self.assertEqual([item['id'] for item in items], ["c", "b", "a"])
         for item in items:
-            self.assertEqual(item["detail_bytes"], len(first[f'records/{item['id']}.json']))
+            self.assertEqual(item["detail_bytes"], len(first[f"records/{item['id']}.json"]))
             self.assertEqual(json.loads(first[f'records/{item['id']}.meta.json"])["detail_bytes"],
                              item["detail_bytes"])
             self.assertNotIn("detail_bytes", json.loads(first[f'records/{item['id']}.json"]))
