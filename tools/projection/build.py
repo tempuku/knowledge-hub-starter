@@ -16,7 +16,7 @@ from deterministic import ProjectionError, generation_id, json_bytes, write_stag
 from git_source import load_revision, git
 from publication import load_policy, select_public, audit_public
 
-EXPORTER_VERSION = "v1-projection-0.1"
+EXPORTER_VERSION = "v1-projection-0.2"
 
 
 def publish(root: Path, destination: Path, revision: str, *, mode: str = "private"):
@@ -28,16 +28,25 @@ def publish(root: Path, destination: Path, revision: str, *, mode: str = "privat
     if mode == "public":
         policy_bytes = git(root, "show", f"{commit}:config/publication.json")
         policy, policy_digest = load_policy(root, mode, revision_bytes=policy_bytes)
-        excluded = [r for r in records if r["id"] not in policy["record_ids"]]
-        forbidden.update(r["id"] for r in excluded)
-        forbidden.update(r["path"] for r in excluded)
-        forbidden.update(e["id"] for r in excluded for e in histories[r["id"]])
-        for r in records:
-            for event in histories[r["id"]]:
-                forbidden.add(event["actor"]["id"])
-                if event["id"] not in policy["event_ids"]:
-                    forbidden.add(event["id"])
+        original_records = records
+        original_histories = histories
         records, histories, summaries = select_public(records, histories, summaries, policy)
+        selected_record_ids = {r["id"] for r in records}
+        selected_event_ids = {event["id"] for events in histories.values() for event in events}
+        # Audit every source identifier that policy/eligibility actually omitted.
+        # Allowlisting a currently private record or private-before event must
+        # never exempt its references from the public byte scan.
+        for record in original_records:
+            if record["id"] not in selected_record_ids:
+                forbidden.add(record["id"])
+                forbidden.add(record["path"])
+                forbidden.update(event["id"] for event in original_histories[record["id"]])
+            else:
+                for event in original_histories[record["id"]]:
+                    if event["id"] not in selected_event_ids:
+                        forbidden.add(event["id"])
+            # Actor IDs are always redacted from the public projection.
+            forbidden.update(event["actor"]["id"] for event in original_histories[record["id"]])
     generation = generation_id(tree, EXPORTER_VERSION, policy_digest)
     destination = destination.resolve()
     generation_dir = destination / "g" / generation
