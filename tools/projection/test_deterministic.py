@@ -11,9 +11,11 @@ spec.loader.exec_module(projection)
 
 
 class DeterministicProjectionTests(unittest.TestCase):
-    def test_generation_changes_with_policy(self):
+    def test_generation_changes_with_policy_and_exporter_version(self):
         self.assertEqual(projection.generation_id("tree", "v1", "public"), projection.generation_id("tree", "v1", "public"))
         self.assertNotEqual(projection.generation_id("tree", "v1", "public"), projection.generation_id("tree", "v1", "private"))
+        self.assertNotEqual(projection.generation_id("tree", "v1-projection-0.1", "public"),
+                            projection.generation_id("tree", "v1-projection-0.2", "public"))
 
     def test_json_utf8_and_trailing_newline(self):
         self.assertEqual(projection.json_bytes({"schema_version": 1, "title": "Été"}), b'{\n  "schema_version": 1,\n  "title": "\xc3\x89t\xc3\xa9"\n}\n')
