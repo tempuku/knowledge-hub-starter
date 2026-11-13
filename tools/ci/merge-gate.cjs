@@ -7,6 +7,10 @@ const BASELINE = "5befec6cc67486327fa36b22f54f22db59cceecb";
 const CONTEXT = "knowledge-merge-gate";
 const REQUIRED_STEPS = [
   "Test Knowledge Hub frontmatter validation",
+  "Test v1 storage schemas and histories in disposable Git repositories",
+  "Test deterministic projection primitives (#31)",
+  "Validate v1 source records and append-only trusted-base prefix",
+  "Test automated PR readiness safety (no approval or merge)",
   "Validate all staged OpenWiki pages and links",
   "Build and smoke-test private diary locally in CI",
   "Check browser JavaScript syntax and iOS 12 compatibility",
@@ -36,6 +40,50 @@ function parseEvidence(body) {
   return rows;
 }
 
+function parseAcceptanceIds(value) {
+  const ids = new Set();
+  const parts = String(value || "").split(",");
+  if (!parts.length) return null;
+  for (const raw of parts) {
+    const part = raw.trim();
+    if (part === "A-04") { ids.add(part); continue; }
+    const match = part.match(/^([SPU])\s*(\d+)\s*(?:[-–]\s*([SPU])?\s*(\d+))?$/i);
+    if (!match) return null;
+    const [, prefixRaw, startRaw, endPrefixRaw, endRaw] = match;
+    const prefix = prefixRaw.toUpperCase();
+    const start = Number(startRaw);
+    const end = endRaw === undefined ? start : Number(endRaw);
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 1 || end < start ||
+        (endPrefixRaw && endPrefixRaw.toUpperCase() !== prefix)) return null;
+    if (end - start > 500) return null;
+    for (let n = start; n <= end; n++) ids.add(prefix + n);
+  }
+  return ids.size ? ids : null;
+}
+
+function parseIssueAcceptanceIds(value) {
+  const text = String(value || "");
+  if (!text.trim()) return null;
+  const ids = new Set();
+  if (/\bA-04\b/i.test(text)) ids.add("A-04");
+  const segments = text.split(";");
+  for (let index = 0; index < segments.length; index++) {
+    const segment = segments[index];
+    if (index > 0 && /handed\s+to|delegat/i.test(segment)) continue;
+    const matches = [...segment.matchAll(/\b([SPU])\s*(\d+)\s*(?:[-–]\s*([SPU])?\s*(\d+))?/gi)];
+    for (const match of matches) {
+      const [, prefixRaw, startRaw, endPrefixRaw, endRaw] = match;
+      const prefix = prefixRaw.toUpperCase();
+      const start = Number(startRaw);
+      const end = endRaw === undefined ? start : Number(endRaw);
+      if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 1 || end < start ||
+          (endPrefixRaw && endPrefixRaw.toUpperCase() !== prefix) || end - start > 500) return null;
+      for (let n = start; n <= end; n++) ids.add(prefix + n);
+    }
+  }
+  return ids.size ? ids : null;
+}
+
 function validDetail(value) {
   const s = normalized(value);
   return s.length >= 5 &&
@@ -55,12 +103,15 @@ function validateBody({body, issueNumber, issueBody, sha}) {
   if (!new RegExp("Head SHA:\\s*\`?" + exact + "\`?", "i").test(md))
     failures.push("Head SHA must match the current 40-character PR head");
   const ids = md.match(/^\s*Acceptance IDs:\s*(.+)$/mi);
-  if (!ids || !/(?:A-04|[SPU]\d+)/.test(ids[1]))
-    failures.push("Concrete acceptance scenario IDs are missing");
+  const providedIds = ids && parseAcceptanceIds(ids[1]);
+  if (!providedIds)
+    failures.push("Concrete acceptance scenario IDs are missing or malformed");
   const issueIdLine = String(issueBody || "").match(/Required acceptance scenario IDs:\*?\*?\s*([^\n]+)/i);
   if (issueIdLine) {
-    for (const id of (issueIdLine[1].match(/A-04|[SPU]\d+/g) || [])) {
-      if (!ids || !ids[1].includes(id)) failures.push("Missing required scenario ID " + id);
+    const requiredIds = parseIssueAcceptanceIds(issueIdLine[1]);
+    if (!requiredIds) failures.push("Issue required acceptance scenario IDs are malformed");
+    else for (const id of requiredIds) {
+      if (!providedIds || !providedIds.has(id)) failures.push("Missing required scenario ID " + id);
     }
   }
   if (!/https:\/\/github\.com\/tempuku\/knowledge-hub-starter\/blob\/5befec6cc67486327fa36b22f54f22db59cceecb\/openwiki\/design\//.test(md))
@@ -236,5 +287,5 @@ async function run({github,context,core}) {
   }
 }
 
-module.exports = {BASELINE,CONTEXT,REQUIRED_STEPS,requiredChecks,parseEvidence,
+module.exports = {BASELINE,CONTEXT,REQUIRED_STEPS,requiredChecks,parseEvidence,parseAcceptanceIds,parseIssueAcceptanceIds,
   validateBody,validateCoreRun,validateProtection,chooseRun,evaluate,run};
