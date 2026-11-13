@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
+from build import is_native_v1_log
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
@@ -45,13 +46,19 @@ for p in source.rglob("*.md"):
 # Independently enumerate native history entries.
 FRONT = re.compile(r'\A---\r?\n(.*?)\r?\n---\r?\n', flags=re.S)
 revision_bodies = {}
+native_v1_refs = set()
 for log_file in (ROOT / "openwiki").rglob("*.log.md"):
     source_log = log_file.read_text(encoding="utf-8")
     blocks = re.findall(r"^## Entry ([a-z0-9-]+)\n```json\n(.*?)\n```(?:\n|$)", source_log, re.M | re.S)
     assert source_log.count("## Entry ") == len(blocks), log_file
-    for entry_id, raw in blocks:
-        entry = json.loads(raw)
+    entries = [json.loads(raw) for _, raw in blocks]
+    for (entry_id, _), entry in zip(blocks, entries):
         assert entry["id"] == entry_id
+    if is_native_v1_log(source_log, entries):
+        for entry in entries:
+            native_v1_refs.update((entry["id"], entry["record_id"]))
+        continue
+    for (entry_id, _), entry in zip(blocks, entries):
         if a.public_only:
             record_file = ROOT / entry["record"]
             record_meta = yaml.safe_load(FRONT.match(record_file.read_text()).group(1))
@@ -60,6 +67,15 @@ for log_file in (ROOT / "openwiki").rglob("*.log.md"):
         record_id = "log-" + hashlib.sha256((entry["record"] + ":" + entry_id).encode()).hexdigest()[:24]
         expected.add(record_id)
         revision_bodies[record_id] = entry["after"]
+
+# A legacy envelope with forged v1-looking fields must not be classified as
+# native v1 and silently skipped; the legacy parser will reject its missing path.
+forged_legacy_event = {"id": "forged-event", "schema_version": 1,
+                       "record_id": "forged-record", "after": "body"}
+assert not is_native_v1_log(
+    "# OKF Record Change Log\n", [forged_legacy_event]
+)
+assert is_native_v1_log("# Record history\n", [forged_legacy_event])
 
 seen = set()
 for day in calendar["days"]:
@@ -90,4 +106,7 @@ for day in calendar["days"]:
     assert found == day["count"]
     assert timestamps == sorted(timestamps, reverse=True), day["date"]
 assert seen == expected, ("missing", sorted(expected - seen), "extra", sorted(seen - expected))
+serialized = b"".join(path.read_bytes() for path in output.rglob("*.json"))
+for ref in native_v1_refs:
+    assert ref.encode("utf-8") not in serialized, f"v1-only reference leaked into legacy diary output: {ref}"
 print(f"Diary smoke check passed: {len(seen)} included entries, public_only={a.public_only}")

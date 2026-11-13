@@ -29,6 +29,25 @@ NOTE = re.compile(r"^(\d{4})/(\d{2})/(\d{2})/([a-z0-9][a-z0-9-]*)\.md$")
 FRONT = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", flags=re.S)
 
 
+def is_native_v1_log(source_log: str, entries: list[dict]) -> bool:
+    """Recognize the v1 sibling-log envelope before legacy projection skips it.
+
+    Strict v1 integrity validation runs separately; this keeps the transitional
+    exporter from treating a legacy event as v1 merely because it carries extra
+    fields with familiar names.
+    """
+    if not source_log.startswith("# Record history\n") or not entries:
+        return False
+    record_ids = set()
+    for event in entries:
+        if (type(event) is not dict or type(event.get("schema_version")) is not int or
+                event.get("schema_version") != 1 or type(event.get("record_id")) is not str or
+                type(event.get("id")) is not str):
+            return False
+        record_ids.add(event["record_id"])
+    return len(record_ids) == 1
+
+
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -200,10 +219,16 @@ def build(output: Path, public_only: bool) -> tuple[int, int]:
         matches = list(log_pattern.finditer(source_log))
         if source_log.count("## Entry ") != len(matches):
             raise ValueError(f"Malformed log: {log_file}")
-        for match in matches:
-            entry = json.loads(match.group(2))
+        entries = [json.loads(match.group(2)) for match in matches]
+        for match, entry in zip(matches, entries):
             if entry.get("id") != match.group(1):
                 raise ValueError(f"Log entry ID mismatch: {log_file}")
+        # Native v1 logs are validated and projected by the separate v1
+        # pipeline. This transitional legacy builder must not reinterpret
+        # their schema or invent legacy record paths/diary rows.
+        if is_native_v1_log(source_log, entries):
+            continue
+        for match, entry in zip(matches, entries):
             record = entry.get("record")
             if not isinstance(record, str) or not record.startswith("openwiki/") or ".." in Path(record).parts:
                 raise ValueError(f"Unsafe record path: {log_file}")
