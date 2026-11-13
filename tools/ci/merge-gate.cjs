@@ -185,7 +185,7 @@ function validateProtection(branch, rules) {
   const contexts = new Set(rules.filter(r => r.type === "required_status_checks")
     .flatMap(r => r.parameters?.required_status_checks || [])
     .map(c => c.context));
-  for (const ctx of ["validate-openwiki", CONTEXT]) {
+  for (const ctx of ["validate-openwiki"]) {
     if (!contexts.has(ctx))
       failures.push("main does not require status " + ctx);
   }

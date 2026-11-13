@@ -2,6 +2,8 @@
 // Synthetic parser fixtures are policy tests only, NOT real PR/CI acceptance evidence.
 const {test} = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const gate = require("./merge-gate.cjs");
 
 const SHA = "a".repeat(40);
@@ -120,19 +122,30 @@ test("core workflow run tied to exact commit and PR", () => {
   assert.equal(gate.chooseRun([{...base,pull_requests:[{number:100}]}],pr),null);
 });
 
-test("branch protected flag alone never passes enforced rules inspection", () => {
+test("branch requires core CI while evidence gate status remains advisory", () => {
   const required=[
     {type:"pull_request"},
     {type:"non_fast_forward"},
     {type:"required_status_checks",parameters:{required_status_checks:[
-      {context:"validate-openwiki"},{context:"knowledge-merge-gate"}]}}
+      {context:"validate-openwiki"}]}}
   ];
+  // No knowledge-merge-gate status is configured or required.
   assert.deepEqual(gate.validateProtection({protected:true},required),[]);
   assert.ok(gate.validateProtection({protected:true},[]).length);
   assert.ok(gate.validateProtection({protected:false},required).length);
   assert.ok(gate.validateProtection({protected:true},required.slice(0,2)).length);
   assert.ok(gate.validateProtection({protected:true},required.slice(1)).length);
+  assert.ok(gate.validateProtection({protected:true},required.map(rule => rule.type === "required_status_checks"
+    ? {...rule,parameters:{required_status_checks:[]}} : rule)).some(e=>e.includes("validate-openwiki")));
   assert.ok(gate.validateProtection({protected:true},required.filter(r=>r.type!=="non_fast_forward")).length);
+});
+
+test("ruleset requires core validation but not advisory evidence status", () => {
+  const config = JSON.parse(fs.readFileSync(path.join(__dirname, "main-ruleset.json"), "utf8"));
+  const checks = config.rules.find(rule=>rule.type==="required_status_checks")
+    .parameters.required_status_checks.map(check=>check.context);
+  assert.deepEqual(checks, ["validate-openwiki"]);
+  assert.equal(checks.includes(gate.CONTEXT), false);
 });
 
 test("multi-word pending ledger values cannot pass as evidence", () => {

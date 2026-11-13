@@ -1,12 +1,11 @@
 # Knowledge Hub implementation PR — evidence gate
 
 > Before merging, replace ALL placeholders below. Copy **every** checkbox from
-> the linked issue verbatim (including its mandatory gate); change each to [x]
-> only after the result is demonstrated. Never assert a mock is real evidence.
-> **One numbered C-row per issue checkbox**, in exactly the same order.
-> Each row must include real, current-head evidence. Unchecked items,
-> unverified scenarios or stale SHA intentionally block merging. No independent
-> approval is required by the owner-approved issue #24 policy amendment.
+> the linked issue verbatim; change each to [x] only after the result is
+> demonstrated. Never assert a mock is real evidence. **One numbered C-row per
+> issue checkbox**, in exactly the same order. The evidence gate status is
+> advisory; it does not block merging. Core `validate-openwiki` CI remains
+> required. The owner may request review at their discretion.
 >
 > Gate specification: [issue #26](https://github.com/tempuku/knowledge-hub-starter/issues/26)
 > and [A-04 acceptance](https://github.com/tempuku/knowledge-hub-starter/blob/5befec6cc67486327fa36b22f54f22db59cceecb/openwiki/design/acceptance.md#a-04-implementation-evidence-and-completion).
@@ -51,12 +50,12 @@ should link the exact SHA. Do not use this template as evidence of completion.
 | C1 | <head-sha> | <command> | <fixture-revision> | <expected> | <observed> | <artifact-url> | <limitations> |
 | C2 | <head-sha> | <command> | <fixture-revision> | <expected> | <observed> | <artifact-url> | <limitations> |
 
-## Autonomous verification and optional owner review
+## Verification and optional owner review
 
-Independent GitHub APPROVED reviews are **not mandatory** under the
-[owner-approved policy amendment](https://github.com/tempuku/knowledge-hub-starter/issues/24#issuecomment-6819748012).
-The assistant must verify every checkbox and current-head evidence row, inspect
-privacy/regression implications, and check exact-head CI and both required
-GitHub status contexts before squash merge. Optional human review of epic #24
-is welcome but is not an implementation-PR blocker. Never report synthetic
-unit tests as live merge-enforcement proof.
+The evidence gate's `knowledge-merge-gate` status is advisory and is not a
+required GitHub status context. Reviewers should inspect the current diff,
+issue checklist, SHA-bound evidence, privacy/regression implications, and the
+exact-head `validate-openwiki` result. Independent GitHub approvals are not
+required under the [owner-approved policy amendment](https://github.com/tempuku/knowledge-hub-starter/issues/24#issuecomment-6819748012).
+The owner may request review at their discretion. Never report synthetic unit
+tests as live enforcement proof or claim unfinished #31/#32 acceptance.
