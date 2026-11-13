@@ -2,6 +2,8 @@
 // Synthetic parser fixtures are policy tests only, NOT real PR/CI acceptance evidence.
 const {test} = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const gate = require("./merge-gate.cjs");
 
 const SHA = "a".repeat(40);
@@ -48,6 +50,43 @@ test("head change invalidates old assertions and artifact rows", () => {
   assert.ok(errors.some(s=>s.includes("Head SHA")));
   assert.ok(errors.some(s=>s.includes("evidence is not anchored")));
 });
+test("acceptance ID ranges expand exactly and reject malformed or reversed input", () => {
+  assert.deepEqual([...gate.parseAcceptanceIds("U1–U3, S2 - S4")],
+    ["U1", "U2", "U3", "S2", "S3", "S4"]);
+  assert.equal(gate.parseAcceptanceIds("U0"), null);
+  assert.equal(gate.parseAcceptanceIds("U3-U1"), null);
+  assert.equal(gate.parseAcceptanceIds("U1-P3"), null);
+  assert.equal(gate.parseAcceptanceIds("U1-bad"), null);
+});
+test("acceptance IDs compare exact expanded tokens, not substrings", () => {
+  const issueWithU1 = issue.replace("A-04", "A-04, U1");
+  const bodyWithU10 = body().replace("Acceptance IDs: A-04", "Acceptance IDs: A-04, U10");
+  const errors = gate.validateBody({body:bodyWithU10,issueNumber:26,issueBody:issueWithU1,sha:SHA});
+  assert.ok(errors.some(e=>e.includes("Missing required scenario ID U1")));
+  const validRange = body().replace("Acceptance IDs: A-04", "Acceptance IDs: A-04, U1–U3");
+  const issueWithRange = issue.replace("A-04", "A-04, U1-U3");
+  assert.deepEqual(gate.validateBody({body:validRange,issueNumber:26,issueBody:issueWithRange,sha:SHA}),[]);
+});
+test("normative issue ID prose expands ranges and excludes handed-off scenarios", () => {
+  const cases = [
+    ["P1, P2, P3, P4, P9, P14; P16 performance checks handed to #37.",
+      ["P1","P2","P3","P4","P9","P14"]],
+    ["P5, P6, P7, P8, P15; S20.",
+      ["P5","P6","P7","P8","P15","S20"]],
+    ["U1–U8, U14, U17–U24 as applicable; #13/#21 discussions.",
+      ["U1","U2","U3","U4","U5","U6","U7","U8","U14",...Array.from({length:8},(_,i)=>"U"+(i+17))]],
+    ["S17 and S20; regressions S8–S11. Working real stdio MCP validation required.",
+      ["S8","S9","S10","S11","S17","S20"]]
+  ];
+  for (const [line, expected] of cases)
+    assert.deepEqual([...gate.parseIssueAcceptanceIds(line)].sort(), [...expected].sort());
+});
+test("missing interior scenario in an expanded range fails", () => {
+  const issueWithRange = issue.replace("A-04", "A-04, U1–U3");
+  const bodyMissingU2 = body().replace("Acceptance IDs: A-04", "Acceptance IDs: A-04, U1, U3");
+  const errors = gate.validateBody({body:bodyMissingU2,issueNumber:26,issueBody:issueWithRange,sha:SHA});
+  assert.ok(errors.some(e=>e.includes("Missing required scenario ID U2")));
+});
 test("missing design traceability fails even with evidence present", () => {
   const bad = body().replace("Acceptance IDs: A-04","Acceptance IDs: None");
   const errors = gate.validateBody({body:bad,issueNumber:26,issueBody:issue,sha:SHA});
@@ -64,8 +103,14 @@ test("core workflow and every required step must be truly successful", () => {
     steps:gate.REQUIRED_STEPS.map(name=>({name,conclusion:"success"}))};
   assert.deepEqual(gate.validateCoreRun(run,[job]),[]);
   assert.ok(gate.validateCoreRun({...run,conclusion:"skipped"},[job]).length);
-  assert.ok(gate.validateCoreRun(run,[{...job,steps:job.steps.slice(1)}]).length);
-  assert.ok(gate.validateCoreRun(run,[{...job,conclusion:"skipped"}]).length);
+  for (const required of gate.REQUIRED_STEPS) {
+    assert.ok(gate.validateCoreRun(run,[{...job,steps:job.steps.filter(s=>s.name!==required)}])
+      .some(error=>error.includes(required)), "missing step must fail: " + required);
+    assert.ok(gate.validateCoreRun(run,[{...job,steps:job.steps.map(s=>s.name===required?{...s,conclusion:"skipped"}:s)}])
+      .some(error=>error.includes(required)), "skipped step must fail: " + required);
+    assert.ok(gate.validateCoreRun(run,[{...job,steps:job.steps.map(s=>s.name===required?{...s,conclusion:"failure"}:s)}])
+      .some(error=>error.includes(required)), "failed step must fail: " + required);
+  }
 });
 test("core workflow run tied to exact commit and PR", () => {
   const pr={number:99,head:{sha:SHA,ref:"feature",repo:{full_name:"tempuku/knowledge-hub-starter"}}};
@@ -77,19 +122,30 @@ test("core workflow run tied to exact commit and PR", () => {
   assert.equal(gate.chooseRun([{...base,pull_requests:[{number:100}]}],pr),null);
 });
 
-test("branch protected flag alone never passes enforced rules inspection", () => {
+test("branch requires core CI while evidence gate status remains advisory", () => {
   const required=[
     {type:"pull_request"},
     {type:"non_fast_forward"},
     {type:"required_status_checks",parameters:{required_status_checks:[
-      {context:"validate-openwiki"},{context:"knowledge-merge-gate"}]}}
+      {context:"validate-openwiki"}]}}
   ];
+  // No knowledge-merge-gate status is configured or required.
   assert.deepEqual(gate.validateProtection({protected:true},required),[]);
   assert.ok(gate.validateProtection({protected:true},[]).length);
   assert.ok(gate.validateProtection({protected:false},required).length);
   assert.ok(gate.validateProtection({protected:true},required.slice(0,2)).length);
   assert.ok(gate.validateProtection({protected:true},required.slice(1)).length);
+  assert.ok(gate.validateProtection({protected:true},required.map(rule => rule.type === "required_status_checks"
+    ? {...rule,parameters:{required_status_checks:[]}} : rule)).some(e=>e.includes("validate-openwiki")));
   assert.ok(gate.validateProtection({protected:true},required.filter(r=>r.type!=="non_fast_forward")).length);
+});
+
+test("ruleset requires core validation but not advisory evidence status", () => {
+  const config = JSON.parse(fs.readFileSync(path.join(__dirname, "main-ruleset.json"), "utf8"));
+  const checks = config.rules.find(rule=>rule.type==="required_status_checks")
+    .parameters.required_status_checks.map(check=>check.context);
+  assert.deepEqual(checks, ["validate-openwiki"]);
+  assert.equal(checks.includes(gate.CONTEXT), false);
 });
 
 test("multi-word pending ledger values cannot pass as evidence", () => {

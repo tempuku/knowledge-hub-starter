@@ -1,5 +1,5 @@
 {
-  "name": "Knowledge Hub main - required evidence and validation",
+  "name": "Knowledge Hub main - required validation",
   "target": "branch",
   "enforcement": "active",
   "bypass_actors": [],
@@ -36,9 +36,6 @@
         "required_status_checks": [
           {
             "context": "validate-openwiki"
-          },
-          {
-            "context": "knowledge-merge-gate"
           }
         ]
       }

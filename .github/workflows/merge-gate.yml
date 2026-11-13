@@ -1,4 +1,4 @@
-name: Enforce evidence merge gate
+name: Advisory evidence review
 
 # Privileged events intentionally execute ONLY trusted main-branch code.
 # PR body, commits, and linked reports are parsed as untrusted text only.
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   evidence-merge-gate:
-    name: evidence-merge-gate
+    name: advisory-evidence-review
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,7 +28,7 @@ jobs:
         with:
           ref: main
           persist-credentials: false
-      - name: Evaluate current PR head, issue, CI and human review
+      - name: Evaluate current PR head, issue, CI and branch rules (advisory)
         uses: actions/github-script@v7
         with:
           script: |

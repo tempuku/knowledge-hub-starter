@@ -13,11 +13,17 @@ The `Validate OKF and diary` workflow must run on pull requests, pushes to `main
 
 The [acceptance contract](design/acceptance.md) requires v1 record/event schemas, complete chain and trusted-base prefix validation, real writer/MCP transaction tests, deterministic generation/publication checks, migration reconciliation and UI/performance evidence. Existing OKF/browser checks do not establish those guarantees. Keep current checks enabled while implementing the target.
 
-## Protected evidence merge gate — verified November 12, 2026
+## Current owner policy — November 13, 2026
+
+The owner amendment to [issue #24](https://github.com/tempuku/knowledge-hub-starter/issues/24) makes `knowledge-merge-gate` advisory; it is not a required status or administrator-configuration blocker. The declarative [`main-ruleset.json`](../tools/ci/main-ruleset.json) requires `validate-openwiki`. Current live GitHub settings after this policy change have not been reverified. Reviewers should still inspect the diff, exact-head core CI, evidence, privacy impact and remaining acceptance work. Bounded implementation PRs may merge with parent criteria still open; those criteria stay open and must not be described as complete.
+
+## Historical evidence-gate configuration — verified November 12, 2026
+
+The configuration and enforcement results below document the former policy as observed on November 12. They are historical evidence and do not describe current merge requirements.
 
 This milestone is recorded in the [November 12 diary entry](journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.md), [original implementation issue #26](https://github.com/tempuku/knowledge-hub-starter/issues/26) and [completed remediation issue #42](https://github.com/tempuku/knowledge-hub-starter/issues/42).
 
-### Enforced contract
+### Prior diagnostic contract
 
 The active [main ruleset #27036674](https://github.com/tempuku/knowledge-hub-starter/rules/27036674) requires pull requests and successful `validate-openwiki` **and** `knowledge-merge-gate` statuses, with no bypass actors. Force pushes and deletion are denied by the ruleset. Mandatory independent GitHub approval was explicitly removed by the [owner-approved epic #24 amendment](https://github.com/tempuku/knowledge-hub-starter/issues/24#issuecomment-6819748012); the platform has zero required approving reviews.
 
@@ -36,7 +42,7 @@ The trusted-main [auto-ready workflow](../.github/workflows/auto-ready.yml) list
 
 **Live result:** [PR #53](https://github.com/tempuku/knowledge-hub-starter/pull/53) began as a draft. Its [exact-head CI #43199159208](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43199159208) passed all required steps; [GitHub Actions run #43199420378](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43199420378) logged promotion at commit `bc3f19b61a4254fd8ce8088314adc29d5b8c8a26`, and the GitHub PR timeline reported `ready_for_review` by `github-actions[bot]`. Its [gate #43200352150](https://github.com/tempuku/knowledge-hub-starter/actions/runs/43200352150) passed and it squash-merged as [65a3cc1](https://github.com/tempuku/knowledge-hub-starter/commit/65a3cc1a9204ac94b3a17052afdf09500a6ebe69).
 
-A successful auto-ready operation is **not** permission to merge; the separate evidence gate and current-head CI must pass. When either fails, fix the PR, update SHA-bound evidence and rerun checks rather than asking the owner for routine Ready or approval clicks. The workflow does not auto-merge; authorized agents or maintainers may merge only when GitHub permits it.
+A successful auto-ready operation is **not** permission to merge. The workflow does not auto-merge; reviewers should inspect current-head CI and evidence. The evidence status is advisory under the current owner policy.
 
 **Known limits:** The observed native promotion was for a same-repository PR, not an untrusted fork. No disposable direct-push denial attempt, physical iPad verification, live Cloudflare deployment or completion of the remaining Knowledge Hub implementation DAG is claimed. The checked ruleset establishes configured protection; the tested PRs establish positive/negative merge enforcement.
 
@@ -55,7 +61,7 @@ The staged checker also exposed a newer schema mismatch: [the guide](GUIDE.md) a
 
 The separate `Return to PR when CI completes` workflow handles completed validation runs. It needs `pull-requests: write` to create or update its PR conversation comment; `issues: write` with `pull-requests: read` returned `403 Resource not accessible by integration` in [this handoff run](https://github.com/tempuku/knowledge-hub-starter/actions/runs/42975069303).
 
-Keep its existing same-repository, current-head and open-PR checks. This privileged workflow must never check out or run PR code. Its comment records a CI result but does not authorize merging; an agent or maintainer verifies current-head evidence and both required statuses. Mandatory independent GitHub review is no longer required under the owner-approved amendment linked above.
+Keep its existing same-repository, current-head and open-PR checks. This privileged workflow must never check out or run PR code. Its comment records a CI result but does not authorize merging; an agent or maintainer verifies current-head core CI and evidence. The evidence status is advisory and independent GitHub approval is not required under the owner amendment linked above.
 
 ## Verification
 
