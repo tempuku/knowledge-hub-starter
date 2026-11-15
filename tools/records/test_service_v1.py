@@ -176,6 +176,37 @@ class ServiceFixtures(unittest.TestCase):
         self.assertEqual(err.exception.code, "PUBLICATION_DENIED")
         self.assertEqual(git(self.root, "rev-parse", "main"), self.head)
 
+    def test_public_writes_never_modify_publication_policy(self):
+        # A trusted public writer may change an explicitly public record, but
+        # publication eligibility remains a separately reviewed Git policy.
+        policy_path = self.root / "config/publication.json"
+        policy_path.parent.mkdir()
+        policy = b'{"schema_version":1,"record_ids":[],"event_ids":[],"actor_labels":[]}\n'
+        policy_path.write_bytes(policy)
+        git(self.root, "add", "config/publication.json")
+        git(self.root, "commit", "-qm", "reviewed empty publication policy")
+        public = self.make_writer(self.root, {**self.capability,
+            "repository_mode": "public", "publisher_scope": True})
+        request = {**self.request, "expected_head": git(self.root, "rev-parse", "HEAD"),
+            "content": self.source.replace('title: "Sample"', 'title: "Sample"\nvisibility: public'),
+            "publish_current": True}
+        first = public.write(request)
+        current = public.read(first["record_id"])
+        second = public.write({
+            **{k: v for k, v in request.items() if k != "path"},
+            "command": "update", "idempotency_key": str(uuid.uuid4()),
+            "record_id": first["record_id"], "expected_head": first["head"],
+            "expected_version": first["version"],
+            "content": current["content"].replace("Body\n", "Second body\n"),
+        })
+        for result in (first, second):
+            self.assertEqual(result["publication"], "pending")
+            actual = subprocess.check_output(
+                ["git", "show", result["head"] + ":config/publication.json"], cwd=self.root)
+            self.assertEqual(actual, policy)
+            changed = git(self.root, "diff-tree", "--no-commit-id", "--name-only", "-r", result["head"])
+            self.assertNotIn("config/publication.json", changed.splitlines())
+
     def test_fault_before_publication_keeps_branch(self):
         for failure in ("staged", "validated", "committed"):
             with self.subTest(failure=failure):

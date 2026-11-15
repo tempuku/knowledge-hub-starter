@@ -10,6 +10,8 @@ The owner-selected target is **hierarchical records + per-record logs + a genera
 
 [Issue #26](https://github.com/tempuku/knowledge-hub-starter/issues/26) tracks the evidence evaluator, whose `knowledge-merge-gate` status is advisory under the current owner policy. See the [current policy and diagnostics](docs/merge-gate.md). The PR template helps reviewers check issue acceptance rows, SHA-bound evidence, privacy/regression notes, and exact-head results. The `validate-openwiki` status remains required by the declarative main ruleset; the advisory status is not. Independent GitHub approvals are not required under the [owner-approved #24 amendment](https://github.com/tempuku/knowledge-hub-starter/issues/24#issuecomment-6819748012). Reviewers should inspect the current diff and evidence; do not present unfinished #31/#32 acceptance or synthetic fixtures as completed proof.
 
+The [public projection privacy acceptance map](docs/acceptance/privacy.md) links publication-boundary requirements to the executable real-Git and writer tests. It records test coverage, not a passed CI result.
+
 ## What is in this starter (current, transitional)
 
 - `openwiki/`: source-of-truth OKF bundle, one concept/diary record per Markdown file.

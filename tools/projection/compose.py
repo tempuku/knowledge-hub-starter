@@ -5,13 +5,44 @@ allowlisting are deliberately separate operations.
 """
 from __future__ import annotations
 
-from collections import Counter, defaultdict
+from collections import Counter
 import json
+import re
 
 from deterministic import ProjectionError, json_bytes, search_shards
 from event_pages import build_event_pages
 from record_pages import build_record_pages
 from reminders import project_reminders
+
+UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
+
+
+def _validated_aliases(aliases: dict, record_ids: set[str], event_ids: set[str]) -> dict:
+    if not isinstance(aliases, dict) or set(aliases) != {"paths", "entries"}:
+        raise ProjectionError("invalid alias structure")
+    paths, entries = aliases["paths"], aliases["entries"]
+    if not isinstance(paths, dict) or not isinstance(entries, dict):
+        raise ProjectionError("invalid alias maps")
+    clean_paths = {}
+    for path, ids in paths.items():
+        if (not isinstance(path, str) or not path.startswith("openwiki/") or
+                len(path.encode("utf-8")) > 240 or not path.endswith(".md") or
+                "\\" in path or "\0" in path or
+                any(ord(char) < 32 or ord(char) == 127 for char in path) or
+                any(part in ("", ".", "..") for part in path.split("/")) or
+                not isinstance(ids, list) or not ids or
+                any(not isinstance(rid, str) or not UUID.fullmatch(rid) or rid not in record_ids
+                    for rid in ids) or ids != sorted(set(ids))):
+            raise ProjectionError("invalid path alias")
+        clean_paths[path] = ids
+    clean_entries = {}
+    for legacy_id, event_id in entries.items():
+        if (not isinstance(legacy_id, str) or not legacy_id or len(legacy_id) > 1024 or
+                any(ord(c) < 32 or ord(c) == 127 for c in legacy_id) or not isinstance(event_id, str) or
+                event_id not in event_ids):
+            raise ProjectionError("invalid legacy entry alias")
+        clean_entries[legacy_id] = event_id
+    return {"paths": dict(sorted(clean_paths.items())), "entries": dict(sorted(clean_entries.items()))}
 
 
 def build_projection(records: list[dict], histories: dict[str, list[dict]],
@@ -42,9 +73,9 @@ def build_projection(records: list[dict], histories: dict[str, list[dict]],
     for prefix, payload in shards.items():
         files[f"search/{prefix}.json"] = payload
     if aliases is None:
-        aliases = {"paths": {}, "entries": {}}
-    if set(aliases) != {"paths", "entries"}:
-        raise ProjectionError("invalid alias structure")
+        from git_source import derive_aliases
+        aliases = derive_aliases(records, histories)
+    aliases = _validated_aliases(aliases, set(by_id), expected_events)
     files["aliases.json"] = json_bytes({"schema_version": 1, **aliases})
     areas = Counter(r["area"] for r in records)
     projects = sorted(
