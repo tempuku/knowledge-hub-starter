@@ -3,7 +3,7 @@
    Browser Cache Storage can retain diary content on this device; do not deploy
    private records to a publicly reachable site. */
 'use strict';
-var CACHE_NAME = 'knowledge-hub-pwa-v9';
+var CACHE_NAME = 'knowledge-hub-pwa-v11';
 var SHELL = ['./', './index.html', './app.js?v=9', './style.css?v=9', './manifest.webmanifest'];
 
 self.addEventListener('install', function (event) {
@@ -39,6 +39,13 @@ self.addEventListener('fetch', function (event) {
   if (url.origin !== self.location.origin) return;
   // Never cache requests outside this app's own deployment scope.
   if (url.href.indexOf(self.registration.scope) !== 0) return;
+  // Native generation JSON has its own mode-aware cache client. In
+  // particular, private no-store requests must never enter the legacy PWA
+  // cache or fall back to public cached data while offline.
+  var relativePath = url.href.slice(self.registration.scope.length).split('?')[0];
+  if (request.cache === 'no-store' || relativePath === 'manifest.json' ||
+      relativePath.indexOf('data/') === 0 ||
+      relativePath.indexOf('g/') === 0) return;
   event.respondWith(
     fetch(request, {cache: 'no-cache'}).then(function (response) {
       if (!response.ok) return response;

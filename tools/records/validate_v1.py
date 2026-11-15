@@ -447,18 +447,34 @@ def compare_base(root, base, tracked, paths):
             continue
         if kind.startswith("A"):
             require(path in paths, f"{path}: new record must use v1 schema and sibling log")
-    for path, (_, events) in paths.items():
-        log_path = path[:-3] + ".log.md"
-        initial = events[0]["path_after"][:-3] + ".log.md"
-        # History files move, but their original first path is immutable.
-        old = git(root, "show", base + ":" + initial, missing_ok=True)
-        if old is None:
+    # Resolve trusted histories by stable record identity. A moved record's
+    # initial filename can legitimately be reused by a different record, and
+    # the trusted base can already contain one or more completed moves.
+    base_histories = {}
+    for log_path in git(root, "ls-tree", "-r", "--name-only", base, "--", "openwiki").decode().splitlines():
+        if not log_path.endswith(".log.md"):
             continue
+        old = git(root, "show", base + ":" + log_path)
+        if not old.startswith(b"# Record history\n"):
+            continue
+        old_path = log_path[:-7] + ".md"
+        old_events = parse_log(old, old_path)
+        record_id = old_events[0]["record_id"]
+        require(record_id not in base_histories, "duplicate trusted-base record identity")
+        base_histories[record_id] = (old_path, old)
+    current_ids = {events[0]["record_id"] for _, events in paths.values()}
+    require(set(base_histories) <= current_ids, "trusted-base record/history deleted")
+    for path, (_, events) in paths.items():
+        trusted = base_histories.get(events[0]["record_id"])
+        if trusted is None:
+            continue
+        old_path, old = trusted
+        log_path = path[:-3] + ".log.md"
         current = git(root, "show", ":" + log_path)
         require(current.startswith(old) and
                 (len(current) == len(old) or current[len(old):].startswith(b"\n")),
                 f"{log_path}: trusted-base history prefix rewritten")
-        old_record = git(root, "show", base + ":" + path, missing_ok=True)
+        old_record = git(root, "show", base + ":" + old_path, missing_ok=True)
         if old_record is not None and old_record != git(root, "show", ":" + path):
             require(len(current) > len(old), f"{path}: direct record edit without appended event")
 

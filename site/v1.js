@@ -1,246 +1,219 @@
-/* Read-only v1 projection client. Text-only rendering intentionally prevents
-   untrusted Markdown, SVG, HTML and script execution. */
-(() => {
-"use strict";
-const app = document.getElementById("app");
-let manifest, root, token = 0;
-const el = (tag, text, cls) => {
-  const node = document.createElement(tag);
-  if (text !== undefined) node.textContent = String(text);
-  if (cls) node.className = cls;
-  return node;
-};
-const link = (label, route) => { const a=el("a",label);a.href="#"+route;return a; };
-const heading = (title) => {app.replaceChildren(el("h1",title));};
-const get = async (path) => {
-  const response = await fetch(path, {cache:"no-cache"});
-  if (!response.ok) throw new Error("HTTP "+response.status);
-  const value = await response.json();
-  if (value.schema_version !== 1) throw new Error("Update required: unsupported schema");
-  return value;
-};
-const data = path => get(root+path);
-const panel = (...nodes) => {const p=el("section",undefined,"panel");p.append(...nodes);app.append(p);return p;};
-const error = (err) => {
-  const p=panel(el("p","Could not load this resource: "+err.message,"error"));
-  const b=el("button","Retry");b.onclick=render;p.append(b);
-};
-const parse = () => {
-  const [path, query] = location.hash.slice(1).split("?");
-  return {parts:(path||"/diary").split("/").filter(Boolean),params:new URLSearchParams(query||"")};
-};
-const metadata = async () => {
-  manifest=await get("./manifest.json");
-  if (manifest.mode !== "public" || !/^g\/[a-f0-9]{64}\/$/.test(manifest.root))
-    throw new Error("Public v1 generation unavailable");
-  root="./"+manifest.root;
-};
-const render = async () => {
-  const current=++token;
-  heading("Loading…");
-  try {
-    await metadata();
-    if(current!==token)return;
-    const {parts,params}=parse();
-    const route=parts[0]||"diary";
-    if(route==="record" && parts[1]){
-      const id=parts[1];
-      if(!/^[0-9a-f-]{36}$/.test(id))throw new Error("Invalid record ID");
-      const meta=await data("records/"+id+".meta.json");
-      if(current!==token)return;
-      heading(meta.title);
-      panel(el("p",meta.description||""),el("small",meta.status+" · "+meta.area));
-      if(meta.detail_bytes>262144){
-        const b=el("button","Load full content");
-        b.onclick=()=>showRecord(id,current);
-        panel(b);
-      } else await showRecord(id,current);
-      panel(link("History","/history/"+id));
-    } else if(route==="history" && parts[1]){
-      const id=parts[1],history=await data("history/"+id+"/index.json");
-      if(current!==token)return;
-      heading("History");
-      if(!history.event_count)panel(el("p","No published history"));
-      for(const page of history.pages){
-        const section=panel(el("small","Page "+page.number));
-        const b=el("button","Load revisions");
-        b.onclick=async()=>{b.disabled=true;try{
-          const result=await data(page.url);
-          const list=el("ul",undefined,"list");
-          for(const e of result.items){const li=el("li");li.append(link((e.title||e.summary||e.id)+" · "+e.recorded_at,"/event/"+e.id));list.append(li);}
-          section.append(list);b.remove();
-        }catch(e){b.disabled=false;section.append(el("p",e.message,"error"));}};
-        section.append(b);
-      }
-    } else if(route==="event" && parts[1]){
-      const id=parts[1],meta=await data("events/"+id+".meta.json");
-      if(current!==token)return;
-      heading((meta.title||meta.summary||"Event")+" · revision "+meta.sequence);
-      panel(el("p",meta.summary),el("small",meta.recorded_at));
-      const b=el("button","Load revision and diff");
-      const section=panel(b);
-      b.onclick=async()=>{b.disabled=true;try{
-        const value=await data("events/"+id+".json");
-        section.append(el("h2","This revision"),el("pre",value.event.after),
-          el("h2","Previous revision"),el("pre",value.event.before||"(creation)"),
-          el("h2","Exact diff"),el("pre",value.diff.text||"No changed lines"));
-        b.remove();
-      }catch(e){b.disabled=false;section.append(el("p",e.message,"error"));}};
-    } else if(route==="diary"){
-      heading("Diary · UTC");
-      const catalog=await data("catalog.json");
-      if(current!==token)return;
-      for(const month of catalog.months){
-        const section=panel(el("h2",month.month),el("p",month.change_count+" changes · "+month.record_count+" records"));
-        const year=month.month.slice(0,4),calendar=await data("calendar/"+year+".json");
-        if(current!==token)return;
-        for(const day of calendar.days.filter(x=>x.date.startsWith(month.month))){
-          const b=el("button",day.date+" · "+day.change_count+" changes");
-          b.onclick=()=>loadDay(day.date,section);
-          section.append(b);
-        }
-      }
-    } else if(["records","projects","today","calendar"].includes(route)){
-      await renderCollection(route,params,current);
-    } else {
-      heading("Not found");
-      panel(link("Back to Diary","/diary"));
-    }
-  } catch(e){if(current===token){heading("Knowledge Hub");error(e);}}
-};
-async function showRecord(id,current){
-  const value=await data("records/"+id+".json");
-  if(current!==token)return;
-  const section=panel(el("h2","Current file"),el("pre",value.content));
-  // Never turn user-authored Markdown into executable HTML.
-  section.append(el("small","Source path: "+value.path));
-}
-async function loadDay(day,section){
-  try{
-    const index=await data("days/"+day+"/index.json");
-    const box=el("div");
-    for(const page of index.pages){
-      const b=el("button","Load page "+page.number);
-      b.onclick=async()=>{b.disabled=true;try{
-        const result=await data(page.url);
-        const list=el("ul");
-        for(const event of result.items){const li=el("li");li.append(link((event.title||event.summary||event.id)+" · "+event.recorded_at,"/event/"+event.id));list.append(li);}
-        box.append(list);b.remove();
-      }catch(e){b.disabled=false;box.append(el("p",e.message,"error"));}};
-      box.append(b);
-    }
-    section.append(box);
-  }catch(e){section.append(el("p",e.message,"error"));}
-}
-
-const tokenize = text => [...new Set((text.normalize("NFC").toLowerCase().match(/[^\W_]+/gu)||[])
-  .filter(t=>t.length>=2&&t.length<=64))];
-const archived = record => record.status==="deprecated";
-async function allRecords(current){
-  const index=await data("records/catalog/index.json");
-  const items=[];
-  for(const page of index.pages){
-    const result=await data(page.url);
-    if(current!==token)return [];
-    items.push(...result.items);
-  }
-  return items;
-}
-async function renderCollection(route,params,current){
-  const records=await allRecords(current);
-  if(current!==token)return;
-  const includeArchived=params.get("archived")==="1";
-  const visible=records.filter(r=>includeArchived||!archived(r));
-  heading({records:"Records / Search",projects:"Projects",today:"Today",calendar:"Calendar"}[route]);
-  const nav=panel();
-  const archive=el("label");
-  const toggle=el("input");toggle.type="checkbox";toggle.checked=includeArchived;
-  toggle.onchange=()=>{params.set("archived",toggle.checked?"1":"0");
-    location.hash="/"+route+"?"+params.toString();};
-  archive.append(toggle,document.createTextNode(" Include archived"));nav.append(archive);
-  if(route==="records"){
-    const search=el("input");search.type="search";search.placeholder="Search records";
-    search.setAttribute("aria-label","Search records");
-    search.value=params.get("q")||"";
-    nav.append(search);
-    let searchSerial=0;
-    const output=panel();
-    const show=async()=>{
-      const serial=++searchSerial;
-      const terms=tokenize(search.value);
-      if(terms.length>8){output.replaceChildren(el("p","Maximum eight search tokens"));return;}
-      let matched=visible.map(r=>({record:r,score:0}));
-      if(terms.length){
-        const shards=new Map();
-        const manifest=await data("search/manifest.json");
-        const published=new Set(manifest.shards.map(s=>s.prefix));
-        // WebCrypto is required for the deterministic SHA-256 shard interface.
-        for(const term of terms){
-          const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(term));
-          if(serial!==searchSerial||current!==token)return;
-          const prefix=Array.from(new Uint8Array(digest)).slice(0,1).map(b=>b.toString(16).padStart(2,"0")).join("");
-          if(!shards.has(prefix))shards.set(prefix,published.has(prefix)?await data("search/"+prefix+".json"):{terms:{}});
-        }
-        const hits=new Map();
-        for(const term of terms){
-          const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(term));
-          const prefix=new Uint8Array(digest)[0].toString(16).padStart(2,"0");
-          const entries=shards.get(prefix).terms[term]||[];
-          const currentHits=new Map(entries.map(e=>[e.record_id,Math.max(...e.fields.map(f=>({title:8,tag:4,description:2,body:1}[f]||0)))]));
-          for(const id of [...hits.keys()])if(!currentHits.has(id))hits.delete(id);
-          if(hits.size===0&&term===terms[0])for(const [id,score] of currentHits)hits.set(id,score);
-          else for(const [id,score] of currentHits)if(hits.has(id))hits.set(id,hits.get(id)+score);
-        }
-        matched=matched.filter(x=>hits.has(x.record.id)).map(x=>({...x,score:hits.get(x.record.id)}));
-      }
-      if(serial!==searchSerial||current!==token)return;
-      matched.sort((a,b)=>b.score-a.score||b.record.updated_at.localeCompare(a.record.updated_at)||a.record.id.localeCompare(b.record.id));
-      output.replaceChildren(el("p",matched.length+" matching records"));
-      let offset=0;
-      const more=el("button","Load more");
-      more.onclick=()=>{
-        for(const {record} of matched.slice(offset,offset+50)){
-          const p=el("p");p.append(link(record.title,"/record/"+record.id),el("small"," · "+record.status+" · "+record.area));output.append(p);
-        }
-        offset+=50;
-        more.hidden=offset>=matched.length;
-      };
-      output.append(more);more.click();
-    };
-    let timer;
-    search.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{
-      params.set("q",search.value);history.replaceState(null,"","#/records?"+params.toString());show();
-    },250);};
-    await show();
-  } else if(route==="projects"){
-    const projects=visible.filter(r=>r.type==="project");
-    if(!projects.length)panel(el("p","No published projects"));
-    for(const project of projects){
-      const section=panel(el("h2",project.title),link("Open project","/record/"+project.id));
-      const children=visible.filter(r=>r.project_id===project.id);
-      section.append(el("p",children.length+" linked records"));
-      for(const child of children){const p=el("p");p.append(link(child.title,"/record/"+child.id));section.append(p);}
-    }
-  } else if(route==="today"){
-    const day=new Date().toISOString().slice(0,10);
-    panel(el("p","Today · "+day+" (UTC)"));
-    const month=await data("reminders/"+day.slice(0,7)+".json").catch(e=>{if(e.message==="HTTP 404")return {items:[]};throw e;});
-    const hits=month.items.filter(r=>r.start_date<=day&&r.end_date>=day&&visible.some(x=>x.id===r.record_id));
-    if(!hits.length)panel(el("p","No reminders today"));
-    for(const item of hits){const p=panel(el("p",item.text));p.append(link(item.title,"/record/"+item.record_id));}
-  } else if(route==="calendar"){
-    const month=params.get("month")||new Date().toISOString().slice(0,7);
-    const input=el("input");input.type="month";input.value=month;
-    input.onchange=()=>{params.set("month",input.value);location.hash="/calendar?"+params.toString();};
-    nav.append(input);
-    const reminders=await data("reminders/"+month+".json").catch(e=>{if(e.message==="HTTP 404")return {items:[]};throw e;});
-    const items=reminders.items.filter(r=>visible.some(x=>x.id===r.record_id));
-    if(!items.length)panel(el("p","No published reminders this month"));
-    for(const item of items){const p=panel(el("p",item.start_date+" – "+item.end_date+" · "+item.text));p.append(link(item.title,"/record/"+item.record_id));}
-  }
-}
-
-window.addEventListener("hashchange",render);
-window.addEventListener("popstate",render);
-render();
-})();
+/* Read-only Knowledge Hub v1 app. One route state drives selection and rendering. */
+(function (window, document) {
+  "use strict";
+  var app = document.getElementById("route-content"), live = document.getElementById("live-status");
+  var api = window.KnowledgeV1Data && window.KnowledgeV1Data.create ? window.KnowledgeV1Data.create({baseUrl:"./data/",mode:"public"}) : null;
+  var token = 0, manifest = null, latestDate = null, pendingRoute = false, restoringHistory = false, expandSections = false;
+  var previousFocus = Object.create(null), routeMemory = Object.create(null), pageState = Object.create(null), defaultFilters = {project:"",area:"",type:"",status:"",tag:"",action:""};
+  if(api&&api.setUpdateHandler)api.setUpdateHandler(function(){var note=document.getElementById("update-available");if(!note){note=text("div","Update available. Refresh to load the new published generation.","update-banner");note.id="update-available";document.getElementById("app-footer").before(note);}});
+  var nowDate = function () { return new Date().toISOString().slice(0, 10); };
+  var text = function (tag, value, cls) { var el = document.createElement(tag); if (value !== undefined && value !== null) el.textContent = String(value); if (cls) el.className = cls; return el; };
+  var button = function (label, fn, cls) { var b = text("button", label, cls || "btn"); b.type = "button"; b.addEventListener("click", fn); return b; };
+  var link = function (label, route, cls) { var a = text("a", label, cls || ""); a.href = "#" + route; return a; };
+  var routeBox = function (title, intro) { while(app.firstChild)app.removeChild(app.firstChild);app.setAttribute("aria-busy", "false"); var box = text("div", undefined, "route-wrap"); var h = text("h1", title); h.tabIndex = -1; box.appendChild(h); if (intro) box.appendChild(text("p", intro, "route-intro")); app.appendChild(box); return box; };
+  var panel = function (parent, title) { var section = text("section", undefined, "panel"); if (title) { var h = text("h2", title); section.appendChild(h); } parent.appendChild(section); return section; };
+  var announce = function (msg) { live.textContent = ""; window.setTimeout(function () { live.textContent = msg; }, 10); };
+  var fail = function (parent, err, retry) { var box = text("div", undefined, "error"); box.setAttribute("role", "alert"); box.appendChild(text("p", err && err.message ? err.message : "This section could not be loaded.")); box.appendChild(button("Retry", retry, "btn secondary")); parent.appendChild(box); };
+  var queryString = function (params) { var keys = Object.keys(params).sort(), out=[]; keys.forEach(function (key) { var value=params[key]; if (value !== "" && value !== null && value !== undefined && value !== false) out.push(encodeURIComponent(key)+"="+encodeURIComponent(String(value))); }); return out.length ? "?"+out.join("&") : ""; };
+  var saveRouteMemory = function(){var active=document.activeElement;routeMemory[window.location.hash||"#/diary"]={scroll:document.getElementById("app").scrollTop,windowY:window.scrollY||0,focusId:active&&active.id||""};};
+  var go = function (path, params, replace) { var value = "#" + path + queryString(params || {});if(!replace)saveRouteMemory(); if (replace) window.history.replaceState(window.history.state, "", value); else window.location.hash = value; };
+  var parseRoute = function () {
+    var hash = window.location.hash || "", raw = hash.replace(/^#/, ""), q = raw.indexOf("?"), path = q < 0 ? raw : raw.slice(0,q), query = q < 0 ? "" : raw.slice(q+1);
+    var parts = path.split("/").filter(Boolean), params = new URLSearchParams(query), name = parts[0] || "diary";
+    var fragment="",fragmentAt=path.indexOf("#");if(fragmentAt>=0){fragment=path.slice(fragmentAt+1);path=path.slice(0,fragmentAt);parts=path.split("/").filter(Boolean);name=parts[0]||"diary";}
+    var route = {name:name, id:parts[1] || "", params:params,fragment:fragment};
+    try { route.id=decodeURIComponent(route.id); } catch (e) { route.invalid=true; }
+    if (name === "record") route.name="records"; if (name === "event") route.name="events"; if (name === "history") { route.name="records"; route.params.set("tab","history"); }
+    return route;
+  };
+  var safeId = function (id) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id); };
+  var fmtDate = function (s) { if (!s) return ""; return s + " UTC"; };
+  var readFrontmatter = function (s) { return String(s || "").replace(/^---\s*\n[\s\S]*?\n---\s*(?:\n|$)/, ""); };
+  var apiGet = async function (path) {
+    if (api && api.get) return api.get(path);
+    var root = "./data/" + (manifest && manifest.root ? manifest.root : "");
+    var response = await fetch(root + path, {cache:"no-cache"}); if (!response.ok) { var error = new Error(response.status === 404 ? "Record unavailable in this view." : "Request failed ("+response.status+")"); error.status=response.status; throw error; }
+    var value=await response.json(); if(value.schema_version!==1)throw new Error("Update required: unsupported data schema."); return value;
+  };
+  var dataCall = async function (method, args, fallbackPath) { if (api && typeof api[method] === "function") return api[method](args); return apiGet(fallbackPath); };
+  var initialize = async function (refresh) {
+    var loaded=null;
+    if (api && api.loadManifest) { loaded=await api.loadManifest({refresh:!!refresh,activate:!!refresh});manifest=loaded.manifest||loaded; }
+    else { var res=await fetch("./manifest.json",{cache:"no-cache"}); if(!res.ok)throw new Error("Published data is unavailable."); manifest=await res.json(); if(manifest.schema_version!==1)throw new Error("Update required: unsupported manifest."); }
+    if (!manifest || manifest.mode !== "public" || !manifest.root) throw new Error("Public demo data is unavailable.");
+    document.getElementById("build-state").textContent = "Public demo";
+    document.getElementById("sidebar-status").textContent = "Read-only public records";
+    document.getElementById("source-revision").textContent = String(manifest.source_revision || "").slice(0,12) || "source unavailable";
+    document.getElementById("source-revision").setAttribute("aria-label", "Source revision " + (manifest.source_revision || "unavailable"));
+    var published = document.getElementById("app-footer");
+    if (published && manifest.published_at) published.firstChild.textContent = "Published " + manifest.published_at + " · ";
+    if (loaded && loaded.offline || manifest.offline || api&&api.status&&api.status().offline) { var offline=text("div","Offline — showing saved data from "+(manifest.published_at || "an earlier publication"),"offline-banner"); app.insertBefore(offline,app.firstChild); }
+    if (loaded && loaded.updateAvailable) { var update=text("div","Update available. Refresh to load the new published generation.","update-banner");update.id="update-available";document.getElementById("app-footer").before(update); }
+    return manifest;
+  };
+  var allRecords = async function () {
+    if (api && api.catalogPages) return api.catalogPages();
+    if (api && api.resolveRecords) { var result=await api.resolveRecords({}); return Array.isArray(result)?result:(result.items||[]); }
+    var idx=await apiGet("records/catalog/index.json"), out=[];
+    for(var i=0;i<idx.pages.length;i++) { var page=await apiGet(idx.pages[i].url); out=out.concat(page.items || []); }
+    return out;
+  };
+  var catalog = async function () { return dataCall("catalog", {}, "catalog.json"); };
+  var statusNode = function (value) { var labels={draft:"✎ Draft",stable:"✓ Stable",completed:"✓ Completed",deprecated:"▣ Archived"}; var key=value || "unknown"; return text("span",labels[key] || "? Unknown", "status"); };
+  var statusText = function (parent, value) { var node=statusNode(value); node.setAttribute("data-status",value || "unknown"); parent.appendChild(node); };
+  var setupSearch = function (route) {
+    var field=document.getElementById("global-search"), form=document.getElementById("global-search-form");
+    if (route.name === "records") field.value=route.params.get("q") || "";
+    form.onsubmit=function (event) { event.preventDefault(); go("/records",{q:field.value}); };
+    var keydown=function(event){ if(event.key==="/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName) && !event.target.isContentEditable){event.preventDefault();field.focus();} if(event.key==="Escape" && document.activeElement===field){field.value="";field.blur();} };
+    document.removeEventListener("keydown",window.__khSearchKey||function(){}); window.__khSearchKey=keydown; document.addEventListener("keydown",keydown);
+  };
+  var setupMobileNav = function () {
+    var main=document.getElementById("app"), host=main.querySelector(".route-wrap"); if(!host || host.querySelector(".mobile-nav"))return;
+    var nav=document.createElement("div"); nav.className="mobile-nav";
+    var trigger=button(expandSections?"Close Sections":"Sections",function(){expandSections=!expandSections; render();},"btn secondary"); trigger.id="sections-toggle"; trigger.setAttribute("aria-expanded",String(expandSections)); trigger.setAttribute("aria-controls","sections-panel"); nav.appendChild(trigger);
+    var list=document.createElement("nav"); list.className="section-panel"; list.id="sections-panel"; list.hidden=!expandSections; list.setAttribute("aria-label","Sections");
+    ["Today","Projects","Records","Diary","Calendar"].forEach(function(label){var key=label.toLowerCase();list.appendChild(link(label,"/"+key));}); nav.appendChild(list); host.insertBefore(nav,host.children[1] || null);
+    trigger.addEventListener("keydown",function(e){if(e.key==="Escape"&&expandSections){expandSections=false;render();var t=document.getElementById("sections-toggle");if(t)t.focus();}});
+  };
+  var setNav = function (name) { Array.prototype.forEach.call(document.querySelectorAll("#primary-nav a"),function(a){if(a.getAttribute("data-route")===name)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");}); };
+  var eventLink = function (event, view) { return "/events/"+event.id+queryString({view:view || "revision"}); };
+  var recordLink = function (id, tab) { return "/records/"+id+queryString({tab:tab && tab!=="content"?tab:""}); };
+  var resolveAliases = async function (route, serial) {
+    if(!api || !api.aliases || !route.id)return route;
+    var aliases=await api.aliases(), paths=aliases.paths||{}, entries=aliases.entries||{};
+    if(route.name==="events" && entries[route.id]){ if(serial===token)go("/events/"+entries[route.id],{view:route.params.get("view")||"revision"},true); return {name:"events",id:entries[route.id],params:route.params}; }
+    if(route.name==="records" && !safeId(route.id)){var ids=paths[route.id]||[]; if(ids.length===1){if(serial===token)go("/records/"+ids[0],{tab:route.params.get("tab")||""},true);return {name:"records",id:ids[0],params:route.params};} if(ids.length>1){route.ambiguous=ids;return route;} }
+    return route;
+  };
+  var dateParts = function (date) { var d=new Date(date+"T00:00:00Z"),day=(d.getUTCDay()+6)%7; d.setUTCDate(d.getUTCDate()-day); var end=new Date(d);end.setUTCDate(end.getUTCDate()+6);return {start:d.toISOString().slice(0,10),end:end.toISOString().slice(0,10)}; };
+  var dateIsValid = function (value) { if(!/^\d{4}-\d\d-\d\d$/.test(value||""))return false;var d=new Date(value+"T00:00:00Z");return !isNaN(d.getTime())&&d.toISOString().slice(0,10)===value; };
+  var diaryParams = function(date,mode,route){var p={date:date,mode:mode};["project","area","type","status","tag","action"].forEach(function(f){if(route&&route.params.get(f))p[f]=route.params.get(f);});return p;};
+  var latestChange = async function () {
+    if(latestDate)return latestDate;
+    var cat=await catalog(), months=cat.months||[];
+    if(months.length){var y=months.map(function(x){return x.month;}).sort().reverse()[0].slice(0,4),cal=await dataCall("calendar",y,"calendar/"+y+".json");var days=(cal.days||[]).map(function(x){return x.date;}).sort().reverse();if(days.length)latestDate=days[0];}
+    latestDate=latestDate || nowDate();return latestDate;
+  };
+  var loadDiaryEvents = async function (start,end) {
+    if(api&&api.diaryInitialRange){var params=parseRoute().params,filters={};["project","area","type","status","tag","action"].forEach(function(key){if(params.get(key))filters[key]=params.get(key);});return api.diaryInitialRange({start:start,end:end,filters:filters});}
+    if(api&&api.diaryRange&&api.dayIndex&&api.dayPage){var dates=[],cursor=start;while(cursor<=end){dates.push(cursor);var nextDate=new Date(cursor+"T00:00:00Z");nextDate.setUTCDate(nextDate.getUTCDate()+1);cursor=nextDate.toISOString().slice(0,10);}var results=await Promise.all(dates.map(async function(day){try{var index=await api.dayIndex(day),dayItems=[];for(var pageNo=1;pageNo<=(index.pages||[]).length;pageNo++){var page=await api.dayPage(day,pageNo);dayItems=dayItems.concat(page.items||[]);}return {day:day,items:dayItems};}catch(e){if(e.code==="unavailable")return {day:day,items:[]};return {day:day,items:[],error:e};}}));var gathered=[],errors=[];results.forEach(function(result){gathered=gathered.concat(result.items);if(result.error)errors.push({day:result.day,error:result.error});});return {items:gathered,total_changes:gathered.length,total_records:Array.from(new Set(gathered.map(function(item){return item.record_id;}))).length,dayErrors:errors};}
+    if(api && api.diaryRange){var result=await api.diaryRange({start:start,end:end,filters:{}}); return result;}
+    var d=new Date(start+"T00:00:00Z"), last=new Date(end+"T00:00:00Z"), days=[];
+    while(d<=last){days.push(d.toISOString().slice(0,10));d.setUTCDate(d.getUTCDate()+1);}
+    var indexes=await Promise.all(days.map(function(day){return apiGet("days/"+day+"/index.json").catch(function(e){if(e.status===404)return null;return {day:day,error:e};});}));
+    var all=[],errors=[]; for(var n=0;n<indexes.length;n++){var index=indexes[n];if(!index)continue;if(index.error){errors.push(index);continue;}for(var j=0;j<index.pages.length;j++){try{var page=await apiGet(index.pages[j].url);all=all.concat(page.items||[]);}catch(e){errors.push({day:index.date,error:e});}}}
+    return {items:all,total_changes:all.length,total_records:Array.from(new Set(all.map(function(x){return x.record_id;}))).length,dayErrors:errors};
+  };
+  var diaryScreen = async function (route, serial) {
+    var mode=route.params.get("mode")||"week", validModes=["day","week","month"];if(validModes.indexOf(mode)<0)throw new Error("Invalid view. Reset view to continue.");
+    var date=route.params.get("date"); if(route.params.has("date")&&!dateIsValid(date))throw new Error("Invalid view. Reset view to continue.");if(!route.params.has("date"))date=await latestChange();
+    if(!route.params.has("date")){go("/diary",{date:date,mode:mode},true);}
+    var dayDate=new Date(date+"T00:00:00Z"), start, end;
+    if(mode==="day")start=end=date;
+    else if(mode==="week"){var range=dateParts(date);start=range.start;end=range.end;}
+    else {start=date.slice(0,7)+"-01";var last=new Date(Date.UTC(+date.slice(0,4),+date.slice(5,7),0));end=last.toISOString().slice(0,10);}
+    var title="Diary", box=routeBox(title); setNav("diary");
+    var toolbar=text("div",undefined,"toolbar");
+    var modes=text("div",undefined,"segmented"); ["day","week","month"].forEach(function(m){var b=button(m.charAt(0).toUpperCase()+m.slice(1),function(){go("/diary",diaryParams(date,m,route));},"");b.setAttribute("aria-pressed",String(mode===m));modes.appendChild(b);});toolbar.appendChild(modes);
+    var delta=mode==="day"?1:mode==="week"?7:0;var prev=button("Previous period",function(){var d=new Date(date+"T00:00:00Z");if(mode==="month")d=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()-1,Math.min(d.getUTCDate(),new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),0)).getUTCDate())));else d.setUTCDate(d.getUTCDate()-delta);go("/diary",diaryParams(d.toISOString().slice(0,10),mode,route));},"btn secondary");var next=button("Next period",function(){var d=new Date(date+"T00:00:00Z");if(mode==="month")d=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,Math.min(d.getUTCDate(),new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+2,0)).getUTCDate())));else d.setUTCDate(d.getUTCDate()+delta);go("/diary",diaryParams(d.toISOString().slice(0,10),mode,route));},"btn secondary");toolbar.append(prev,next,button("Today",function(){go("/diary",diaryParams(nowDate(),mode,route));},"btn secondary"),button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));
+    var dateLabel=document.createElement("label");dateLabel.appendChild(text("span","Jump to date (UTC)"));var input=document.createElement("input");input.type="date";input.value=date;input.setAttribute("aria-label","Jump to date (UTC)");input.addEventListener("change",function(){if(input.value)go("/diary",{date:input.value,mode:mode});});dateLabel.appendChild(input);toolbar.appendChild(dateLabel);box.appendChild(toolbar);
+    box.appendChild(text("p",start+" – "+end+" · UTC","route-intro"));
+    var filters=text("details",undefined,"panel filter-panel");filters.id="filter-panel";var summary=text("summary","Filters");summary.id="filter-toggle";summary.setAttribute("aria-controls","diary-filters");filters.appendChild(summary);
+    var form=text("div",undefined,"filter-form");form.id="diary-filters";var fields=["project","area","type","status","tag","action"];
+    fields.forEach(function(field){var label=document.createElement("label");label.appendChild(text("span",field.charAt(0).toUpperCase()+field.slice(1)));var control=document.createElement("input");control.setAttribute("aria-label",field);control.value=route.params.get(field)||"";control.addEventListener("change",function(){var p={date:date,mode:mode};fields.forEach(function(f){p[f]=f===field?control.value:(route.params.get(f)||"");});go("/diary",p);});label.appendChild(control);form.appendChild(label);});
+    filters.appendChild(form);var clear=button("Clear filters",function(){go("/diary",{date:date,mode:mode});},"btn secondary");filters.appendChild(clear);box.appendChild(filters);
+    var active=fields.filter(function(f){return !!route.params.get(f);}).length;summary.textContent=active?"Filters ("+active+")":"Filters";
+    if(active){box.appendChild(text("p","Filters apply to the revision shown.","meta"));}
+    app.setAttribute("aria-busy","true");
+    var data=await loadDiaryEvents(start,end);if(serial!==token)return;
+    var items=(data.items||[]).slice();items=items.filter(function(e){return fields.every(function(f){var v=route.params.get(f);if(!v)return true;if(f==="project")return e.project_id===v;if(f==="area")return e.area===v||e.area.indexOf(v+"/")===0;if(f==="action")return e.action===v;return String(e[f]||"")===v;});});
+    var countRecords=data.total_records !== undefined && !active ? data.total_records : Array.from(new Set(items.map(function(e){return e.record_id;}))).length;
+    var countNode=text("p",data.countsExact===false?"Calculating changes · records":items.length+" changes · "+countRecords+" records","meta");box.appendChild(countNode);
+    var diaryEmpty=null;if(!items.length&&data.countsExact!==false){diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","No changes in this period.","empty"));diaryEmpty.appendChild(button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));if(active)diaryEmpty.appendChild(button("Clear filters",function(){go("/diary",{date:date,mode:mode});},"btn secondary"));}else if(!items.length&&data.countsExact===false){diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","Loading filtered results…","meta"));}
+    var groups={};items.forEach(function(event){var day=(event.recorded_at||"").slice(0,10);(groups[day]||(groups[day]=[])).push(event);});
+    var keys=Object.keys(groups).sort().reverse(); if(mode==="day" && !keys.length)keys=[date]; if(mode==="week" && !active){var d=new Date(start+"T00:00:00Z"),e=new Date(end+"T00:00:00Z");while(d<=e){var k=d.toISOString().slice(0,10);if(!groups[k])groups[k]=[];d.setUTCDate(d.getUTCDate()+1);}keys=Object.keys(groups).sort().reverse();}
+    var loaded=pageState[window.location.hash]||50;
+    var dayHost=text("div",undefined,"diary-days");box.appendChild(dayHost);
+    keys.forEach(function(day){var block=text("section",undefined,"day-block diary-day");var events=groups[day]||[];var pageDesc=(data.dayIndexes||[]).filter(function(x){return x.date===day;})[0];var dayTotal=pageDesc?pageDesc.change_count:events.length;var opened=mode==="week"||mode==="day"||(!active&&mode==="month"&&keys[0]===day);var header=button(day+" · "+dayTotal+" changes",function(){var body=block.querySelector(".day-items");var expanded=header.getAttribute("aria-expanded")==="true";header.setAttribute("aria-expanded",String(!expanded));body.hidden=expanded;},"");header.setAttribute("aria-expanded",String(opened));block.appendChild(header);var body=text("div",undefined,"day-items");body.hidden=!opened;
+      var dayError=(data.dayErrors||[]).filter(function(e){return e.date===day||e.day===day;})[0]||(pageDesc&&pageDesc.error?{error:pageDesc.error}:null);if(dayError)fail(body,dayError.error,function(){render();});var pageNumber=events.length?1:0;events.forEach(function(ev){body.appendChild(renderEventRow(ev,items));});var descriptors=pageDesc&&pageDesc.index?pageDesc.index.pages:[];var more=null;var addMore=function(){if(!descriptors||pageNumber>=descriptors.length)return;if(!more||!more.parentNode){more=button("Load more",async function(){more.disabled=true;try{pageNumber++;var result=await api.dayPage(day,pageNumber);if(serial!==token)return;(result.items||[]).forEach(function(ev){body.insertBefore(renderEventRow(ev,items),more);});if(pageNumber>=descriptors.length){more.remove();}else more.disabled=false;}catch(e){more.disabled=false;fail(body,e,function(){more.click();});}},"btn secondary load-more");body.appendChild(more);}};if(pageNumber>0)addMore();if(!events.length&&descriptors&&descriptors.length)header.addEventListener("click",async function(){if(body.getAttribute("data-loaded")==="true")return;body.setAttribute("data-loaded","true");var loading=text("p","Loading…","meta");body.appendChild(loading);try{var firstPage=await api.dayPage(day,1);if(serial!==token)return;loading.remove();(firstPage.items||[]).forEach(function(ev){body.appendChild(renderEventRow(ev,firstPage.items));});pageNumber=1;addMore();}catch(e){loading.remove();body.removeAttribute("data-loaded");fail(body,e,function(){header.click();});}});block.appendChild(body);dayHost.appendChild(block);});
+    app.setAttribute("aria-busy","false");if(data.countsExact===false&&api&&api.diaryRange){var exactFilters={};fields.forEach(function(f){if(route.params.get(f))exactFilters[f]=route.params.get(f);});api.diaryRange({start:start,end:end,filters:exactFilters}).then(function(exact){if(serial!==token)return;if(exact.countsExact===false){countNode.textContent="Counts could not be calculated.";return;}countNode.textContent=exact.total_changes+" changes · "+exact.total_records+" records";if(active){if(diaryEmpty)diaryEmpty.remove();while(dayHost.firstChild)dayHost.removeChild(dayHost.firstChild);var exactGroups={};(exact.items||[]).forEach(function(ev){var eventDay=(ev.recorded_at||"").slice(0,10);(exactGroups[eventDay]||(exactGroups[eventDay]=[])).push(ev);});var exactDays=Object.keys(exactGroups).sort().reverse();exactDays.forEach(function(eventDay){var evs=exactGroups[eventDay],block=text("section",undefined,"day-block diary-day"),header=button(eventDay+" · "+evs.length+" changes",function(){var body=block.querySelector(".day-items"),expanded=header.getAttribute("aria-expanded")==="true";header.setAttribute("aria-expanded",String(!expanded));body.hidden=expanded;},"");header.setAttribute("aria-expanded",String(mode!=="month"||exactDays[0]===eventDay));block.appendChild(header);var body=text("div",undefined,"day-items");body.hidden=header.getAttribute("aria-expanded")!=="true";var offset=0,more=null;var appendChunk=function(){evs.slice(offset,offset+50).forEach(function(ev){body.insertBefore(renderEventRow(ev,exact.items),more||null);});offset+=50;if(more&&offset>=evs.length)more.remove();};if(evs.length>50)more=button("Load more",function(){appendChunk();},"btn secondary load-more");appendChunk();if(more)body.appendChild(more);block.appendChild(body);dayHost.appendChild(block);});if(!exact.items.length){diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","No changes in this period.","empty"));diaryEmpty.appendChild(button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));diaryEmpty.appendChild(button("Clear filters",function(){go("/diary",{date:date,mode:mode});},"btn secondary"));}}}).catch(function(){if(serial===token){countNode.textContent="Counts could not be calculated.";}});}
+  };
+  var renderEventRow = function (ev, visible) {
+    var row=text("article",undefined,"event-row");var title=ev.title||ev.summary||"Untitled record";var h=text("h2",title);row.appendChild(h);if(ev.summary)row.appendChild(text("p",ev.summary));row.appendChild(text("p",(ev.action||"Change")+" · "+(ev.recorded_at||"")+" UTC","meta"));if(ev.occurred_on||ev.occurred_at)row.appendChild(text("p","Occurred "+(ev.occurred_on||"")+(ev.occurred_at?" "+ev.occurred_at:""),"meta"));var meta=text("p",undefined,"meta");statusText(meta,ev.status);if(ev.project_id)meta.appendChild(text("span"," · "+(ev.project_title||ev.project_id)));if(ev.actor_label)meta.appendChild(text("span"," · "+ev.actor_label));if(ev.provenance_kind && ev.provenance_kind!=="native")meta.appendChild(text("span"," · Imported history","badge"));row.appendChild(meta);
+    var actions=text("div",undefined,"actions");actions.appendChild(link("Open current record",recordLink(ev.record_id)));actions.appendChild(link("View this revision",eventLink(ev,"revision")));actions.appendChild(link("Show changes",eventLink(ev,"diff")));var fileUrl=publicSourceUrl(ev.record_id);if(fileUrl){var file=text("a","File: "+String((window.KnowledgeHubConfig.publicSourcePaths||{})[ev.record_id]).split(/[\\/]/).pop());file.href=fileUrl;file.target="_blank";file.rel="noopener noreferrer";file.setAttribute("aria-label",file.textContent+" (opens in a new tab)");actions.appendChild(file);}row.appendChild(actions);if(ev.operation_id&&visible.filter(function(x){return x.operation_id===ev.operation_id;}).length>1)row.appendChild(text("p","Same operation","badge"));return row;
+  };
+  var recordScreen = async function (route, serial) {
+    if(!safeId(route.id)) { await resolveAliases(route,serial); if(route.ambiguous){renderAmbiguous(route);return;} if(!safeId(route.id))throw new Error("Record unavailable in this view."); }
+    var meta=await dataCall("recordMeta",route.id,"records/"+route.id+".meta.json"); if(serial!==token)return;
+    var box=routeBox(meta.title||"Record");setNav("records");var status=panel(box);statusText(status,meta.status);status.appendChild(text("p",meta.description||""));status.appendChild(text("p",(meta.project_title||"")+(meta.area?" · "+meta.area:""),"meta"));if(meta.updated_at)status.appendChild(text("p","Last recorded update · "+meta.updated_at,"meta"));
+    var tab=route.params.get("tab")||"content", tabs=text("nav",undefined,"record-tabs");tabs.setAttribute("aria-label","Record views");["content","history","source"].forEach(function(key){var a=link(key.charAt(0).toUpperCase()+key.slice(1),recordLink(route.id,key));if(tab===key)a.setAttribute("aria-current","page");tabs.appendChild(a);});box.appendChild(tabs);
+    if(tab==="content")await renderRecordContent(box,route.id,meta,serial);
+    else if(tab==="history")await renderHistory(box,route.id,meta,serial);
+    else if(tab==="source")await renderSource(box,route.id,meta,serial);
+    else throw new Error("Invalid view. Reset view to continue.");
+    if(route.fragment)applyFragment(box,route.fragment);
+  };
+  var applyFragment=function(box,fragment){var id;try{id=decodeURIComponent(fragment);}catch(e){id=fragment;}var target=document.getElementById(id);if(target){target.tabIndex=-1;target.scrollIntoView();target.focus();}else box.appendChild(text("p","Section no longer available.","meta"));};
+  var renderRecordContent = async function (box,id,meta,serial) {
+    var section=panel(box,"Content");if(meta.detail_bytes>262144){section.appendChild(text("p","This record is "+meta.detail_bytes+" bytes. Load the full content to continue."));section.appendChild(button("Load full content",async function(){try{await loadRecordBody(section,id,serial,true);}catch(e){fail(section,e,function(){renderRecordContent(box,id,meta,serial);});}}));return;}
+    await loadRecordBody(section,id,serial);
+  };
+  var loadRecordBody = async function (section,id,serial,force) { var value=force?await apiGet("records/"+id+".json"):await dataCall("record",id,"records/"+id+".json");if(serial!==token)return;var content=readFrontmatter(value.content||"");var links=value.links||[];var byHref=Object.create(null);links.forEach(function(l){if(l.href&&l.target_id&&l.available!==false)byHref[l.href]="#/records/"+l.target_id+(l.fragment?"#"+encodeURIComponent(l.fragment):"");});var rendered=window.KnowledgeV1Markdown.render(content,{baseUrl:window.location.href,resolveLink:function(href,label){return byHref[href]||null;},approvedAssets:[]});section.appendChild(rendered); };
+  var publicSourceUrl = function (id) { var cfg=window.KnowledgeHubConfig||{};if(!sourceApproved(id))return null;try{var base=new URL(cfg.sourceURLBase,window.location.href);if(base.protocol!=="https:"&&base.protocol!=="http:")return null;var path=String(cfg.publicSourcePaths[id]||"").replace(/\\/g,"/");if(!path||path.charAt(0)==="/"||path.split("/").some(function(part){return !part||part==="."||part==="..";}))return null;var encoded=path.split("/").map(function(part){return encodeURIComponent(part);}).join("/");return new URL(encoded,base.href.replace(/\/?$/,"/")).href;}catch(e){return null;} };
+  var sourceApproved = function(id){var cfg=window.KnowledgeHubConfig||{};return !!(cfg.sourceURLBase&&cfg.publicSourcePaths&&cfg.publicSourcePaths[id]&&Array.isArray(cfg.publicSourceRecordIds)&&cfg.publicSourceRecordIds.indexOf(id)>=0);};
+  var renderSource = async function (box,id,meta,serial) {
+    var section=panel(box,"Source");if(!sourceApproved(id)){section.appendChild(text("p","Exact source is unavailable in this view."));return;}if(meta.detail_bytes>262144){section.appendChild(text("p","This record is "+meta.detail_bytes+" bytes. Load the full source to continue."));section.appendChild(button("Load full source",function(){loadSource(true);},"btn"));return;}await loadSource(false);
+    async function loadSource(force){try{var url=publicSourceUrl(id);if(!url)throw new Error("Exact source is unavailable in this view.");var response=await fetch(url,{cache:"no-store"});if(!response.ok)throw new Error("Exact source could not be loaded.");var source=await response.text();if(serial!==token)return;var pre=text("pre",source,"source-text");pre.tabIndex=0;section.appendChild(pre);var copy=button("Copy source",async function(){try{await navigator.clipboard.writeText(source);announce("Source copied.");}catch(e){var selection=window.getSelection();var range=document.createRange();range.selectNodeContents(pre);selection.removeAllRanges();selection.addRange(range);announce("Clipboard unavailable. Source selected for manual copying.");}});section.appendChild(copy);var file=text("a","File: "+String((window.KnowledgeHubConfig.publicSourcePaths||{})[id]).split(/[\\/]/).pop());file.href=url;file.target="_blank";file.rel="noopener noreferrer";file.setAttribute("aria-label",file.textContent+" (opens in a new tab)");section.appendChild(file);section.appendChild(text("p","Exact current source bytes.","meta"));}catch(e){fail(section,e,function(){loadSource(force);});}}
+  };
+  var renderHistory = async function (box,id,meta,serial) {
+    var section=panel(box,"History");try{var index=await dataCall("historyIndex",id,"history/"+id+"/index.json");if(!index.event_count){section.appendChild(text("p","No published history."));return;}var pages=index.pages||[],pageNumber=pageState[window.location.hash]||1,all=[];for(var i=0;i<Math.min(pageNumber,pages.length);i++){var page=api&&api.historyPage?await api.historyPage(id,pages[i].number):await apiGet(pages[i].url);all=all.concat(page.items||[]);}if(serial!==token)return;all.sort(function(a,b){return b.sequence-a.sequence;});section.appendChild(text("p","Current version is labelled current. Showing published history.","meta"));all.forEach(function(ev){var row=renderEventRow(ev,all);if(ev.sequence===meta.version)row.insertBefore(text("span","Current version","badge"),row.firstChild);section.appendChild(row);});if(pageNumber<pages.length)section.appendChild(button("Load more",function(){pageState[window.location.hash]=pageNumber+1;render();},"btn secondary"));}catch(e){fail(section,e,function(){renderHistory(box,id,meta,serial);});}
+  };
+  var renderEvent = async function (route,serial) {
+    if(!safeId(route.id))throw new Error("Event unavailable in this view.");var meta=await dataCall("eventMeta",route.id,"events/"+route.id+".meta.json");if(serial!==token)return;var view=route.params.get("view")||"revision";if(["revision","before","diff"].indexOf(view)<0)throw new Error("Invalid view. Reset view to continue.");var current=null;try{current=await dataCall("recordMeta",meta.record_id,"records/"+meta.record_id+".meta.json");}catch(e){}if(serial!==token)return;var isCurrent=current&&current.version===meta.sequence;var box=routeBox("Revision "+meta.sequence+" · "+meta.recorded_at+" UTC");setNav("diary");box.appendChild(text("p",isCurrent?"Current revision":"You are viewing a past revision.","badge"));box.appendChild(text("h2",meta.title||meta.summary||"Historical record"));var tabs=text("nav",undefined,"record-tabs");tabs.setAttribute("aria-label","Revision views");["revision","before","diff"].forEach(function(v){var label={revision:"This revision",before:"Previous revision",diff:"Changes"}[v],a=link(label,eventLink(meta,v));if(view===v)a.setAttribute("aria-current","page");tabs.appendChild(a);});box.appendChild(tabs);var actions=text("div",undefined,"actions");actions.appendChild(link("Open current record",recordLink(meta.record_id)));actions.appendChild(link("Back to diary","/diary"));var fileUrl=publicSourceUrl(meta.record_id);if(fileUrl){var file=text("a","File: "+String((window.KnowledgeHubConfig.publicSourcePaths||{})[meta.record_id]).split(/[\\/]/).pop());file.href=fileUrl;file.target="_blank";file.rel="noopener noreferrer";actions.appendChild(file);}box.appendChild(actions);
+    if(meta.detail_bytes>262144){var gate=panel(box);gate.appendChild(text("p","This revision is "+meta.detail_bytes+" bytes. Load the full revision to continue."));gate.appendChild(button("Load full revision",function(){loadEventDetail(box,route,meta,view,serial);},"btn"));return;}await loadEventDetail(box,route,meta,view,serial);
+  };
+  var loadEventDetail = async function (box,route,meta,view,serial) {try{var value=meta.detail_bytes>262144?await apiGet("events/"+route.id+".json"):await dataCall("event",route.id,"events/"+route.id+".json");if(serial!==token)return;var ev=value.event||{}, section=panel(box,{revision:"This revision",before:"Previous revision",diff:"Changes"}[view]);var content=view==="before"?ev.before:view==="revision"?ev.after:null;if(view==="before"&&ev.before===null){section.appendChild(text("p","This record did not exist before this change."));return;}if(view==="diff"){if(ev.action==="MOVED"&&!(value.diff&&value.diff.text))section.appendChild(text("p","Content unchanged; moved from "+(ev.path_before||"unknown")+" to "+(ev.path_after||"unknown")+"."));else{var pre=text("pre",undefined,"revision-diff");(value.diff&&value.diff.text||"").split("\n").forEach(function(line){var span=text("span",line+"\n");if(line.charAt(0)==="+")span.className="diff-added";if(line.charAt(0)==="-")span.className="diff-removed";pre.appendChild(span);});section.appendChild(pre);}return;}
+      var rendered=window.KnowledgeV1Markdown.render(readFrontmatter(content||""),{baseUrl:window.location.href,approvedAssets:[]});section.appendChild(rendered);section.appendChild(text("p","Status in this revision: "+(meta.status||"Unknown"),"meta"));}catch(e){fail(box,e,function(){loadEventDetail(box,route,meta,view,serial);});}};
+  var renderAmbiguous = function (route) {var box=routeBox("Choose a record");box.appendChild(text("p","This old path matches more than one published record. Choose the intended title."));var list=panel(box);route.ambiguous.forEach(async function(id){try{var meta=await dataCall("recordMeta",id,"records/"+id+".meta.json");list.appendChild(link(meta.title+" · "+meta.area,recordLink(id)));}catch(e){}});};
+  var recordsScreen = async function (route,serial) {
+    var box=routeBox("Records");setNav("records");var q=route.params.get("q")||"";var form=text("div",undefined,"panel filter-panel");form.id="filter-panel";var filters=text("div",undefined,"filter-form");var fields=["area","project","type","status","tag"];fields.forEach(function(f){var label=document.createElement("label");label.appendChild(text("span",f.charAt(0).toUpperCase()+f.slice(1)));var input=document.createElement("input");input.value=route.params.get(f)||"";input.setAttribute("aria-label",f);input.addEventListener("change",function(){var p={q:q,archived:route.params.get("archived")||""};fields.forEach(function(name){p[name]=name===f?input.value:(route.params.get(name)||"");});go("/records",p);});label.appendChild(input);filters.appendChild(label);});form.appendChild(filters);var archived=document.createElement("label"),check=document.createElement("input");check.type="checkbox";check.checked=route.params.get("archived")==="1"||route.params.get("status")==="deprecated";check.addEventListener("change",function(){var p={q:q,archived:check.checked?"1":""};fields.forEach(function(f){p[f]=route.params.get(f)||"";});go("/records",p);});archived.append(check,document.createTextNode(" Include archived"));form.appendChild(archived);box.appendChild(form);
+    var state=text("p",q?"Searching…":"Loading records…","meta");box.appendChild(state);var output=panel(box);var items;
+    if(api&&api.search&&q){var searchResult=await api.search(q);items=searchResult.items||[];items.forEach(function(record){record.score=(searchResult.scores||{})[record.id]||0;});}else items=await allRecords();if(serial!==token)return;
+    if(!Array.isArray(items))items=items.items||[];var params={q:q,area:route.params.get("area")||"",project:route.params.get("project")||"",type:route.params.get("type")||"",status:route.params.get("status")||"",tag:route.params.get("tag")||""};var activeArchived=check.checked;
+    items=items.filter(function(r){if(!activeArchived&&r.status==="deprecated")return false;return (!params.area||r.area===params.area||r.area.indexOf(params.area+"/")===0)&&(!params.project||r.project_id===params.project)&&(!params.type||r.type===params.type)&&(!params.status||r.status===params.status)&&(!params.tag||(r.tags||[]).indexOf(params.tag)>=0);});
+    if(!q)items.sort(function(a,b){return String(a.title||"").toLowerCase().localeCompare(String(b.title||"").toLowerCase())||String(a.id).localeCompare(String(b.id));});
+    else items.sort(function(a,b){return (b.score||0)-(a.score||0)||String(b.updated_at||"").localeCompare(String(a.updated_at||""))||String(a.id).localeCompare(String(b.id));});
+    state.textContent=items.length+" matching records";if(!items.length){output.appendChild(text("p","No matching records.","empty"));output.appendChild(button("Clear filters",function(){go("/records",{q:q});},"btn secondary"));return;}
+    var offset=pageState[window.location.hash]||0;items.slice(0,offset+50).forEach(function(r){var row=text("article",undefined,"record-row");var h=text("h2");h.appendChild(link(r.title||"Untitled",recordLink(r.id)));row.appendChild(h);if(r.description)row.appendChild(text("p",r.description));var metaBox=text("p",undefined,"meta");statusText(metaBox,r.status);metaBox.appendChild(text("span"," · "+(r.project_title||r.project_id||"No project")+" · "+(r.area||"")));if(r.updated_at)metaBox.appendChild(text("span"," · Updated "+r.updated_at));row.appendChild(metaBox);output.appendChild(row);});if(items.length>offset+50)output.appendChild(button("Load more",function(){pageState[window.location.hash]=offset+50;render();},"btn secondary load-more"));
+  };
+  var projectsScreen = async function (route,serial) {var records=await allRecords();if(serial!==token)return;var box=routeBox("Projects");setNav("projects");var projects=records.filter(function(r){return r.type==="project"&&r.status!=="deprecated";});if(route.id){var project=projects.filter(function(p){return p.id===route.id;})[0];if(!project)throw new Error("Record unavailable in this view.");box.querySelector("h1").textContent=project.title;var detail=await dataCall("record",route.id,"records/"+route.id+".json");if(serial!==token)return;var content=panel(box,"About this project");content.appendChild(window.KnowledgeV1Markdown.render(readFrontmatter(detail.content||""),{approvedAssets:[]}));var children=records.filter(function(r){return r.project_id===route.id&&r.type!=="project"&&r.status!=="deprecated";});content.appendChild(text("p",children.length+" related records","meta"));if(!children.length)content.appendChild(text("p","No records in this project.","empty"));children.forEach(function(r){content.appendChild(link(r.title,recordLink(r.id)));});return;}if(!projects.length)box.appendChild(text("p","No published projects.","empty"));projects.forEach(function(p){var section=panel(box,p.title);if(p.description)section.appendChild(text("p",p.description));statusText(section,p.status);var children=records.filter(function(r){return r.project_id===p.id&&r.type!=="project"&&r.status!=="deprecated";});section.appendChild(text("p",children.length+" related current records","meta"));section.appendChild(link("Open project","/projects/"+p.id));});};
+  var todayScreen = async function (route,serial) {var day=nowDate(), box=routeBox("Today",day+" · UTC");setNav("today");var value=await dataCall("today",{date:day},"reminders/"+day.slice(0,7)+".json");if(serial!==token)return;var sections={"Important dates today":value.today||[],"Upcoming seven dates":value.upcoming||[],"Recently updated":value.recently_updated||[]};var names=["Important dates today","Upcoming seven dates","Recently updated"];
+    names.forEach(function(name,index){var section=panel(box,name),items=sections[name]||[];if(!items.length)section.appendChild(text("p",index===2?"None recently updated.":"None.","empty"));items.forEach(function(item){var row=text("p",undefined);var rid=item.record_id||item.id;row.appendChild(link(item.title||item.text||"Record",recordLink(rid)));if(item.text)row.appendChild(text("span"," · "+item.text));section.appendChild(row);});});box.appendChild(link("View calendar","/calendar"));box.appendChild(link("See all records","/records"));};
+  var calendarScreen = async function (route,serial) {var month=route.params.get("month")||nowDate().slice(0,7);if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error("Invalid view. Reset view to continue.");if(!route.params.has("month"))go("/calendar",{month:month},true);var day=route.params.get("day")||"";if(day&&(!dateIsValid(day)||day.slice(0,7)!==month))throw new Error("Invalid view. Reset view to continue.");var box=routeBox("Calendar",month+" · UTC");setNav("calendar");var controls=text("div",undefined,"toolbar");var input=document.createElement("input");input.type="month";input.value=month;input.setAttribute("aria-label","Month (UTC)");input.addEventListener("change",function(){go("/calendar",{month:input.value,day:day});});controls.append(button("Previous month",function(){go("/calendar",{month:shiftMonth(month,-1),day:""});},"btn secondary"),button("Next month",function(){go("/calendar",{month:shiftMonth(month,1),day:""});},"btn secondary"),button("Today",function(){go("/calendar",{month:nowDate().slice(0,7)});},"btn secondary"),input);box.appendChild(controls);
+    var reminders=await dataCall("reminders",month,"reminders/"+month+".json");if(serial!==token)return;var items=(reminders.items||[]).filter(function(x){return x.status!=="deprecated";});var grid=panel(box,"Important dates · Monday–Sunday");var table=text("table",undefined,"calendar-table");table.setAttribute("aria-label","Important dates calendar");var thead=document.createElement("thead"),headerRow=document.createElement("tr");["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].forEach(function(d){var th=text("th",d);th.scope="col";headerRow.appendChild(th);});thead.appendChild(headerRow);table.appendChild(thead);var tbody=document.createElement("tbody");var parts=month.split("-"),first=new Date(Date.UTC(+parts[0],+parts[1]-1,1)),offset=(first.getUTCDay()+6)%7,count=new Date(Date.UTC(+parts[0],+parts[1],0)).getUTCDate(),cells=[];for(var blank=0;blank<offset;blank++)cells.push(null);for(var n=1;n<=count;n++)cells.push(n);while(cells.length%7)cells.push(null);for(var rowIndex=0;rowIndex<cells.length;rowIndex+=7){var tr=document.createElement("tr");for(var col=0;col<7;col++){var td=document.createElement("td"),value=cells[rowIndex+col];if(value){var current=month+"-"+(value<10?"0":"")+value,hits=items.filter(function(x){return x.start_date<=current&&x.end_date>=current;});var cell=button(String(value)+(hits.length?" · "+hits.length:""),function(d){return function(){go("/calendar",{month:month,day:d});};}(current),"");cell.setAttribute("aria-label",current+(hits.length?": "+hits.length+" reminders":""));cell.setAttribute("aria-selected",String(current===day));if(current===nowDate())cell.setAttribute("aria-current","date");if(hits.length)cell.className+=" has-reminder";td.appendChild(cell);}tr.appendChild(td);}tbody.appendChild(tr);}table.appendChild(tbody);grid.appendChild(table);
+    var agenda=panel(box,day?"Agenda · "+day:"Month agenda");var shown=items.filter(function(x){return day?x.start_date<=day&&x.end_date>=day:x.start_date.slice(0,7)<=month&&x.end_date.slice(0,7)>=month;});if(!shown.length)agenda.appendChild(text("p","No important dates in this period.","empty"));shown.forEach(function(item){var row=text("article",undefined,"record-row");row.appendChild(link(item.title,recordLink(item.record_id)));row.appendChild(text("p",item.text));row.appendChild(text("p",item.start_date===item.end_date?item.start_date:item.start_date+" – "+item.end_date,"meta"));statusText(row,item.status);agenda.appendChild(row);});agenda.appendChild(text("p","Important dates are not notifications.","meta"));if(day)agenda.appendChild(link("View changes on this day","/diary"+queryString({date:day,mode:"day"})));};
+  var shiftMonth=function(month,delta){var p=month.split("-");var d=new Date(Date.UTC(+p[0],+p[1]-1+delta,1));return d.toISOString().slice(0,7);};
+  var render = async function () {
+    var serial=++token;app.setAttribute("aria-busy","true");var oldHash=window.location.hash;
+    try { if(!manifest)await initialize(false); else if(api&&api.loadManifest){var check=await api.loadManifest({refresh:false});if(check.generation&&manifest.generation&&check.generation!==manifest.generation){var note=document.getElementById("update-available");if(!note){note=text("div","Update available. Refresh to load the new published generation.","update-banner");note.id="update-available";document.getElementById("app-footer").before(note);} }}
+      if(serial!==token)return;var route=parseRoute();route=await resolveAliases(route,serial);if(serial!==token)return;setupSearch(route);setNav(route.name);
+      if(route.name==="diary")await diaryScreen(route,serial);
+      else if(route.name==="records"&&route.id)await recordScreen(route,serial);
+      else if(route.name==="records")await recordsScreen(route,serial);
+      else if(route.name==="events")await renderEvent(route,serial);
+      else if(route.name==="projects")await projectsScreen(route,serial);
+      else if(route.name==="today")await todayScreen(route,serial);
+      else if(route.name==="calendar")await calendarScreen(route,serial);
+      else {var box=routeBox("Page not found");box.appendChild(text("p","The requested page is not available."));box.appendChild(link("Go to diary","/diary"));}
+      if(serial!==token)return;setupMobileNav();app.setAttribute("aria-busy","false");
+      var headingNode=app.querySelector("h1");if(restoringHistory){var memory=routeMemory[window.location.hash||"#/diary"];if(memory){app.scrollTop=memory.scroll||0;if(memory.focusId&&document.getElementById(memory.focusId))document.getElementById(memory.focusId).focus();else if(headingNode)headingNode.focus();if(memory.windowY)window.scrollTo(0,memory.windowY);}else if(headingNode)headingNode.focus();}else if(headingNode)headingNode.focus();restoringHistory=false;pendingRoute=false;announce("Page loaded.");
+    } catch(error){if(serial!==token)return;var box;if(error&&(/invalid view/i.test(error.message)||error.code&&error.code.indexOf("invalid_")===0)){box=routeBox("Invalid view");box.appendChild(text("p","The route contains an unsupported value."));box.appendChild(button("Reset view",function(){go("/diary",{},true);render();},"btn"));}else if(error&&(error.code==="unavailable"||error.status===404)){box=routeBox("Record unavailable in this view");box.appendChild(text("p","This record is unavailable in this view."));box.appendChild(button("Back",function(){window.history.back();},"btn secondary"));}else{box=routeBox("Knowledge Hub");fail(box,error,function(){manifest=null;render();});}app.setAttribute("aria-busy","false");var errorHeading=app.querySelector("h1");if(errorHeading)errorHeading.focus();}
+  };
+  document.addEventListener("click",function(event){var anchor=event.target.closest&&event.target.closest('a[href^="#/"]');if(anchor)saveRouteMemory();});
+  window.addEventListener("hashchange",function(){pendingRoute=true;render();});
+  window.addEventListener("popstate",function(){pendingRoute=true;restoringHistory=true;render();});
+  document.getElementById("refresh").addEventListener("click",async function(){try{manifest=null;await initialize(true);var note=document.getElementById("update-available");if(note)note.remove();pendingRoute=true;render();}catch(e){announce("Refresh failed. Retry.");}});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"){var details=document.querySelector("#filter-panel[open]");if(details){details.open=false;var trigger=document.getElementById("filter-toggle");if(trigger)trigger.focus();}}});
+  render();
+}(window, document));

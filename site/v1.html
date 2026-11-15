@@ -1,19 +1,46 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Knowledge Hub · V1</title>
-<style>
-:root{font:16px system-ui,sans-serif;color-scheme:light;background:#f6f8fb;color:#18283c}
-body{margin:0}header{padding:1rem 1.5rem;background:#fff;border-bottom:1px solid #d5dfeb}
-nav{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:.7rem}
-a{color:#2458a0}main{max-width:960px;margin:auto;padding:1.5rem}
-article,.panel{background:white;border:1px solid #d5dfeb;border-radius:12px;padding:1rem;margin:1rem 0;overflow-wrap:anywhere}
-button,input,select{font:inherit;padding:.5rem;border-radius:6px}
-button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #2458a0}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#eef2f8;padding:1rem}
-small{color:#46566a}.error{color:#a32020} .list{padding-left:1.4rem}
-@media(max-width:480px){main{padding:.75rem}header{padding:1rem}}
-</style></head>
-<body><header><strong>Knowledge Hub</strong><nav aria-label="Main navigation">
-<a href="#/diary">Diary</a><a href="#/records">Records</a><a href="#/projects">Projects</a><a href="#/today">Today</a><a href="#/calendar">Calendar</a>
-</nav></header><main id="app" tabindex="-1" aria-live="polite">Loading…</main>
-<script src="./v1.js" defer></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#355b89">
+  <title>Knowledge Hub</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./v1.css">
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <div class="app-shell">
+    <header class="app-navbar">
+      <a class="app-identity" href="#/today" aria-label="Knowledge Hub home">
+        <span class="book-icon" aria-hidden="true">▤</span><span>Knowledge Hub</span>
+      </a>
+      <form id="global-search-form" role="search"><label class="sr-only" for="global-search">Search records</label><input id="global-search" type="search" placeholder="Search records"><button type="submit">Search</button></form>
+      <span id="build-state" class="nav-version">Loading</span>
+    </header>
+    <div class="workspace">
+      <aside class="library-sidebar" aria-label="Knowledge Hub navigation">
+        <div class="sidebar-toolbar"><span class="sidebar-toolbar-icon" aria-hidden="true">▦</span><span>Sections</span></div>
+        <nav id="primary-nav" class="sidebar-scroll" aria-label="Primary navigation">
+          <a href="#/today" data-route="today">Today</a>
+          <a href="#/projects" data-route="projects">Projects</a>
+          <a href="#/records" data-route="records">Records</a>
+          <a href="#/diary" data-route="diary">Diary</a>
+          <a href="#/calendar" data-route="calendar">Calendar</a>
+        </nav>
+        <div id="sidebar-status" class="sidebar-bottom">Public demo · Read-only</div>
+      </aside>
+      <main id="app" class="diary-content" tabindex="-1">
+        <div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
+        <div id="route-content" aria-busy="true">Loading Knowledge Hub…</div>
+      </main>
+    </div>
+    <footer id="app-footer" class="app-footer">Published data loading · <span id="source-revision">—</span> · <button id="refresh" type="button">Refresh</button></footer>
+  </div>
+  <script src="./v1_data.js" defer></script>
+  <script src="./vendor/markdown-it-13.0.2.min.js" defer></script>
+  <script src="./v1-config.js" defer></script>
+  <script src="./v1_markdown.js" defer></script>
+  <script src="./v1.js" defer></script>
+</body>
+</html>
