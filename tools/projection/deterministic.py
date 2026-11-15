@@ -17,6 +17,9 @@ PAGE_BYTES = 128 * 1024
 EVENT_SUMMARY_LIMIT = 16 * 1024
 SEARCH_SHARD_LIMIT = 512 * 1024
 TOKEN_PATTERN = re.compile(r"[^\W_]+", re.UNICODE)
+INLINE_LINK = re.compile(r"!?\[([^\]\n]*)\]\((?:<)?[^)\s>]+(?:>)?(?:\s+[^)]*)?\)")
+REFERENCE_LINK = re.compile(r"(?m)^\s*\[[^\]\n]+\]:\s*(?:<[^>\n]+>|[^\s\n]+).*$")
+URL_PATTERN = re.compile(r"(?i)(?:https?://|mailto:)[^\s<>()]+")
 FIELD_WEIGHTS = {"title": 8, "tag": 4, "description": 2, "body": 1}
 
 
@@ -39,6 +42,14 @@ def tokenize(value: str) -> list[str]:
     return [token for token in TOKEN_PATTERN.findall(normalized) if 2 <= len(token) <= 64]
 
 
+def searchable_body(value: str) -> str:
+    """Keep visible Markdown link labels while excluding destination URLs/IDs."""
+    value = REFERENCE_LINK.sub("", value)
+    value = INLINE_LINK.sub(lambda match: match.group(1), value)
+    value = re.sub(r"(?i)<(?:https?://|mailto:)[^>\s]+>", "", value)
+    return URL_PATTERN.sub("", value)
+
+
 def search_shards(records: list[dict]) -> dict[str, bytes]:
     """Create a deterministic token -> record/field inverted index."""
     shards = defaultdict(lambda: defaultdict(dict))
@@ -48,7 +59,7 @@ def search_shards(records: list[dict]) -> dict[str, bytes]:
             "title": record.get("title", ""),
             "description": record.get("description", ""),
             "tag": " ".join(record.get("tags", [])),
-            "body": record.get("body", ""),
+            "body": searchable_body(record.get("body", "")),
         }
         for field, value in fields.items():
             for token in set(tokenize(value)):

@@ -18,6 +18,8 @@ jobs:
     name: validate-openwiki
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      KH_ACCEPTANCE_REPORT_DIR: ${{ runner.temp }}/projection-acceptance
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -63,6 +65,21 @@ jobs:
         run: python -m unittest discover -s tools/records -p 'test_*.py' -v
       - name: Test deterministic projection primitives (#31)
         run: python -m unittest discover -s tools/projection -p 'test_*.py' -v
+      - name: Upload projection and privacy acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-projection-acceptance
+          path: ${{ runner.temp }}/projection-acceptance
+          if-no-files-found: warn
+      - name: Smoke-test immutable native projections for repository source
+        run: |
+          python tools/projection/build.py --destination "$RUNNER_TEMP/native-private" --revision HEAD --mode private
+          python tools/projection/build.py --destination "$RUNNER_TEMP/native-public" --revision HEAD --mode public
+          python tools/projection/sourcebundle.py --root "$GITHUB_WORKSPACE" --revision HEAD --output "$RUNNER_TEMP/native.bundle.json" --receipt-output "$RUNNER_TEMP/native.receipt.json"
+          native_receipt_pin=$(python -c 'import hashlib,os,pathlib;print(hashlib.sha256((pathlib.Path(os.environ["RUNNER_TEMP"])/"native.receipt.json").read_bytes()).hexdigest())')
+          python tools/projection/build.py --destination "$RUNNER_TEMP/native-bundle" --bundle "$RUNNER_TEMP/native.bundle.json" --receipt "$RUNNER_TEMP/native.receipt.json" --receipt-sha256 "$native_receipt_pin" --mode private
+          diff -r "$RUNNER_TEMP/native-private/g" "$RUNNER_TEMP/native-bundle/g"
       - name: Validate v1 source records and append-only trusted-base prefix
         run: |
           BASE="$(git merge-base HEAD origin/main)"

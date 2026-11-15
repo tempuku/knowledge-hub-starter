@@ -9,7 +9,7 @@ visibility: "public"
 
 # Migration inventory review — issue #35
 
-**Frozen source:** `de749bed9053dd4bc9f96fee3cb7f816e5bdebcb` (merged #30). **Decision:** reviewed for deterministic dry run, not approval to cut over or publish. The machine-readable source of individual decisions is [`migration/records-v1.json`](../../migration/records-v1.json). Its UUIDs and paths are persistent allocations, not values to regenerate.
+**Frozen source:** `de749bed9053dd4bc9f96fee3cb7f816e5bdebcb` (merged #30). **Decision:** reviewed for deterministic dry run, not approval to cut over or publish. The machine-readable source of individual decisions is [`migration/records-v1.json`](https://github.com/tempuku/knowledge-hub-starter/blob/main/migration/records-v1.json). Its UUIDs and paths are persistent allocations, not values to regenerate.
 
 ## Scope and disposition
 
