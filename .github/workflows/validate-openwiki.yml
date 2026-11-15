@@ -49,6 +49,12 @@ jobs:
         run: python -m pip install -r tools/diary/requirements.txt
       - name: Test v1 storage schemas and histories in disposable Git repositories
         run: python -m unittest discover -s tools/records -p 'test_*.py' -v
+      - name: Test migration inventory and fail-closed evidence audit (#35)
+        run: |
+          python -m unittest discover -s tests -p 'test_inventory_legacy.py' -v
+          python -m unittest discover -s tests -p 'test_validate_inventory_review.py' -v
+          python -m unittest discover -s tests -p 'test_audit_legacy_evidence.py' -v
+          python -m unittest discover -s scripts -p 'test_inventory_legacy.py' -v
       - name: Test deterministic projection primitives (#31)
         run: python -m unittest discover -s tools/projection -p 'test_*.py' -v
       - name: Validate v1 source records and append-only trusted-base prefix
