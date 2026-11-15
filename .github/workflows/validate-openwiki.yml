@@ -47,6 +47,18 @@ jobs:
           cache-dependency-path: tools/diary/requirements.txt
       - name: Install diary builder dependencies
         run: python -m pip install -r tools/diary/requirements.txt
+      - name: Validate reviewed issue #35 inventory and mutation tests
+        run: |
+          python scripts/inventory_legacy.py --revision de749bed9053dd4bc9f96fee3cb7f816e5bdebcb --check
+          python scripts/validate_inventory.py --manifest migration/records-v1.json --report-json "$RUNNER_TEMP/inventory-validation.json"
+          python -m unittest discover -s tests -p 'test_validate_inventory.py' -v
+      - name: Upload reviewed inventory validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reviewed-inventory-validation
+          path: ${{ runner.temp }}/inventory-validation.json
+          if-no-files-found: warn
       - name: Test v1 storage schemas and histories in disposable Git repositories
         run: python -m unittest discover -s tools/records -p 'test_*.py' -v
       - name: Test deterministic projection primitives (#31)

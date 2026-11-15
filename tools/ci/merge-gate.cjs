@@ -8,6 +8,7 @@ const CONTEXT = "knowledge-merge-gate";
 const REQUIRED_STEPS = [
   "Test Knowledge Hub frontmatter validation",
   "Test v1 storage schemas and histories in disposable Git repositories",
+  "Validate reviewed issue #35 inventory and mutation tests",
   "Test deterministic projection primitives (#31)",
   "Validate v1 source records and append-only trusted-base prefix",
   "Test automated PR readiness safety (no approval or merge)",
