@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      KH_ACCEPTANCE_REPORT_DIR: ${{ runner.temp }}/projection-acceptance
+      KH_ACCEPTANCE_REPORT_DIR: acceptance-reports
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -70,7 +70,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-projection-acceptance
-          path: ${{ runner.temp }}/projection-acceptance
+          path: acceptance-reports
           if-no-files-found: warn
       - name: Smoke-test immutable native projections for repository source
         run: |
