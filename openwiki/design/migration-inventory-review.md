@@ -18,6 +18,14 @@ Run `python3 scripts/inventory_legacy.py --revision de749bed9053dd4bc9f96fee3cb7
 
 **Important:** A generated inventory is not a reviewed manifest. All disposition, stable ID, project/area, destination, visibility, provenance, and legacy event mappings remain unset until evidence-based reconciliation. The generator deliberately fails closed rather than guessing from filenames. A separate review must account for structural indexes and links.
 
+## Resolved demo snapshot divergence (frozen evidence, not a fabricated event)
+
+At the frozen source revision, `openwiki/concepts/diary-diff-demo.md` has `status: completed` whereas the last native log `after` snapshot has `status: stable`. The rest of the source is identical: the three-byte length difference is exactly `completed` (9 bytes) versus `stable` (6 bytes). This is a real unlogged status change, **not** a malformed snapshot or permission to rewrite history.
+
+Reconciliation disposition: **retain both originals**. The frozen source bytes are authoritative for the imported current record, and the final native event remains an immutable historical snapshot. Record the missing transition as an **unattributed provenance gap**, with `occurred_at: null` and no fabricated actor, timestamp, or event ID. At eventual migration, emit only the separately specified import/normalization event at the real migration time; do not backdate a status update. The public demo is already marked public in source, but this fact alone does not approve any imported event for publication.
+
+This resolves the *meaning* of the mismatch; it does not make the byte-equality check pass, and that expected mismatch must remain visible in audit evidence.
+
 ## Required reconciliation before approval
 
 - Verify each native log's final after snapshot against current source bytes; inspect GUIDE and concepts/diary-diff-demo divergence first.
