@@ -257,9 +257,10 @@ class PrivacyAcceptanceTests(unittest.TestCase):
             self.assertIn(f"record:{IDS['public_record']}", linked["content"])
             self.assertEqual(linked["links"], [
                 {"target_id": None, "fragment": None,
-                 "label": "Unavailable in this view", "available": False},
+                 "label": "Unavailable in this view", "available": False, "href": None},
                 {"target_id": IDS["public_record"], "fragment": None,
-                 "label": "Public target", "available": True},
+                 "label": "Public target", "available": True,
+                 "href": f"record:{IDS['public_record']}"},
             ])
             self.assertEqual(linked["content_bytes"], len(linked["content"].encode("utf-8")))
             published_event = json.loads(public_files[f"events/{IDS['public_event']}.json"])["event"]

@@ -139,7 +139,12 @@ def select_public(records: list[dict], histories: dict[str, list[dict]],
                 link = dict(link)
                 if link.get("target_id") not in eligible_ids:
                     link.update(target_id=None, fragment=None,
-                                label="Unavailable in this view", available=False)
+                                label="Unavailable in this view", available=False, href=None)
+                else:
+                    # Public Markdown is rewritten to canonical IDs. Never emit
+                    # original source paths as renderer lookup keys.
+                    link["href"] = "record:" + link["target_id"] + (
+                        "#" + link["fragment"] if link.get("fragment") else "")
                 sanitized_links.append(link)
             public_record["links"] = sanitized_links
         chosen_records.append(public_record)

@@ -63,7 +63,7 @@ def _record_links(body: str, metadata: dict, source_path: str) -> list[dict]:
                 if not UUID.fullmatch(identifier) or (separator and not fragment):
                     raise ProjectionError("invalid canonical record link ID")
                 links.append({"target_id": identifier, "fragment": fragment if separator else None,
-                              "label": label, "available": True})
+                              "label": label, "available": True, "href": target})
             elif target.startswith(("http://", "https://", "mailto:")):
                 continue
             elif re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target):
@@ -83,12 +83,12 @@ def _record_links(body: str, metadata: dict, source_path: str) -> list[dict]:
                 if not target_path.endswith(".md") or ("#" in target and not fragment):
                     raise ProjectionError("invalid relative record link")
                 links.append({"target_path": target_path, "fragment": fragment or None,
-                              "label": label, "available": True})
+                              "label": label, "available": True, "href": target})
     for source in metadata.get("sources", []):
         resource = source.get("resource", "") if isinstance(source, dict) else ""
         if resource.startswith("record:"):
             links.append({"target_id": resource[7:], "fragment": None,
-                          "label": source.get("title", ""), "available": True})
+                          "label": source.get("title", ""), "available": True, "href": resource})
     return links
 
 

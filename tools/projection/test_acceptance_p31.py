@@ -354,7 +354,7 @@ class ProjectionAcceptance(unittest.TestCase):
         self.assertEqual(record["path"], "openwiki/ideas/archive/source.md")
         self.assertEqual(record["history_index"], f"history/{source}/index.json")
         self.assertEqual(record["links"], [{"target_id": target, "fragment": "overview",
-                         "label": "Target", "available": True}])
+                         "label": "Target", "available": True, "href": f"record:{target}#overview"}])
 
         aliases = decode(files, "aliases.json")
         self.assertEqual(aliases["paths"]["openwiki/ideas/source.md"], [source])
@@ -401,10 +401,23 @@ class ProjectionAcceptance(unittest.TestCase):
         files = self.build()
         record = decode(files, f"records/{source}.json")
         self.assertEqual(record["links"], [{"target_id": target, "fragment": "part",
-                         "label": "target", "available": True}])
+                         "label": "target", "available": True, "href": "../../notes/target.md#part"}])
         self.evidence(expected={"record_link_count": 1},
                       observed={"record_link_count": len(record["links"])},
                       generated_files=files)
+
+    def test_relative_link_lookup_preserves_distinct_targets_with_same_label(self):
+        first = self.repo.add_record("openwiki/notes/first.md",
+            note("First", "First body\n"), recorded_at="2026-11-12T08:00:00Z")
+        second = self.repo.add_record("openwiki/notes/second.md",
+            note("Second", "## Part\n\nSecond body\n"), recorded_at="2026-11-12T08:01:00Z")
+        source = self.repo.add_record("openwiki/notes/source.md",
+            note("Source", "[Same](first.md) [Same](second.md#part)\n"),
+            recorded_at="2026-11-12T09:00:00Z")
+        self.repo.commit()
+        record = decode(self.build(), f"records/{source}.json")
+        self.assertEqual([(link["href"], link["target_id"]) for link in record["links"]],
+                         [("first.md", first), ("second.md#part", second)])
 
     def test_p03_full_body_unicode_and_filters_use_only_current_search_fields(self):
         winner = self.repo.add_record(
@@ -502,7 +515,7 @@ class ProjectionAcceptance(unittest.TestCase):
         generation = destination / manifest["root"]
         public_record = json.loads((generation / f"records/{source}.json").read_text())
         self.assertEqual(public_record["links"], [{"target_id": target, "fragment": None,
-                         "label": "target", "available": True}])
+                         "label": "target", "available": True, "href": f"record:{target}"}])
         public_files = self.published_files(destination, manifest)
         self.evidence(expected={"eligible_current_link_count": 1},
                       observed={"eligible_current_link_count": len(public_record["links"])},
@@ -531,7 +544,7 @@ class ProjectionAcceptance(unittest.TestCase):
         public_record = json.loads((generation / f"records/{source}.json").read_text())
         self.assertEqual(public_record["links"], [{
             "target_id": None, "fragment": None,
-            "label": "Unavailable in this view", "available": False,
+            "label": "Unavailable in this view", "available": False, "href": None,
         }])
         self.assertEqual(decode(redacted_files, f"history/{source}/index.json")["event_count"], 0)
         artifact_bytes = b"".join(path.read_bytes() for path in generation.rglob("*") if path.is_file())

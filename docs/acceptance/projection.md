@@ -37,3 +37,7 @@ python3 tools/projection/build.py --destination /secure/read-model \
 ```
 
 The bundle contains the complete recursive tree manifest and embedded blobs. Its loader reconstructs the Git tree hash, verifies every embedded Git blob object ID and size, validates the detached receipt, then reparses raw record and log bytes through the same schema and chain validators used for Git builds. It never trusts serialized record summaries from the bundle.
+
+## Renderer link lookup
+
+Navigable record links include `href` for exact destination lookup, so links with the same visible label cannot resolve to the wrong record. Private projections preserve the original Markdown destination. Public current Markdown and its eligible link keys use canonical `record:<id>#fragment` destinations. Unavailable links have `href: null`, no target ID/fragment, and plain unavailable text; original private paths are never included in these keys.
