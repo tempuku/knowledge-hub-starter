@@ -83,6 +83,8 @@ def main():
     ap.add_argument("--output", default="migration/records-v1.json")
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true")
+    mode.add_argument("--validate-reviewed", action="store_true",
+                      help="validate reviewed mappings against frozen Git bytes; never regenerate")
     mode.add_argument("--check-snapshots", action="store_true",
                       help="compare every paired native final after snapshot with frozen source bytes")
     args = ap.parse_args()
@@ -90,6 +92,28 @@ def main():
         sys.exit(1 if check_snapshots(args.revision) else 0)
     data = build(args.revision)
     output = ROOT / args.output
+    if args.validate_reviewed or (args.check and output.exists()):
+        try:
+            reviewed = json.loads(output.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            sys.exit(f"FAIL: cannot read reviewed inventory {output}: {exc}")
+        if reviewed.get("review_status") == "reviewed-for-dry-run":
+            if reviewed.get("base_revision") != args.revision:
+                sys.exit("FAIL: reviewed inventory base_revision does not equal --revision")
+            try:
+                from validate_inventory import validate
+            except ImportError as exc:
+                sys.exit(f"FAIL: reviewed validator is unavailable: {exc}")
+            errors = validate(reviewed, ROOT, str(output))
+            if errors:
+                print(f"FAIL: reviewed inventory validation found {len(errors)} issue(s):")
+                for error in errors:
+                    print(f"- {error}")
+                sys.exit(1)
+            print(f"PASS: reviewed manifest reconciles {len(reviewed['items'])} frozen sources; no generation or migration performed")
+            return
+        if args.validate_reviewed:
+            sys.exit("FAIL: --validate-reviewed requires review_status reviewed-for-dry-run")
     encoded = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
     if args.check:
         if not output.exists() or output.read_text() != encoded:

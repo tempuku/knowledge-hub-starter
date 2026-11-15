@@ -1,0 +1,3210 @@
+{
+  "schema_version": 1,
+  "base_revision": "de749bed9053dd4bc9f96fee3cb7f816e5bdebcb",
+  "review_status": "reviewed-for-dry-run",
+  "items": [
+    {
+      "old_path": "openwiki/CI.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "b60fc765d29298fccc94e6dc28bfb076d18870e055eac554d2977307ff9e611e",
+      "legacy_log_path": "openwiki/CI.log.md",
+      "legacy_event_ids": [
+        "design-20f84da878f4-baseline",
+        "design-20f84da878f4-contract",
+        "git-1c92f41f4cab1b9f"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+        "event_count": 3
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 b60fc765d29298fccc94e6dc28bfb076d18870e055eac554d2977307ff9e611e) with 3 original event(s) for openwiki/CI.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/CI.md",
+      "disposition": "record",
+      "destination_path": "openwiki/CI.md",
+      "allocated_record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+      "source_sha256": "f49ec8860fe3672188e15144805353085efac6bc4406433f41326235704124fa",
+      "legacy_log_path": "openwiki/CI.log.md",
+      "legacy_event_ids": [
+        "design-20f84da878f4-baseline",
+        "design-20f84da878f4-contract",
+        "git-1c92f41f4cab1b9f"
+      ],
+      "legacy_ui_ids": [
+        "log-dfb04fea343b750bccefe13a",
+        "log-c90af0299ba370c2668d8bda",
+        "log-ec40719981a4bf8cb5047be4"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "guide",
+        "title": "Knowledge Hub CI validation and troubleshooting",
+        "status": "draft",
+        "visibility": "private",
+        "description": "",
+        "tags": [
+          "ci",
+          "validation",
+          "knowledge-hub"
+        ],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "CI repair, validator compatibility, ruleset evidence and workflow handoff prose; root guide remains at original path. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval. Unlogged four-line insertion at Git f69def4 (PR #23) between legacy events 2 and 3; recover exact before/after from Git with git-backfill provenance, original_time null."
+    },
+    {
+      "old_path": "openwiki/GUIDE.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "d3487473ccbcf3010f1c60c58ce2f1d8ddb2d9959aed346f60c1a4245f0f5f49",
+      "legacy_log_path": "openwiki/GUIDE.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-0f91054a8ecb6685",
+        "git-2ef2bcf51641c7b3",
+        "design-094cfa8a83ac-reconcile",
+        "design-094cfa8a83ac-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+        "event_count": 5
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 d3487473ccbcf3010f1c60c58ce2f1d8ddb2d9959aed346f60c1a4245f0f5f49) with 5 original event(s) for openwiki/GUIDE.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/GUIDE.md",
+      "disposition": "record",
+      "destination_path": "openwiki/GUIDE.md",
+      "allocated_record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "source_sha256": "7d012e6fb6c946a17750dd2c4c5a9c3f48c1a6ec2d28e44f0c8ddf7136a19f7d",
+      "legacy_log_path": "openwiki/GUIDE.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-0f91054a8ecb6685",
+        "git-2ef2bcf51641c7b3",
+        "design-094cfa8a83ac-reconcile",
+        "design-094cfa8a83ac-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-bd8b41a07b0ae843a972cc78",
+        "log-204c2e8cf0b37f2c6512690d",
+        "log-eab069081d61eaa065eb1e65",
+        "log-eb5dfaf58d4f6b08207f0575",
+        "log-fbb3481466978ca11b0a7127"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "guide",
+        "title": "Knowledge hub conventions",
+        "status": "draft",
+        "visibility": "private",
+        "description": "",
+        "tags": [
+          "knowledge-management",
+          "okf",
+          "journal"
+        ],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Knowledge Hub conventions, target design, migration boundary and UI rules; root guide remains at original path. Its frozen head matches last legacy after. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/adr/0001-private-records-authenticated-app.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "967c416a09d821b2378987972fc8f1f2ea61dc8222b026624f2a13ef84aa0f3d",
+      "legacy_log_path": "openwiki/adr/0001-private-records-authenticated-app.log.md",
+      "legacy_event_ids": [
+        "git-9b41fb55f196b824",
+        "git-2ef2bcf51641c7b3",
+        "baseline-b4f7312961b429e7",
+        "design-3532aad98fbc-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+        "event_count": 4
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 967c416a09d821b2378987972fc8f1f2ea61dc8222b026624f2a13ef84aa0f3d) with 4 original event(s) for openwiki/adr/0001-private-records-authenticated-app.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/adr/0001-private-records-authenticated-app.md",
+      "disposition": "record",
+      "destination_path": "openwiki/adr/0001-private-records-authenticated-app.md",
+      "allocated_record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "source_sha256": "f6a80b56859a1b965669098302cbcac6c057584d5ef682312ea8564cac96f683",
+      "legacy_log_path": "openwiki/adr/0001-private-records-authenticated-app.log.md",
+      "legacy_event_ids": [
+        "git-9b41fb55f196b824",
+        "git-2ef2bcf51641c7b3",
+        "baseline-b4f7312961b429e7",
+        "design-3532aad98fbc-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-e16f94e12e4353e05770e176",
+        "log-a73abd662fd61a3491c15eb8",
+        "log-c6f43c9ee05bcd29e7c11525",
+        "log-afa32c4616870394b27ea15a"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "decision",
+        "title": "Separate public application code from private knowledge records",
+        "status": "stable",
+        "visibility": "private",
+        "description": "Authenticated, Git-backed Knowledge Hub with a public demo and private production diary.",
+        "tags": [
+          "architecture",
+          "security",
+          "privacy",
+          "authentication",
+          "knowledge-hub"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/issues/2"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Architecture decision for private repository/authenticated application; preserve public/private boundary and technical citations. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/adr/okf-record-history.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "3516fc4cf04233102445d163ef7858162202f79c66be9cc22a4e8eace8599625",
+      "legacy_log_path": "openwiki/adr/okf-record-history.log.md",
+      "legacy_event_ids": [
+        "git-96b9e650238107cb",
+        "git-9f0a505edc112aa0",
+        "design-bb60d82f8473-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "76d983ef-aea6-4b82-a353-2b7f341d3967",
+        "event_count": 3
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 3516fc4cf04233102445d163ef7858162202f79c66be9cc22a4e8eace8599625) with 3 original event(s) for openwiki/adr/okf-record-history.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/adr/okf-record-history.md",
+      "disposition": "record",
+      "destination_path": "openwiki/adr/okf-record-history.md",
+      "allocated_record_id": "76d983ef-aea6-4b82-a353-2b7f341d3967",
+      "source_sha256": "549c1b641e564dcd0e186c42105784396c14c8f2d752f565da77315cca7c7f94",
+      "legacy_log_path": "openwiki/adr/okf-record-history.log.md",
+      "legacy_event_ids": [
+        "git-96b9e650238107cb",
+        "git-9f0a505edc112aa0",
+        "design-bb60d82f8473-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-201fb3b4d214826c907d3ddf",
+        "log-dde655192c479eb727a02d6e",
+        "log-c41be7b4d54acc6a80831a62"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "decision",
+        "title": "Hierarchical records with per-record logs and a projected diary",
+        "status": "draft",
+        "visibility": "public",
+        "description": "",
+        "tags": [],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Owner-selected hierarchical records/history decision; distinct rationale and references, not duplicate of implementation contract. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/concepts/diary-diff-demo.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "6b3210b0f0b68884272229b0b5b282d3438bd31563798e8aec8e2135da3fdb24",
+      "legacy_log_path": "openwiki/concepts/diary-diff-demo.log.md",
+      "legacy_event_ids": [
+        "demo-baseline-20261110",
+        "demo-native-update-20261110"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "7e282a44-ec2e-467e-a3e6-d4153242f5cb",
+        "event_count": 2
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 6b3210b0f0b68884272229b0b5b282d3438bd31563798e8aec8e2135da3fdb24) with 2 original event(s) for openwiki/concepts/diary-diff-demo.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/concepts/diary-diff-demo.md",
+      "disposition": "record",
+      "destination_path": "openwiki/concepts/diary-diff-demo.md",
+      "allocated_record_id": "7e282a44-ec2e-467e-a3e6-d4153242f5cb",
+      "source_sha256": "6e9ba9c3dc138ab1408384167d9d98741c805504cf6ae24106a77ebf95811380",
+      "legacy_log_path": "openwiki/concepts/diary-diff-demo.log.md",
+      "legacy_event_ids": [
+        "demo-baseline-20261110",
+        "demo-native-update-20261110"
+      ],
+      "legacy_ui_ids": [
+        "log-b9b309bc48a90707ae88e354",
+        "log-8716ce24fa143fee258b53d2"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "concept",
+        "title": "Diary diff demo",
+        "status": "completed",
+        "visibility": "public",
+        "description": "A public test source for inspecting changes in the diary.",
+        "tags": [
+          "knowledge-hub",
+          "demo",
+          "history"
+        ],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Public test concept with feature bullets and native history demonstration; status-only Git head divergence is separately documented. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval. Final legacy after is 622 bytes, current source 625: Git 00e0a43 (PR #20) changes only status stable to completed. Preserve both bytes; document Git-backed missing transition, do not infer occurrence."
+    },
+    {
+      "old_path": "openwiki/design/acceptance.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "6019ab0c3b0e616694a7eb8f01d5919e7e1b56811e4152c33801a1ba38b7bda1",
+      "legacy_log_path": "openwiki/design/acceptance.log.md",
+      "legacy_event_ids": [
+        "design-61a51e5e7e92-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "e776a3cb-afa9-45ae-b3c1-855cc57aa925",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 6019ab0c3b0e616694a7eb8f01d5919e7e1b56811e4152c33801a1ba38b7bda1) with 1 original event(s) for openwiki/design/acceptance.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/design/acceptance.md",
+      "disposition": "record",
+      "destination_path": "openwiki/design/acceptance.md",
+      "allocated_record_id": "e776a3cb-afa9-45ae-b3c1-855cc57aa925",
+      "source_sha256": "1a415f36d9f0bf169693387333e9134941c0c5b1206bde8d457d11c0a19bf367",
+      "legacy_log_path": "openwiki/design/acceptance.log.md",
+      "legacy_event_ids": [
+        "design-61a51e5e7e92-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-2df479c7888d7c66e7039f6b"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "guide",
+        "title": "Storage and UX acceptance contract",
+        "status": "draft",
+        "visibility": "private",
+        "description": "",
+        "tags": [],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Normative S/P/U scenario acceptance text, independently meaningful design contract. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/design/migration.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "b416dcd59a217939719f528029644617c79942d0d17d211aa4ce361423d16052",
+      "legacy_log_path": "openwiki/design/migration.log.md",
+      "legacy_event_ids": [
+        "design-b78fa9e201c4-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "5c337989-dae9-41e2-943c-7dd177b8d898",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 b416dcd59a217939719f528029644617c79942d0d17d211aa4ce361423d16052) with 1 original event(s) for openwiki/design/migration.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/design/migration.md",
+      "disposition": "record",
+      "destination_path": "openwiki/design/migration.md",
+      "allocated_record_id": "5c337989-dae9-41e2-943c-7dd177b8d898",
+      "source_sha256": "229e1858b8c6458eea8b931e1ca0ac35cc082797432162636283fd18babe4789",
+      "legacy_log_path": "openwiki/design/migration.log.md",
+      "legacy_event_ids": [
+        "design-b78fa9e201c4-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-181b93c1615ec5f5e9a2f52a"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "guide",
+        "title": "Hierarchical records migration and implementation sequence",
+        "status": "draft",
+        "visibility": "private",
+        "description": "",
+        "tags": [],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Normative inventory, history preservation, rehearsal and cutover contract. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/design/overview.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "957883688d17f5247ff869932d8dde7566f6d8abe3f806464e577e622b8618e6",
+      "legacy_log_path": "openwiki/design/overview.log.md",
+      "legacy_event_ids": [
+        "design-44cb507a4296-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "24a5c390-d17a-4030-9b44-a5281b061bc0",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 957883688d17f5247ff869932d8dde7566f6d8abe3f806464e577e622b8618e6) with 1 original event(s) for openwiki/design/overview.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/design/overview.md",
+      "disposition": "record",
+      "destination_path": "openwiki/design/overview.md",
+      "allocated_record_id": "24a5c390-d17a-4030-9b44-a5281b061bc0",
+      "source_sha256": "8901b5e4746117a4aa713e13b55b408fde9c4f525c004e08fb22a2187bafa56c",
+      "legacy_log_path": "openwiki/design/overview.log.md",
+      "legacy_event_ids": [
+        "design-44cb507a4296-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-a1c07898f2e26f19c3a13984"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "guide",
+        "title": "Hierarchical Knowledge Hub — implementation design baseline",
+        "status": "draft",
+        "visibility": "private",
+        "description": "Normative storage, history, UI, migration and acceptance contracts; implementation pending.",
+        "tags": [],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Design scope, precedence and boundaries; link to baseline contract parts. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/design/projections.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "fa92dac8e03e6d0b199f7c4d3cbb1c3db8c09202082faee9673a997eb54f088b",
+      "legacy_log_path": "openwiki/design/projections.log.md",
+      "legacy_event_ids": [
+        "design-3fc63bb050e9-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "57e3b3d0-fcb6-4565-9166-400fceffd91c",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 fa92dac8e03e6d0b199f7c4d3cbb1c3db8c09202082faee9673a997eb54f088b) with 1 original event(s) for openwiki/design/projections.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/design/projections.md",
+      "disposition": "record",
+      "destination_path": "openwiki/design/projections.md",
+      "allocated_record_id": "57e3b3d0-fcb6-4565-9166-400fceffd91c",
+      "source_sha256": "8773a48251d4c94ea5448cb1bdd94af60b8bb342bd2c644012abe6086a6ad37a",
+      "legacy_log_path": "openwiki/design/projections.log.md",
+      "legacy_event_ids": [
+        "design-3fc63bb050e9-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-c8017121077996ad80ce6412"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "guide",
+        "title": "Read models, publication and performance contract",
+        "status": "draft",
+        "visibility": "private",
+        "description": "",
+        "tags": [],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Normative generated JSON, search, publication and performance contract. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/design/records-and-writes.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "4b0c6dec95f6529d7e1ffd7d151769b91e7376dfb604b40f4834f7297f8c62ce",
+      "legacy_log_path": "openwiki/design/records-and-writes.log.md",
+      "legacy_event_ids": [
+        "design-14dc7fa3f9c3-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "2bc67db9-2c5b-48b5-922a-33d7983ecffc",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 4b0c6dec95f6529d7e1ffd7d151769b91e7376dfb604b40f4834f7297f8c62ce) with 1 original event(s) for openwiki/design/records-and-writes.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/design/records-and-writes.md",
+      "disposition": "record",
+      "destination_path": "openwiki/design/records-and-writes.md",
+      "allocated_record_id": "2bc67db9-2c5b-48b5-922a-33d7983ecffc",
+      "source_sha256": "8b8b5818787c29bd55a16cb284fdf227f762b36ae89a2b88223e1878a5ec81ee",
+      "legacy_log_path": "openwiki/design/records-and-writes.log.md",
+      "legacy_event_ids": [
+        "design-14dc7fa3f9c3-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-5984c01c058719485006fff3"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "guide",
+        "title": "Record, event and writer contracts",
+        "status": "draft",
+        "visibility": "private",
+        "description": "",
+        "tags": [],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Normative source schema, writer, concurrency and CLI/MCP contract. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/design/ui-ux.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "39f668928e77b2a17a23e4ac22c591b828013591171d277cd0e6617241ccfef3",
+      "legacy_log_path": "openwiki/design/ui-ux.log.md",
+      "legacy_event_ids": [
+        "design-b33b23a6bac1-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "2fc98d1e-2c68-44c7-a97d-0e7a8a922c93",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 39f668928e77b2a17a23e4ac22c591b828013591171d277cd0e6617241ccfef3) with 1 original event(s) for openwiki/design/ui-ux.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/design/ui-ux.md",
+      "disposition": "record",
+      "destination_path": "openwiki/design/ui-ux.md",
+      "allocated_record_id": "2fc98d1e-2c68-44c7-a97d-0e7a8a922c93",
+      "source_sha256": "14436fef569895d54448cbb551e3d8ebe9761c2b9f8f006839a3a8f87130ea7e",
+      "legacy_log_path": "openwiki/design/ui-ux.log.md",
+      "legacy_event_ids": [
+        "design-b33b23a6bac1-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-e53966961e7ab69411d86562"
+      ],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "type": "guide",
+        "title": "Knowledge Hub UI and UX contract",
+        "status": "draft",
+        "visibility": "private",
+        "description": "",
+        "tags": [],
+        "sources": [],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Normative routes, workflows, responsive UI and accessibility contract. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/09/implementation-issues.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "2ebb5cac19ca9e601889bc7534c036c6b4f4ced16dc03d593ae14c4a15e7c4ac",
+      "legacy_log_path": "openwiki/journal/2026/11/09/implementation-issues.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3",
+        "git-cc380ce2d6cf3289",
+        "baseline-60c64cc41e745ff5"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+        "event_count": 4
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 2ebb5cac19ca9e601889bc7534c036c6b4f4ced16dc03d593ae14c4a15e7c4ac) with 4 original event(s) for openwiki/journal/2026/11/09/implementation-issues.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/09/implementation-issues.md",
+      "disposition": "record",
+      "destination_path": "openwiki/notes/ivanovo-models/implementation-issues.md",
+      "allocated_record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "source_sha256": "60c64cc41e745ff5225d696ec87e24dd870d28d5e1573d85c5ae25ea16b1bc15",
+      "legacy_log_path": "openwiki/journal/2026/11/09/implementation-issues.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3",
+        "git-cc380ce2d6cf3289",
+        "baseline-60c64cc41e745ff5"
+      ],
+      "legacy_ui_ids": [
+        "2026-11-09-implementation-issues",
+        "log-942f04ad671bf323ff0fd3e6",
+        "log-3d2eb2816eee62abc488525b",
+        "log-209f22fe816d8439c28a71c9",
+        "log-f56a694da39ad172a50cb8b1"
+      ],
+      "project_mapping": {
+        "legacy_slug": "ivanovo-models",
+        "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+        "x_legacy_project": null
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "Four implementation issues created for Ivanovo models",
+        "status": "draft",
+        "visibility": "public",
+        "description": "Documentation, production tooling, unified viewer and GitHub Pages deployment are tracked as separate issues.",
+        "tags": [
+          "planning",
+          "github",
+          "architecture"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/issues/1",
+            "title": "Issue 1"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/issues/2",
+            "title": "Issue 2"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/issues/3",
+            "title": "Issue 3"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/issues/4",
+            "title": "Issue 4"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/5",
+            "title": "Standards PR"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/8",
+            "title": "Building foundation PR"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/15",
+            "title": "Viewer groundwork PR"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/7",
+            "title": "Merged deployment CI"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/19",
+            "title": "Open draft shared viewer"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/20",
+            "title": "Merged private viewer authentication"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {
+          "type": "diary-entry"
+        },
+        "occurred_on": "2026-11-09"
+      },
+      "occurrence_source": "legacy-frontmatter:occurred_on",
+      "review_notes": "Substantive Ivanovo issue-scope analysis and source citations; preserve as dated factual note under project topic. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "043273f7bb06f65bcb42ded62febbb3723fd8f510e372c209ae22f38e2d76cb9",
+      "legacy_log_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "f207737c-5251-4a55-9e77-a1c644bf88a8",
+        "event_count": 2
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 043273f7bb06f65bcb42ded62febbb3723fd8f510e372c209ae22f38e2d76cb9) with 2 original event(s) for openwiki/journal/2026/11/09/knowledge-hub-kickoff.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.md",
+      "disposition": "record",
+      "destination_path": "openwiki/notes/knowledge-hub/knowledge-hub-kickoff.md",
+      "allocated_record_id": "f207737c-5251-4a55-9e77-a1c644bf88a8",
+      "source_sha256": "82cb2f99d8f80256f878f835dca3ce2f5b59dad511d7890be3397767a858027d",
+      "legacy_log_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3"
+      ],
+      "legacy_ui_ids": [
+        "2026-11-09-knowledge-hub-kickoff",
+        "log-5779397cfc25271a75c36ce9",
+        "log-2a2b6407249f81aaca278d68"
+      ],
+      "project_mapping": {
+        "legacy_slug": "knowledge-hub",
+        "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+        "x_legacy_project": null
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "Begin a central OKF knowledge hub with diary browsing",
+        "status": "draft",
+        "visibility": "public",
+        "description": "Centralize personal ideas, projects and decisions with links back to primary sources and date-based browsing.",
+        "tags": [
+          "project",
+          "knowledge-management",
+          "okf"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md",
+            "title": "OKF v0.2 specification"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {
+          "type": "diary-entry"
+        },
+        "occurred_on": "2026-11-09"
+      },
+      "occurrence_source": "legacy-frontmatter:occurred_on",
+      "review_notes": "Distinct Knowledge Hub kickoff goals, OKF specification citation and project context; preserve as note. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/09/parallel-deployment.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "d58f91c1133875b134736d09b80fc1a674089b0a5e1e5a477650e7668f632dee",
+      "legacy_log_path": "openwiki/journal/2026/11/09/parallel-deployment.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3",
+        "git-cc380ce2d6cf3289",
+        "baseline-1b0122f7b686f298"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+        "event_count": 4
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 d58f91c1133875b134736d09b80fc1a674089b0a5e1e5a477650e7668f632dee) with 4 original event(s) for openwiki/journal/2026/11/09/parallel-deployment.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/09/parallel-deployment.md",
+      "disposition": "record",
+      "destination_path": "openwiki/notes/ivanovo-models/parallel-deployment.md",
+      "allocated_record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "source_sha256": "1b0122f7b686f29817a17815c2a34a699e048de397dd2dd47c42d9194607bf3a",
+      "legacy_log_path": "openwiki/journal/2026/11/09/parallel-deployment.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3",
+        "git-cc380ce2d6cf3289",
+        "baseline-1b0122f7b686f298"
+      ],
+      "legacy_ui_ids": [
+        "2026-11-09-parallel-deployment",
+        "log-732f83612ef72210b953cc76",
+        "log-b9c317fc6811911477a61a82",
+        "log-68262c0c133cdbc41ee40b1b",
+        "log-5a1a1963700d6a5c7adf8658"
+      ],
+      "project_mapping": {
+        "legacy_slug": "ivanovo-models",
+        "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+        "x_legacy_project": null
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "Deployment foundation can be implemented independently",
+        "status": "draft",
+        "visibility": "public",
+        "description": "GitHub Actions CI and safe preview-site packaging can be built before the final 3D viewer is integrated.",
+        "tags": [
+          "decision",
+          "deployment",
+          "ci-cd"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/issues/4",
+            "title": "Deployment issue"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/7",
+            "title": "Merged Phase A public-demo CI"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/20",
+            "title": "Merged private authenticated Worker transport"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {
+          "type": "diary-entry"
+        },
+        "occurred_on": "2026-11-09"
+      },
+      "occurrence_source": "legacy-frontmatter:occurred_on",
+      "review_notes": "Distinct Ivanovo deployment dependency plan and CI/security links; preserve as note. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/09/shared-viewer.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "dfde4f62e68bc569fb6b3b2beafbaf2a0ca7de00ab77d6d2aa7590b02587c35f",
+      "legacy_log_path": "openwiki/journal/2026/11/09/shared-viewer.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3",
+        "git-cc380ce2d6cf3289",
+        "baseline-a7fcf8ce9e83401f"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+        "event_count": 4
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 dfde4f62e68bc569fb6b3b2beafbaf2a0ca7de00ab77d6d2aa7590b02587c35f) with 4 original event(s) for openwiki/journal/2026/11/09/shared-viewer.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/09/shared-viewer.md",
+      "disposition": "record",
+      "destination_path": "openwiki/notes/ivanovo-models/shared-viewer.md",
+      "allocated_record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "source_sha256": "a7fcf8ce9e83401fab296f352606d341103fd38d1490d91fc2c17f1c5befafec",
+      "legacy_log_path": "openwiki/journal/2026/11/09/shared-viewer.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3",
+        "git-cc380ce2d6cf3289",
+        "baseline-a7fcf8ce9e83401f"
+      ],
+      "legacy_ui_ids": [
+        "2026-11-09-shared-viewer",
+        "log-135ca27e89e3576de07643f1",
+        "log-8101dc2d9bde423a02ec7682",
+        "log-206b98fdc23ab78b54e2f0aa",
+        "log-af10c96489a16ebc3e69bf50"
+      ],
+      "project_mapping": {
+        "legacy_slug": "ivanovo-models",
+        "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+        "x_legacy_project": null
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "Decide to reuse 3D model assets in one dynamic viewer",
+        "status": "draft",
+        "visibility": "public",
+        "description": "A single shared viewer should load existing model assets and real part assemblies, not embed duplicate meshes in separate HTML applications.",
+        "tags": [
+          "decision",
+          "dry",
+          "viewer"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/issues/3",
+            "title": "Unified viewer implementation issue"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/15",
+            "title": "Viewer-state implementation"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/19",
+            "title": "Draft unified viewer implementation"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/blob/main/openwiki/VIEWER.md",
+            "title": "Viewer implementation and verification guide"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {
+          "type": "diary-entry"
+        },
+        "occurred_on": "2026-11-09"
+      },
+      "occurrence_source": "legacy-frontmatter:occurred_on",
+      "review_notes": "Distinct Ivanovo viewer design, 3D assets and issue/PR evidence; preserve as note. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/10/cloudflare-private-public-repositories.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "c5532f8fe803d2570fadc84064279f8b33a19c2854069cb93e430973550f9f1f",
+      "legacy_log_path": "openwiki/journal/2026/11/10/cloudflare-private-public-repositories.log.md",
+      "legacy_event_ids": [
+        "git-2cbc088d2dc1511c"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "d1b25079-e88d-4c4f-8d87-ba96ab7d8e08",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 c5532f8fe803d2570fadc84064279f8b33a19c2854069cb93e430973550f9f1f) with 1 original event(s) for openwiki/journal/2026/11/10/cloudflare-private-public-repositories.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/10/cloudflare-private-public-repositories.md",
+      "disposition": "record",
+      "destination_path": "openwiki/notes/knowledge-hub/cloudflare-private-public-repositories.md",
+      "allocated_record_id": "d1b25079-e88d-4c4f-8d87-ba96ab7d8e08",
+      "source_sha256": "105888fda6a8c33cd5a5b190fbed26e8287673a31705fab40cb9df04e6e6d413",
+      "legacy_log_path": "openwiki/journal/2026/11/10/cloudflare-private-public-repositories.log.md",
+      "legacy_event_ids": [
+        "git-2cbc088d2dc1511c"
+      ],
+      "legacy_ui_ids": [
+        "2026-11-10-cloudflare-private-public-repositories",
+        "log-3132aba0d737b0359de9c6dd"
+      ],
+      "project_mapping": {
+        "legacy_slug": "knowledge-hub",
+        "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+        "x_legacy_project": null
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "Begin Cloudflare access work for public and private knowledge and model repositories",
+        "status": "draft",
+        "visibility": "public",
+        "description": "Reviewed the November 9 architecture, opened two draft Cloudflare-related PRs, and distinguished passing CI from live authenticated deployment.",
+        "tags": [
+          "cloudflare",
+          "architecture",
+          "security",
+          "deployment",
+          "knowledge-hub",
+          "ivanovo-models"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/blob/main/openwiki/adr/0001-private-records-authenticated-app.md",
+            "title": "Accepted Knowledge Hub private-records architecture"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/pull/9",
+            "title": "Knowledge Hub private Cloudflare gateway draft PR"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/30",
+            "title": "Ivanovo live Access verification draft PR"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/20",
+            "title": "Previously merged private Ivanovo viewer gateway"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {
+          "type": "diary-entry"
+        },
+        "occurred_on": "2026-11-10"
+      },
+      "occurrence_source": "legacy-frontmatter:occurred_on",
+      "review_notes": "Distinct Cloudflare access work and public/private repository architecture references; preserve as note, not authorization. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/10/diary-diff-demo.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "8b411742037fbf5f3e8a9c7fb15994fdfdbb27f97fb879fa4acfe5d0aa072a0c",
+      "legacy_log_path": "openwiki/journal/2026/11/10/diary-diff-demo.log.md",
+      "legacy_event_ids": [
+        "git-75ed73b794084a44"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "745b497d-e351-47c7-b7cc-3ab2e41d5978",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 8b411742037fbf5f3e8a9c7fb15994fdfdbb27f97fb879fa4acfe5d0aa072a0c) with 1 original event(s) for openwiki/journal/2026/11/10/diary-diff-demo.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/10/diary-diff-demo.md",
+      "disposition": "record",
+      "destination_path": "openwiki/notes/knowledge-hub/diary-diff-demo.md",
+      "allocated_record_id": "745b497d-e351-47c7-b7cc-3ab2e41d5978",
+      "source_sha256": "9241b22144bf91454200e672465bf407c316bc499735acfcbf859854c9d46d13",
+      "legacy_log_path": "openwiki/journal/2026/11/10/diary-diff-demo.log.md",
+      "legacy_event_ids": [
+        "git-75ed73b794084a44"
+      ],
+      "legacy_ui_ids": [
+        "2026-11-10-diary-diff-demo",
+        "log-bbe6e5835adfd0356c8db94d"
+      ],
+      "project_mapping": {
+        "legacy_slug": "knowledge-hub",
+        "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+        "x_legacy_project": null
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "Demo — inspect a knowledge record update",
+        "status": "stable",
+        "visibility": "public",
+        "description": "Updated the demo record, added diff navigation, and linked the original source.",
+        "tags": [
+          "demo",
+          "change-history",
+          "diff"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/blob/4c7db76f0be69f6687daa7fbb0eb1e06401f9fd9/openwiki/concepts/diary-diff-demo.md",
+            "title": "Original demo record"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {
+          "actor": "test-fixture",
+          "change": {
+            "record": "openwiki/concepts/diary-diff-demo.md",
+            "before": "655c75c1ecd8df4bfc1503e0fc1348ce92a4e27f",
+            "after": "4c7db76f0be69f6687daa7fbb0eb1e06401f9fd9"
+          },
+          "type": "diary-entry"
+        },
+        "occurred_on": "2026-11-10"
+      },
+      "occurrence_source": "legacy-frontmatter:occurred_on",
+      "review_notes": "Public test instructions and Git before/after revision references for issue #13; independent prose from concept history, despite changed-record reference. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval. Retain as independent record: unique test instructions, issue #13 source and Git revisions differ from sibling concept native-log update; never dedupe by title or changed-record link."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "926bc235dae5f78b95398460a1f0fc0696d559d9c3692c85249e3377b86e556b",
+      "legacy_log_path": "openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.log.md",
+      "legacy_event_ids": [
+        "git-ae48c0ce11de3393"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "d947414c-9b86-48c6-8653-7e85846079fc",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 926bc235dae5f78b95398460a1f0fc0696d559d9c3692c85249e3377b86e556b) with 1 original event(s) for openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.md",
+      "disposition": "record",
+      "destination_path": "openwiki/notes/legacy-chat-ipad-air/legacy-chat-ipad-air-repository.md",
+      "allocated_record_id": "d947414c-9b86-48c6-8653-7e85846079fc",
+      "source_sha256": "c905e6d9edf7111a40ddec390d5732429fbe01272a59152d017e4e2c94f5d3df",
+      "legacy_log_path": "openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.log.md",
+      "legacy_event_ids": [
+        "git-ae48c0ce11de3393"
+      ],
+      "legacy_ui_ids": [
+        "2026-11-10-legacy-chat-ipad-air-repository",
+        "log-ae33ceaa2e9891ca0f76344e"
+      ],
+      "project_mapping": {
+        "legacy_slug": "legacy-chat-ipad-air",
+        "record_id": null,
+        "x_legacy_project": "legacy-chat-ipad-air"
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "Published Legacy Chat iPad Air prototype and DDD knowledge base",
+        "status": "draft",
+        "visibility": "public",
+        "description": "Prepared and published the private iOS 12 ChatGPT-alternative prototype, DDD use cases, and OpenWiki-compatible OKF knowledge tree; native device validation remains outstanding.",
+        "tags": [
+          "ios12",
+          "ipad-air",
+          "legacy-chat",
+          "github",
+          "ddd",
+          "openwiki",
+          "okf",
+          "cloudflare"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/legacy-chat-ipad-air",
+            "title": "Legacy Chat repository (private)"
+          },
+          {
+            "resource": "https://github.com/tempuku/legacy-chat-ipad-air/commit/f70a219eed58d3f2b7f3617fea5d7fd5e0fd4054",
+            "title": "Source publication commit and complete diff (42 files)"
+          },
+          {
+            "resource": "https://github.com/tempuku/legacy-chat-ipad-air/blob/main/docs/ddd/use-cases.md",
+            "title": "DDD use-case catalogue"
+          },
+          {
+            "resource": "https://github.com/tempuku/legacy-chat-ipad-air/blob/main/openwiki/index.md",
+            "title": "OpenWiki-compatible OKF v0.2 index"
+          },
+          {
+            "resource": "https://github.com/tempuku/legacy-chat-ipad-air/blob/main/README.md",
+            "title": "Scope, setup, and verification limitations"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {
+          "type": "diary-entry"
+        },
+        "occurred_on": "2026-11-10"
+      },
+      "occurrence_source": "legacy-frontmatter:occurred_on",
+      "review_notes": "Distinct Legacy Chat iPad prototype and DDD source references; project slug lacks a project source here, retain without invented project UUID. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval. No corresponding project canonical source exists at frozen base; retain x_legacy_project slug and no project_id until separately reviewed/created."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/10/weekly-diary-view.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "0506c1879a4cd92b219eb864f6e046f563fc71be568dc2326e0f2a86615a08dc",
+      "legacy_log_path": "openwiki/journal/2026/11/10/weekly-diary-view.log.md",
+      "legacy_event_ids": [
+        "git-667f225e0460c275",
+        "git-61908387776f1b79"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "c4083a55-7b76-4b8f-92a6-23cdaf241083",
+        "event_count": 2
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 0506c1879a4cd92b219eb864f6e046f563fc71be568dc2326e0f2a86615a08dc) with 2 original event(s) for openwiki/journal/2026/11/10/weekly-diary-view.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/10/weekly-diary-view.md",
+      "disposition": "record",
+      "destination_path": "openwiki/notes/knowledge-hub/weekly-diary-view.md",
+      "allocated_record_id": "c4083a55-7b76-4b8f-92a6-23cdaf241083",
+      "source_sha256": "35d5e96a3a58c648a54de1dfed7ddc0f4a7b4364de4a91461fa2537b8da05e34",
+      "legacy_log_path": "openwiki/journal/2026/11/10/weekly-diary-view.log.md",
+      "legacy_event_ids": [
+        "git-667f225e0460c275",
+        "git-61908387776f1b79"
+      ],
+      "legacy_ui_ids": [
+        "2026-11-10-weekly-diary-view",
+        "log-cc5dd53fe7e928366a0c9ebd",
+        "log-33a45e2fc3320fe2ee9dfe14"
+      ],
+      "project_mapping": {
+        "legacy_slug": "knowledge-hub",
+        "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+        "x_legacy_project": null
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "Knowledge Hub opens to the latest week",
+        "status": "draft",
+        "visibility": "public",
+        "description": "The diary expands each date in Week view so entries across multiple dates are visible on load.",
+        "tags": [
+          "diary",
+          "ui"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/pull/19",
+            "title": "Merged weekly diary UI fix"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {
+          "type": "diary-entry"
+        },
+        "occurred_on": "2026-11-10",
+        "occurred_at": "2026-11-10T18:25:06Z"
+      },
+      "occurrence_source": "legacy-frontmatter:occurred_on,occurred_at",
+      "review_notes": "Distinct weekly diary UI behavior and PR #19 evidence, plus supplied occurred_at; preserve as note. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "0252fa8a7a026762461210a1372d5eab57763a08302f669983b69e129e14c497",
+      "legacy_log_path": "openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.log.md",
+      "legacy_event_ids": [
+        "git-879fae05ae921e84"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "2e6f2b5f-5c19-41f9-bedb-e8dc1c126f0a",
+        "event_count": 1
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 0252fa8a7a026762461210a1372d5eab57763a08302f669983b69e129e14c497) with 1 original event(s) for openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.md",
+      "disposition": "record",
+      "destination_path": "openwiki/notes/knowledge-hub/knowledge-hub-merge-gate-auto-ready.md",
+      "allocated_record_id": "2e6f2b5f-5c19-41f9-bedb-e8dc1c126f0a",
+      "source_sha256": "0f205d996af8529b25fa5847faaec0df089d008a760c5b38d3168b5d004c2b98",
+      "legacy_log_path": "openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.log.md",
+      "legacy_event_ids": [
+        "git-879fae05ae921e84"
+      ],
+      "legacy_ui_ids": [
+        "2026-11-12-knowledge-hub-merge-gate-auto-ready",
+        "log-84938901214585e0d235b6fe"
+      ],
+      "project_mapping": {
+        "legacy_slug": "knowledge-hub",
+        "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+        "x_legacy_project": null
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "Knowledge Hub protected merge gate and native PR readiness verified",
+        "status": "draft",
+        "visibility": "public",
+        "description": "Completed the evidence-based reviewless merge-gate foundation and proved CI-driven Draft to Ready in real protected GitHub pull requests.",
+        "tags": [
+          "knowledge-hub",
+          "ci",
+          "validation",
+          "github",
+          "automation",
+          "security"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/issues/24#issuecomment-6819748012",
+            "title": "Owner-approved change removing mandatory independent PR review"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/issues/26",
+            "title": "Original merge-gate implementation and historical acceptance"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/issues/42",
+            "title": "Completed remediation acceptance with evidence"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/rules/27036674",
+            "title": "Active main-branch protections"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/pull/43",
+            "title": "Rejected disposable negative test PR"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/pull/49",
+            "title": "Merged positive reviewless-gate test PR"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/pull/53",
+            "title": "Merged native Draft-to-Ready test PR"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/actions/runs/43199420378",
+            "title": "GitHub Actions native Draft-to-Ready proof"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {
+          "type": "diary-entry"
+        },
+        "occurred_on": "2026-11-12"
+      },
+      "occurrence_source": "legacy-frontmatter:occurred_on",
+      "review_notes": "Distinct historical #26/#42 gate and auto-ready verification evidence, with current policy subject to later logged correction. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/journal/2026/11/log.md",
+      "disposition": "summary-note",
+      "destination_path": "openwiki/notes/knowledge-hub/november-2026-journal-summary.md",
+      "allocated_record_id": "c612bd17-8e81-4a98-971f-2270784b7b8c",
+      "source_sha256": "eb00b4dbcc4d19fd9d7cd0ca988bc1b7112967be45b1667cfa8ef67771bcec18",
+      "legacy_log_path": null,
+      "legacy_event_ids": [],
+      "legacy_ui_ids": [],
+      "project_mapping": {
+        "legacy_slug": "knowledge-hub",
+        "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f"
+      },
+      "metadata_mapping": {
+        "type": "note",
+        "title": "November 2026 journal summary",
+        "status": "draft",
+        "visibility": "private",
+        "x_legacy": {
+          "source_kind": "directory-log"
+        }
+      },
+      "occurrence_source": null,
+      "review_notes": "Unique human prose records November initialization and Ivanovo project link; summary-note retains body, heading is not factual occurrence time. Unique 2026-11-09 initialization prose and project link; preserve entire original body as a note, not a structural index. No factual occurred_on inferred from heading."
+    },
+    {
+      "old_path": "openwiki/projects/ivanovo-models.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "c668c642be7ca7b38b734c6da2900ef75e371311e3e958c19cbc15365d8fff8c",
+      "legacy_log_path": "openwiki/projects/ivanovo-models.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-cc380ce2d6cf3289",
+        "baseline-57f47a1941bdf232"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+        "event_count": 3
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 c668c642be7ca7b38b734c6da2900ef75e371311e3e958c19cbc15365d8fff8c) with 3 original event(s) for openwiki/projects/ivanovo-models.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/projects/ivanovo-models.md",
+      "disposition": "record",
+      "destination_path": "openwiki/projects/ivanovo-models.md",
+      "allocated_record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+      "source_sha256": "57f47a1941bdf2324fd8fd7283e7dfabf84de30f5e1959a77942b77e594e0be9",
+      "legacy_log_path": "openwiki/projects/ivanovo-models.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-cc380ce2d6cf3289",
+        "baseline-57f47a1941bdf232"
+      ],
+      "legacy_ui_ids": [
+        "log-3a17cf2385d8d67ac1bfe544",
+        "log-973bcc357c07fcfa4a93ec7c",
+        "log-2b531755481e9addc5927d7f"
+      ],
+      "project_mapping": {
+        "legacy_slug": "ivanovo-models",
+        "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+        "x_legacy_project_id": "ivanovo-models"
+      },
+      "metadata_mapping": {
+        "type": "project",
+        "title": "Ivanovo architectural 3D models",
+        "status": "draft",
+        "visibility": "private",
+        "description": "",
+        "tags": [
+          "architecture",
+          "openscad",
+          "3d-printing",
+          "viewer"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models",
+            "title": "Source repository"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/17",
+            "title": "Colored master implementation"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/18",
+            "title": "Mesh and slicer evidence implementation"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/15",
+            "title": "Viewer-state groundwork"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/7",
+            "title": "Merged optional-public-demo CI foundation"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/19",
+            "title": "Open draft shared GLB viewer integration"
+          },
+          {
+            "resource": "https://github.com/tempuku/ivanovo_models/pull/20",
+            "title": "Merged read-only authenticated viewer gateway"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Substantive Ivanovo project canonical scope, private repository evidence and architecture; preserve project identity/legacy slug. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    },
+    {
+      "old_path": "openwiki/projects/knowledge-hub.log.md",
+      "disposition": "structural",
+      "destination_path": null,
+      "allocated_record_id": null,
+      "source_sha256": "44102cd01c7237e220f3ca34aa86e623e615674c5447249079e2d61234ea7536",
+      "legacy_log_path": "openwiki/projects/knowledge-hub.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3",
+        "git-cc380ce2d6cf3289",
+        "baseline-2e98f2240ca81a54",
+        "weekly-diary-ui-pr-19",
+        "design-813523e6dc71-contract"
+      ],
+      "legacy_ui_ids": [],
+      "project_mapping": null,
+      "metadata_mapping": {
+        "archive_exact_bytes": true,
+        "history_for_record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+        "event_count": 6
+      },
+      "occurrence_source": null,
+      "review_notes": "Archive complete original bytes (SHA-256 44102cd01c7237e220f3ca34aa86e623e615674c5447249079e2d61234ea7536) with 6 original event(s) for openwiki/projects/knowledge-hub.md; same namespaced legacy IDs retained. Paired legacy history evidence; archive exact bytes privately and transform in original sequence. Not a separate record or diary row."
+    },
+    {
+      "old_path": "openwiki/projects/knowledge-hub.md",
+      "disposition": "record",
+      "destination_path": "openwiki/projects/knowledge-hub.md",
+      "allocated_record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "source_sha256": "667464b228a5ac639d427bee22d87c5abaa01df9b5e82569782dd1ca8afa2b52",
+      "legacy_log_path": "openwiki/projects/knowledge-hub.log.md",
+      "legacy_event_ids": [
+        "git-727f862f2664ec06",
+        "git-2ef2bcf51641c7b3",
+        "git-cc380ce2d6cf3289",
+        "baseline-2e98f2240ca81a54",
+        "weekly-diary-ui-pr-19",
+        "design-813523e6dc71-contract"
+      ],
+      "legacy_ui_ids": [
+        "log-daf935b5cb19a7434cd2bd05",
+        "log-d42f1dbf7b99307b0288c894",
+        "log-c736f7531e4442d7bda9fa8e",
+        "log-ce3857a31c2d4461fb32cf88",
+        "log-7065d9ffdd862f7855e1a2bc",
+        "log-73fcc8bc1b29961cd33b3737"
+      ],
+      "project_mapping": {
+        "legacy_slug": "knowledge-hub",
+        "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+        "x_legacy_project_id": "knowledge-hub"
+      },
+      "metadata_mapping": {
+        "type": "project",
+        "title": "Knowledge Hub",
+        "status": "draft",
+        "visibility": "private",
+        "description": "",
+        "tags": [
+          "knowledge-management",
+          "diary",
+          "okf"
+        ],
+        "sources": [
+          {
+            "resource": "https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md",
+            "title": "OKF v0.2 specification"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/pull/3",
+            "title": "Public GitHub Pages publishing"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/pull/4",
+            "title": "Private-records authentication ADR"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/pull/5",
+            "title": "Public diary records"
+          },
+          {
+            "resource": "https://github.com/tempuku/knowledge-hub-starter/pull/19",
+            "title": "Default weekly diary view"
+          }
+        ],
+        "reminders": [],
+        "x_legacy": {}
+      },
+      "occurrence_source": null,
+      "review_notes": "Substantive Knowledge Hub project roadmap, links to kickoff/design/ADR and scope; preserve project identity/legacy slug. Preserve complete canonical prose and exact legacy snapshots. Current visibility is not publication approval."
+    }
+  ],
+  "reviewed_source_revision": "de749bed9053dd4bc9f96fee3cb7f816e5bdebcb",
+  "record_count": 23,
+  "legacy_event_mappings": [
+    {
+      "log_path": "openwiki/CI.log.md",
+      "legacy_event_id": "design-20f84da878f4-baseline",
+      "record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+      "sequence": 1,
+      "allocated_event_id": "213d11c8-1fa2-4de9-9769-fe43b29994ba",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/CI.log.md#design-20f84da878f4-baseline",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "CREATED",
+      "source_actor": "Codex",
+      "source_summary": "Import the existing documentation snapshot before its first recorded update",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "c9fd6aec-9373-4378-8181-ecc3b1f89b8e",
+      "allocated_idempotency_key": "75bf1d5a-ef7e-4aab-8af5-24092013a9c5"
+    },
+    {
+      "log_path": "openwiki/CI.log.md",
+      "legacy_event_id": "design-20f84da878f4-contract",
+      "record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+      "sequence": 2,
+      "allocated_event_id": "4b1ac760-d964-495d-a085-9246e7e8b0a4",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/CI.log.md#design-20f84da878f4-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "UPDATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "bcb69702-1d3e-4d1c-97e4-eebca0399459",
+      "allocated_idempotency_key": "9b00754e-4820-4860-90ff-e7fb76edf4b8"
+    },
+    {
+      "log_path": "openwiki/CI.log.md",
+      "legacy_event_id": "git-1c92f41f4cab1b9f",
+      "record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+      "sequence": 3,
+      "allocated_event_id": "98482a27-8584-43ea-87bc-71d6991eecd2",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/CI.log.md#git-1c92f41f4cab1b9f",
+      "original_time": "2026-11-12T10:42:50Z",
+      "source_action": "UPDATED",
+      "source_actor": "ChatGPT",
+      "source_summary": "Record verified protected evidence merge-gate, owner-approved reviewless policy and native GitHub Actions auto-ready findings",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 4,
+      "allocated_operation_id": "133e5110-c6e7-46b4-a69b-33cb27c7341e",
+      "allocated_idempotency_key": "2e52ef3f-2d95-45a5-9307-c0f80ddacb9a"
+    },
+    {
+      "log_path": "openwiki/GUIDE.log.md",
+      "legacy_event_id": "git-727f862f2664ec06",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "sequence": 1,
+      "allocated_event_id": "5ff98211-0018-4b69-9bf4-afff2695bbb3",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/GUIDE.log.md#git-727f862f2664ec06",
+      "original_time": "2026-11-09T15:26:09Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Initial import",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "7a833914-0698-4a99-bb60-1735bfb52940",
+      "allocated_idempotency_key": "0cd71fbd-0d36-433a-bba8-a990f18eab2f"
+    },
+    {
+      "log_path": "openwiki/GUIDE.log.md",
+      "legacy_event_id": "git-0f91054a8ecb6685",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "sequence": 2,
+      "allocated_event_id": "2f93a0de-152f-4f9b-b806-e69bd398d01b",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/GUIDE.log.md#git-0f91054a8ecb6685",
+      "original_time": "2026-11-09T17:11:58Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "Link accepted security ADR from OKF catalog and working guidance",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "4c8ed27b-18c0-415f-a0ba-9e1183d46905",
+      "allocated_idempotency_key": "f3ce3d22-be27-4dda-b6be-9f8dfba2f410"
+    },
+    {
+      "log_path": "openwiki/GUIDE.log.md",
+      "legacy_event_id": "git-2ef2bcf51641c7b3",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "sequence": 3,
+      "allocated_event_id": "608744e4-5bd3-416c-a722-bc864b8989a0",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/GUIDE.log.md#git-2ef2bcf51641c7b3",
+      "original_time": "2026-11-09T17:23:58Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "Publish approved OKF project notes through live diary",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 3,
+      "allocated_operation_id": "3400b226-278a-4e36-9e59-18f087192112",
+      "allocated_idempotency_key": "3782f356-12d1-4901-b7af-2f60c42021b5"
+    },
+    {
+      "log_path": "openwiki/GUIDE.log.md",
+      "legacy_event_id": "design-094cfa8a83ac-reconcile",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "sequence": 4,
+      "allocated_event_id": "8dc8dde5-3484-48fb-bc89-ff028e234ca4",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/GUIDE.log.md#design-094cfa8a83ac-reconcile",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "UPDATED",
+      "source_actor": "Codex",
+      "source_summary": "Record the audited main guide snapshot previously missing from its log",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 4,
+      "allocated_operation_id": "7f0c5e7f-b96b-4aa3-8474-28f38ba1926f",
+      "allocated_idempotency_key": "8ce45f05-30f4-4c84-9bce-5b8d2dd52f37"
+    },
+    {
+      "log_path": "openwiki/GUIDE.log.md",
+      "legacy_event_id": "design-094cfa8a83ac-contract",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "sequence": 5,
+      "allocated_event_id": "b79a7b9b-d144-4ee1-aca2-4409d1f1cb61",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/GUIDE.log.md#design-094cfa8a83ac-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "UPDATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 5,
+      "allocated_operation_id": "36dce0a9-1928-4195-9d6c-6c37c68a6858",
+      "allocated_idempotency_key": "03996bc3-050f-42f0-8e68-67d5110ad9ff"
+    },
+    {
+      "log_path": "openwiki/adr/0001-private-records-authenticated-app.log.md",
+      "legacy_event_id": "git-9b41fb55f196b824",
+      "record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "sequence": 1,
+      "allocated_event_id": "7a4f214f-7d14-4085-bb34-db830555227b",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/adr/0001-private-records-authenticated-app.log.md#git-9b41fb55f196b824",
+      "original_time": "2026-11-09T17:11:11Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Document private OKF data and authenticated app architecture",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "4e0891c4-b975-407f-aa9f-09c979db316e",
+      "allocated_idempotency_key": "c5e11d3a-66d3-43d4-9934-697f1f6f8855"
+    },
+    {
+      "log_path": "openwiki/adr/0001-private-records-authenticated-app.log.md",
+      "legacy_event_id": "git-2ef2bcf51641c7b3",
+      "record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "sequence": 2,
+      "allocated_event_id": "7a7fef13-080c-4e4d-9500-8fc7ccb3feef",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/adr/0001-private-records-authenticated-app.log.md#git-2ef2bcf51641c7b3",
+      "original_time": "2026-11-09T17:23:58Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "Publish approved OKF project notes through live diary",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "4be95452-efe1-49a0-98b0-62962e7d4bec",
+      "allocated_idempotency_key": "52038781-abde-4eed-a15e-64030f598949"
+    },
+    {
+      "log_path": "openwiki/adr/0001-private-records-authenticated-app.log.md",
+      "legacy_event_id": "baseline-b4f7312961b429e7",
+      "record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "sequence": 3,
+      "allocated_event_id": "4d95f554-7d77-46c4-afb9-9fc746a0821e",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/adr/0001-private-records-authenticated-app.log.md#baseline-b4f7312961b429e7",
+      "original_time": "2026-11-09T18:51:55Z",
+      "source_action": "BASELINED",
+      "source_actor": "history-migration",
+      "source_summary": "Current record snapshot; earlier Git history incomplete",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 3,
+      "allocated_operation_id": "dd5e5831-8d60-44b4-b440-18f3ff44d1b0",
+      "allocated_idempotency_key": "f24ff2a5-cd40-4609-9aa3-efabc46931c2"
+    },
+    {
+      "log_path": "openwiki/adr/0001-private-records-authenticated-app.log.md",
+      "legacy_event_id": "design-3532aad98fbc-contract",
+      "record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "sequence": 4,
+      "allocated_event_id": "b039ccba-7ee0-45cd-a347-cc4f90bd25e6",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/adr/0001-private-records-authenticated-app.log.md#design-3532aad98fbc-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "UPDATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 4,
+      "allocated_operation_id": "da3a5f4b-7f09-465c-b831-4c715fc68ce9",
+      "allocated_idempotency_key": "d54dc228-b98e-435f-82c9-193726fa4508"
+    },
+    {
+      "log_path": "openwiki/adr/okf-record-history.log.md",
+      "legacy_event_id": "git-96b9e650238107cb",
+      "record_id": "76d983ef-aea6-4b82-a353-2b7f341d3967",
+      "sequence": 1,
+      "allocated_event_id": "0f5e609a-2c11-4065-851e-e3c433de2a63",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/adr/okf-record-history.log.md#git-96b9e650238107cb",
+      "original_time": "2026-11-10T17:36:23Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Implement OKF-native append-only record logs and daily diary projection (#15)",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "7c3e5bae-a7cc-4fe8-8706-49428c4c3d3c",
+      "allocated_idempotency_key": "9df14c55-1f71-41ac-a617-ca29cbb16251"
+    },
+    {
+      "log_path": "openwiki/adr/okf-record-history.log.md",
+      "legacy_event_id": "git-9f0a505edc112aa0",
+      "record_id": "76d983ef-aea6-4b82-a353-2b7f341d3967",
+      "sequence": 2,
+      "allocated_event_id": "1818892e-a4f3-41b4-96c8-c6840f5fb2a6",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/adr/okf-record-history.log.md#git-9f0a505edc112aa0",
+      "original_time": "2026-11-10T17:55:32Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "feat(diary): native record history backfill tooling and responsive diary",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "2ebae554-19f0-4ffc-b431-7561523c3f70",
+      "allocated_idempotency_key": "9425c873-7d80-470a-a4b0-bef424778481"
+    },
+    {
+      "log_path": "openwiki/adr/okf-record-history.log.md",
+      "legacy_event_id": "design-bb60d82f8473-contract",
+      "record_id": "76d983ef-aea6-4b82-a353-2b7f341d3967",
+      "sequence": 3,
+      "allocated_event_id": "7e28abf1-eb43-49da-a8c0-9183b531fce5",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/adr/okf-record-history.log.md#design-bb60d82f8473-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "UPDATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 3,
+      "allocated_operation_id": "a5745809-bcda-4d75-9917-d742f014f072",
+      "allocated_idempotency_key": "1cbd9380-e29e-48f7-99bc-e733a99e9956"
+    },
+    {
+      "log_path": "openwiki/concepts/diary-diff-demo.log.md",
+      "legacy_event_id": "demo-baseline-20261110",
+      "record_id": "7e282a44-ec2e-467e-a3e6-d4153242f5cb",
+      "sequence": 1,
+      "allocated_event_id": "9afb385c-85a2-40b8-9825-883d7a7e80e3",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/concepts/diary-diff-demo.log.md#demo-baseline-20261110",
+      "original_time": "2026-11-10T17:38:34Z",
+      "source_action": "BASELINED",
+      "source_actor": "agent",
+      "source_summary": "Registered existing diary demo as baseline for native OKF logging",
+      "recorded_at_rule": "preserve-original-recording-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "b1d5df5e-efb9-46d5-b54a-5332e1856550",
+      "allocated_idempotency_key": "d6fd882c-ee7d-405e-b74e-0f903b356d09"
+    },
+    {
+      "log_path": "openwiki/concepts/diary-diff-demo.log.md",
+      "legacy_event_id": "demo-native-update-20261110",
+      "record_id": "7e282a44-ec2e-467e-a3e6-d4153242f5cb",
+      "sequence": 2,
+      "allocated_event_id": "b0c6dd1d-9556-485a-94ba-0c52d020ea09",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/concepts/diary-diff-demo.log.md#demo-native-update-20261110",
+      "original_time": "2026-11-10T17:38:34Z",
+      "source_action": "UPDATED",
+      "source_actor": "agent",
+      "source_summary": "Added native OKF log demonstration and diary indexing notes",
+      "recorded_at_rule": "preserve-original-recording-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "14ae815b-1455-4db8-b327-0cfae882ab53",
+      "allocated_idempotency_key": "1ed53a9b-4427-43ab-a702-a51416b773ea"
+    },
+    {
+      "log_path": "openwiki/design/acceptance.log.md",
+      "legacy_event_id": "design-61a51e5e7e92-contract",
+      "record_id": "e776a3cb-afa9-45ae-b3c1-855cc57aa925",
+      "sequence": 1,
+      "allocated_event_id": "952638cc-907b-4701-a9ed-792e7226ff20",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/design/acceptance.log.md#design-61a51e5e7e92-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "CREATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "preserve-original-recording-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "82354a96-1c4d-41ab-bc90-89a805f9bf87",
+      "allocated_idempotency_key": "e380e5ab-4aea-49ee-9a40-37d8ed82f471"
+    },
+    {
+      "log_path": "openwiki/design/migration.log.md",
+      "legacy_event_id": "design-b78fa9e201c4-contract",
+      "record_id": "5c337989-dae9-41e2-943c-7dd177b8d898",
+      "sequence": 1,
+      "allocated_event_id": "6a6c9998-8c32-45f2-9903-13f18b464fa5",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/design/migration.log.md#design-b78fa9e201c4-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "CREATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "preserve-original-recording-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "0c167621-9f88-4e5c-8c90-5a9257c3db21",
+      "allocated_idempotency_key": "4dc4eb1f-8631-4df2-8e27-ac9b0f16fd6a"
+    },
+    {
+      "log_path": "openwiki/design/overview.log.md",
+      "legacy_event_id": "design-44cb507a4296-contract",
+      "record_id": "24a5c390-d17a-4030-9b44-a5281b061bc0",
+      "sequence": 1,
+      "allocated_event_id": "bda09202-9047-445c-8d01-464068bd7cbb",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/design/overview.log.md#design-44cb507a4296-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "CREATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "preserve-original-recording-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "8d0396c3-abab-454c-8394-bdf740aabd35",
+      "allocated_idempotency_key": "244469dc-7817-4101-989e-e39c2421fd8c"
+    },
+    {
+      "log_path": "openwiki/design/projections.log.md",
+      "legacy_event_id": "design-3fc63bb050e9-contract",
+      "record_id": "57e3b3d0-fcb6-4565-9166-400fceffd91c",
+      "sequence": 1,
+      "allocated_event_id": "e2ceb8e1-e6a6-4699-b279-cf945907ea9a",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/design/projections.log.md#design-3fc63bb050e9-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "CREATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "preserve-original-recording-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "0a539ca8-b191-4abf-9357-45c5c54e4d48",
+      "allocated_idempotency_key": "d9077dce-7807-404b-a096-12f47b01cc52"
+    },
+    {
+      "log_path": "openwiki/design/records-and-writes.log.md",
+      "legacy_event_id": "design-14dc7fa3f9c3-contract",
+      "record_id": "2bc67db9-2c5b-48b5-922a-33d7983ecffc",
+      "sequence": 1,
+      "allocated_event_id": "91e71f24-a818-44be-a5c1-4fb85d8aaf68",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/design/records-and-writes.log.md#design-14dc7fa3f9c3-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "CREATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "preserve-original-recording-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "579db361-fd1c-4974-a59a-7bcfc8d5deb6",
+      "allocated_idempotency_key": "692a3aba-8428-4d94-becd-36a23a147594"
+    },
+    {
+      "log_path": "openwiki/design/ui-ux.log.md",
+      "legacy_event_id": "design-b33b23a6bac1-contract",
+      "record_id": "2fc98d1e-2c68-44c7-a97d-0e7a8a922c93",
+      "sequence": 1,
+      "allocated_event_id": "bc741a13-353b-41dc-84da-5a6a6321e147",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/design/ui-ux.log.md#design-b33b23a6bac1-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "CREATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "preserve-original-recording-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "0d1abaf4-6744-44e9-9310-498e422d222f",
+      "allocated_idempotency_key": "d6f022ae-6ed5-4422-acd4-30c5752d2f55"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/implementation-issues.log.md",
+      "legacy_event_id": "git-727f862f2664ec06",
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "sequence": 1,
+      "allocated_event_id": "fc4103a2-b1a0-4baf-b6f7-37419b5de8f4",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/implementation-issues.log.md#git-727f862f2664ec06",
+      "original_time": "2026-11-09T15:26:09Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Initial import",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "7b03b651-9995-48bc-8d04-cb1e33d3279a",
+      "allocated_idempotency_key": "97dff0da-3e3e-4ab1-b91d-89541ef2c11c"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/implementation-issues.log.md",
+      "legacy_event_id": "git-2ef2bcf51641c7b3",
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "sequence": 2,
+      "allocated_event_id": "9c42ed68-5a4d-46b4-a755-16cb35394520",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/implementation-issues.log.md#git-2ef2bcf51641c7b3",
+      "original_time": "2026-11-09T17:23:58Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "Publish approved OKF project notes through live diary",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "02c655a8-6eb2-48ea-a2b7-270308a9a48f",
+      "allocated_idempotency_key": "dee0ec58-99d9-477d-96c9-098b8eb9e4e8"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/implementation-issues.log.md",
+      "legacy_event_id": "git-cc380ce2d6cf3289",
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "sequence": 3,
+      "allocated_event_id": "25975992-306c-4f64-a475-78ee859fc50e",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/implementation-issues.log.md#git-cc380ce2d6cf3289",
+      "original_time": "2026-11-09T18:45:52Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "docs: record verified Ivanovo and Knowledge Hub progress with check steps (#6)",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 3,
+      "allocated_operation_id": "409004d9-dae3-47a6-99ee-d829f03f5ab1",
+      "allocated_idempotency_key": "64bc45d0-4ed0-4820-9cd3-974463a4c13b"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/implementation-issues.log.md",
+      "legacy_event_id": "baseline-60c64cc41e745ff5",
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "sequence": 4,
+      "allocated_event_id": "e0fe97b7-83a3-4be2-bcd3-f87f555218fe",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/journal/2026/11/09/implementation-issues.log.md#baseline-60c64cc41e745ff5",
+      "original_time": "2026-11-09T18:51:55Z",
+      "source_action": "BASELINED",
+      "source_actor": "history-migration",
+      "source_summary": "Current record snapshot; earlier Git history incomplete",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 4,
+      "allocated_operation_id": "b2e406a4-3d63-4e8a-9599-63c6c589d03f",
+      "allocated_idempotency_key": "da62ded5-93aa-4eda-b216-0f4729b65d17"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.log.md",
+      "legacy_event_id": "git-727f862f2664ec06",
+      "record_id": "f207737c-5251-4a55-9e77-a1c644bf88a8",
+      "sequence": 1,
+      "allocated_event_id": "4eb50112-7b2b-4a5d-9f58-135e899deb2f",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.log.md#git-727f862f2664ec06",
+      "original_time": "2026-11-09T15:26:09Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Initial import",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "eed32504-388e-4815-bcbc-e375ebfda694",
+      "allocated_idempotency_key": "c773b473-c10f-4d0d-b4ac-be490a34fcc8"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.log.md",
+      "legacy_event_id": "git-2ef2bcf51641c7b3",
+      "record_id": "f207737c-5251-4a55-9e77-a1c644bf88a8",
+      "sequence": 2,
+      "allocated_event_id": "0efbbaff-f427-40de-9a2f-528ff4f2f55a",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.log.md#git-2ef2bcf51641c7b3",
+      "original_time": "2026-11-09T17:23:58Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "Publish approved OKF project notes through live diary",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "67fcdc7f-ceab-42f8-b25e-9e1adfd3b662",
+      "allocated_idempotency_key": "b162695c-5fc7-44e6-8040-d2f60ca77875"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/parallel-deployment.log.md",
+      "legacy_event_id": "git-727f862f2664ec06",
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "sequence": 1,
+      "allocated_event_id": "54004bd5-1a52-4945-a0bd-7322ab04eb9b",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/parallel-deployment.log.md#git-727f862f2664ec06",
+      "original_time": "2026-11-09T15:26:09Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Initial import",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "8813379d-1d4b-473f-a8c1-a33aa39c300d",
+      "allocated_idempotency_key": "ad95e7b1-8296-4d74-8d48-47cdd88b747b"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/parallel-deployment.log.md",
+      "legacy_event_id": "git-2ef2bcf51641c7b3",
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "sequence": 2,
+      "allocated_event_id": "95d30174-4b43-4d49-b37f-448f31ac48d6",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/parallel-deployment.log.md#git-2ef2bcf51641c7b3",
+      "original_time": "2026-11-09T17:23:58Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "Publish approved OKF project notes through live diary",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "49d494b2-4286-4ca1-9aa3-17bf489bc4ec",
+      "allocated_idempotency_key": "1943ea81-691f-4792-98b8-86128c8a56cc"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/parallel-deployment.log.md",
+      "legacy_event_id": "git-cc380ce2d6cf3289",
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "sequence": 3,
+      "allocated_event_id": "7631ca70-7ed1-45e5-ab73-f5eb4c1d53ff",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/parallel-deployment.log.md#git-cc380ce2d6cf3289",
+      "original_time": "2026-11-09T18:45:52Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "docs: record verified Ivanovo and Knowledge Hub progress with check steps (#6)",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 3,
+      "allocated_operation_id": "06834c0e-10d1-4e7c-82e0-acd5d1405ec7",
+      "allocated_idempotency_key": "e3b8e0c7-408f-4d90-8cba-28b326bf1907"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/parallel-deployment.log.md",
+      "legacy_event_id": "baseline-1b0122f7b686f298",
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "sequence": 4,
+      "allocated_event_id": "2d002eee-837e-4e28-89c4-dd49a3e3db18",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/journal/2026/11/09/parallel-deployment.log.md#baseline-1b0122f7b686f298",
+      "original_time": "2026-11-09T18:51:55Z",
+      "source_action": "BASELINED",
+      "source_actor": "history-migration",
+      "source_summary": "Current record snapshot; earlier Git history incomplete",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 4,
+      "allocated_operation_id": "76882e9d-fd25-4399-9ab8-f6bb7ccaf465",
+      "allocated_idempotency_key": "5ae36ba9-a7e2-4a4d-9e41-62e0d34ceba4"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/shared-viewer.log.md",
+      "legacy_event_id": "git-727f862f2664ec06",
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "sequence": 1,
+      "allocated_event_id": "57dc3489-e31b-425c-a1fb-93018d1524f4",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/shared-viewer.log.md#git-727f862f2664ec06",
+      "original_time": "2026-11-09T15:26:09Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Initial import",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "a7680c71-abd9-40f8-bb8c-8253fe9c3113",
+      "allocated_idempotency_key": "d4ef0f7e-3ab1-45fc-a809-885d0b8a6f91"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/shared-viewer.log.md",
+      "legacy_event_id": "git-2ef2bcf51641c7b3",
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "sequence": 2,
+      "allocated_event_id": "1315da91-8143-4ac8-a009-f5a9676eda0a",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/shared-viewer.log.md#git-2ef2bcf51641c7b3",
+      "original_time": "2026-11-09T17:23:58Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "Publish approved OKF project notes through live diary",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "92de1e94-75fc-4331-8b20-4d4754ff5278",
+      "allocated_idempotency_key": "830dbe53-e8e8-461f-93e0-7b5e32c01b2f"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/shared-viewer.log.md",
+      "legacy_event_id": "git-cc380ce2d6cf3289",
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "sequence": 3,
+      "allocated_event_id": "76e458d8-22e7-4165-a1e2-04ad103da1a9",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/09/shared-viewer.log.md#git-cc380ce2d6cf3289",
+      "original_time": "2026-11-09T18:45:52Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "docs: record verified Ivanovo and Knowledge Hub progress with check steps (#6)",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 3,
+      "allocated_operation_id": "b63688b9-cad9-424a-af41-4146b887df99",
+      "allocated_idempotency_key": "33bc05a7-ffe9-45dc-b5fa-32d4495abecc"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/09/shared-viewer.log.md",
+      "legacy_event_id": "baseline-a7fcf8ce9e83401f",
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "sequence": 4,
+      "allocated_event_id": "3bf9301b-df54-448b-b217-985fc6e0de42",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/journal/2026/11/09/shared-viewer.log.md#baseline-a7fcf8ce9e83401f",
+      "original_time": "2026-11-09T18:51:55Z",
+      "source_action": "BASELINED",
+      "source_actor": "history-migration",
+      "source_summary": "Current record snapshot; earlier Git history incomplete",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 4,
+      "allocated_operation_id": "721dfa37-c8c3-4cb1-9131-502a6cbb1b1e",
+      "allocated_idempotency_key": "ab1c4069-b303-4149-8bb6-b9907f7aa0a9"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/10/cloudflare-private-public-repositories.log.md",
+      "legacy_event_id": "git-2cbc088d2dc1511c",
+      "record_id": "d1b25079-e88d-4c4f-8d87-ba96ab7d8e08",
+      "sequence": 1,
+      "allocated_event_id": "05e82883-c5d5-48b6-8756-41b27ff9c8c0",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/10/cloudflare-private-public-repositories.log.md#git-2cbc088d2dc1511c",
+      "original_time": "2026-11-10T12:36:09Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "docs(diary): publish November 10 Cloudflare progress",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "59f669d4-a051-431c-8feb-2eb2315b6c29",
+      "allocated_idempotency_key": "7b92feca-1775-40c0-aa0e-08aa4024444e"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/10/diary-diff-demo.log.md",
+      "legacy_event_id": "git-75ed73b794084a44",
+      "record_id": "745b497d-e351-47c7-b7cc-3ab2e41d5978",
+      "sequence": 1,
+      "allocated_event_id": "770e4a7b-52d9-4af1-9dc8-451699d64ddf",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/10/diary-diff-demo.log.md#git-75ed73b794084a44",
+      "original_time": "2026-11-10T16:57:01Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "test: add linked diary entry with real source revision diff",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "fecda556-3878-4477-990e-6b010ce438c8",
+      "allocated_idempotency_key": "caf79c5c-aa7e-438f-9f53-f71d13e7ad4f"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.log.md",
+      "legacy_event_id": "git-ae48c0ce11de3393",
+      "record_id": "d947414c-9b86-48c6-8653-7e85846079fc",
+      "sequence": 1,
+      "allocated_event_id": "4f6b615b-ed39-4d84-8ce5-a52261e92c4f",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.log.md#git-ae48c0ce11de3393",
+      "original_time": "2026-11-10T16:35:24Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "docs(diary): record Legacy Chat iPad Air repository milestone",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "ceca80be-6ddf-4a16-a761-ee2b8f095cc9",
+      "allocated_idempotency_key": "6ce1602e-e11d-45ec-a62d-26426b73cbdb"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/10/weekly-diary-view.log.md",
+      "legacy_event_id": "git-667f225e0460c275",
+      "record_id": "c4083a55-7b76-4b8f-92a6-23cdaf241083",
+      "sequence": 1,
+      "allocated_event_id": "e47c9673-8aac-49cc-95d1-106361e27a7f",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/10/weekly-diary-view.log.md#git-667f225e0460c275",
+      "original_time": "2026-11-10T18:40:34Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Created record",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "fdf2cef2-28e6-4536-8b6b-38e51ce7b26f",
+      "allocated_idempotency_key": "b7ee7670-9a05-4335-bde7-4ceb69b98a87"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/10/weekly-diary-view.log.md",
+      "legacy_event_id": "git-61908387776f1b79",
+      "record_id": "c4083a55-7b76-4b8f-92a6-23cdaf241083",
+      "sequence": 2,
+      "allocated_event_id": "9e2a1485-653b-48c4-9fac-e87dedcb13cb",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/10/weekly-diary-view.log.md#git-61908387776f1b79",
+      "original_time": "2026-11-10T18:48:54Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "Updated record",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "e0b4a522-46de-4ad3-8b95-e210947a2152",
+      "allocated_idempotency_key": "987f82d9-1631-4c4c-9c6e-e7c932e5beb8"
+    },
+    {
+      "log_path": "openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.log.md",
+      "legacy_event_id": "git-879fae05ae921e84",
+      "record_id": "2e6f2b5f-5c19-41f9-bedb-e8dc1c126f0a",
+      "sequence": 1,
+      "allocated_event_id": "05624afe-1fd3-40e8-97d1-2ca4da2228fd",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.log.md#git-879fae05ae921e84",
+      "original_time": "2026-11-12T10:41:41Z",
+      "source_action": "CREATED",
+      "source_actor": "ChatGPT",
+      "source_summary": "Record verified reviewless merge-gate and GitHub Actions Draft-to-Ready milestone with live CI links",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "fc354ae1-c8bb-446a-b6f6-47fd17874b30",
+      "allocated_idempotency_key": "163d3a9a-bc6d-44bc-a0a1-3d260098a5d5"
+    },
+    {
+      "log_path": "openwiki/projects/ivanovo-models.log.md",
+      "legacy_event_id": "git-727f862f2664ec06",
+      "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+      "sequence": 1,
+      "allocated_event_id": "097c4af2-01ae-4228-9ee9-24c6e50db4a2",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/projects/ivanovo-models.log.md#git-727f862f2664ec06",
+      "original_time": "2026-11-09T15:26:09Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Initial import",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "13e6505f-fe0b-488d-b0e3-1b2be55d5712",
+      "allocated_idempotency_key": "a9c78c78-846c-4a5d-ab8b-4b7fd2001de0"
+    },
+    {
+      "log_path": "openwiki/projects/ivanovo-models.log.md",
+      "legacy_event_id": "git-cc380ce2d6cf3289",
+      "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+      "sequence": 2,
+      "allocated_event_id": "e1f562c8-5b84-4bcc-9189-f7b3afa11fc4",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/projects/ivanovo-models.log.md#git-cc380ce2d6cf3289",
+      "original_time": "2026-11-09T18:45:52Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "docs: record verified Ivanovo and Knowledge Hub progress with check steps (#6)",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "747756ef-2aa4-4986-a021-422a42305d43",
+      "allocated_idempotency_key": "3f4e860c-50e5-4ae9-a165-b00764d90f8b"
+    },
+    {
+      "log_path": "openwiki/projects/ivanovo-models.log.md",
+      "legacy_event_id": "baseline-57f47a1941bdf232",
+      "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+      "sequence": 3,
+      "allocated_event_id": "2836665e-a100-4156-be11-b62888336ed3",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/projects/ivanovo-models.log.md#baseline-57f47a1941bdf232",
+      "original_time": "2026-11-09T18:51:55Z",
+      "source_action": "BASELINED",
+      "source_actor": "history-migration",
+      "source_summary": "Current record snapshot; earlier Git history incomplete",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 3,
+      "allocated_operation_id": "2d0de2c5-120e-4841-a7bf-646e5f94d3b5",
+      "allocated_idempotency_key": "45b6d2d0-2424-4a58-829b-bf5e490477ac"
+    },
+    {
+      "log_path": "openwiki/projects/knowledge-hub.log.md",
+      "legacy_event_id": "git-727f862f2664ec06",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "sequence": 1,
+      "allocated_event_id": "fe1fc5d4-20a4-4918-9f36-fe94391a4fba",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/projects/knowledge-hub.log.md#git-727f862f2664ec06",
+      "original_time": "2026-11-09T15:26:09Z",
+      "source_action": "CREATED",
+      "source_actor": "tempuku",
+      "source_summary": "Initial import",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 1,
+      "allocated_operation_id": "29004f11-05b3-449e-84ef-a2698a4f7c36",
+      "allocated_idempotency_key": "36c07b02-aa77-406f-9faf-b7c8c58fe982"
+    },
+    {
+      "log_path": "openwiki/projects/knowledge-hub.log.md",
+      "legacy_event_id": "git-2ef2bcf51641c7b3",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "sequence": 2,
+      "allocated_event_id": "d0067e71-101a-42d6-a9f0-f67bb93f073a",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/projects/knowledge-hub.log.md#git-2ef2bcf51641c7b3",
+      "original_time": "2026-11-09T17:23:58Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "Publish approved OKF project notes through live diary",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 2,
+      "allocated_operation_id": "b4031449-6b87-4d03-a47f-129237393375",
+      "allocated_idempotency_key": "1fb79342-0033-4332-ad7a-25a2c07f6a60"
+    },
+    {
+      "log_path": "openwiki/projects/knowledge-hub.log.md",
+      "legacy_event_id": "git-cc380ce2d6cf3289",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "sequence": 3,
+      "allocated_event_id": "3502e729-34b5-4cd5-a545-fb8325659a4b",
+      "provenance_kind": "git-backfill",
+      "source_ref": "openwiki/projects/knowledge-hub.log.md#git-cc380ce2d6cf3289",
+      "original_time": "2026-11-09T18:45:52Z",
+      "source_action": "UPDATED",
+      "source_actor": "tempuku",
+      "source_summary": "docs: record verified Ivanovo and Knowledge Hub progress with check steps (#6)",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 3,
+      "allocated_operation_id": "3ffab343-7872-4ecd-9156-d34b4b98c28f",
+      "allocated_idempotency_key": "19ec562b-330a-4ab0-a3f4-df61b328f104"
+    },
+    {
+      "log_path": "openwiki/projects/knowledge-hub.log.md",
+      "legacy_event_id": "baseline-2e98f2240ca81a54",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "sequence": 4,
+      "allocated_event_id": "767a9a0f-c8a1-4e14-866b-4475ecdefc8d",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/projects/knowledge-hub.log.md#baseline-2e98f2240ca81a54",
+      "original_time": "2026-11-09T18:51:55Z",
+      "source_action": "BASELINED",
+      "source_actor": "history-migration",
+      "source_summary": "Current record snapshot; earlier Git history incomplete",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 4,
+      "allocated_operation_id": "1940eaed-dc5f-4cf3-b11d-dd41108e2bb5",
+      "allocated_idempotency_key": "25cab204-f954-47a8-8d3e-42a3db566f6e"
+    },
+    {
+      "log_path": "openwiki/projects/knowledge-hub.log.md",
+      "legacy_event_id": "weekly-diary-ui-pr-19",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "sequence": 5,
+      "allocated_event_id": "e2598682-835a-4233-a174-c296a4ecdacd",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/projects/knowledge-hub.log.md#weekly-diary-ui-pr-19",
+      "original_time": "2026-11-10T18:28:06Z",
+      "source_action": "UPDATED",
+      "source_actor": "codex",
+      "source_summary": "Record merged weekly diary UI and verification status",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 5,
+      "allocated_operation_id": "72cc4bf3-2a1e-49d0-8de8-39055103db5c",
+      "allocated_idempotency_key": "7623b5d1-01f0-43be-bae0-816278471654"
+    },
+    {
+      "log_path": "openwiki/projects/knowledge-hub.log.md",
+      "legacy_event_id": "design-813523e6dc71-contract",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "sequence": 6,
+      "allocated_event_id": "9d1211fb-262b-4362-9edf-f26bb56a7248",
+      "provenance_kind": "legacy-log",
+      "source_ref": "openwiki/projects/knowledge-hub.log.md#design-813523e6dc71-contract",
+      "original_time": "2026-11-11T11:19:26Z",
+      "source_action": "UPDATED",
+      "source_actor": "Codex",
+      "source_summary": "Document hierarchical records, per-record history and the UI/UX implementation contract",
+      "recorded_at_rule": "fixed-migration-time",
+      "target_sequence": 6,
+      "allocated_operation_id": "0ff48766-db26-448c-ad51-21c5eab7e618",
+      "allocated_idempotency_key": "c9775c9c-3f46-48a4-ae5a-310e4cdeb13e"
+    }
+  ],
+  "backfill_repair_plan": [
+    {
+      "record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+      "source_path": "openwiki/CI.md",
+      "git_commit": "f69def479f23778722547c8310be728e7af9ec35",
+      "allocated_event_id": "75841cf5-221e-4b6b-9673-8d359e5162f9",
+      "provenance_kind": "git-backfill",
+      "original_time": null,
+      "recorded_at_rule": "fixed migration UTC time between legacy events 2 and 3",
+      "evidence": "exact Git parent-to-commit source diff; preserve original snapshots",
+      "before_bytes": 3995,
+      "after_bytes": 4899,
+      "before_sha256": "4eb74f78ed7db78541b6fdfb4908ffdf8057b503cc3524498f7c04ade7086427",
+      "after_sha256": "671254101a82489a613837159f098fe7cd03611df195a89ff30945715dccf076",
+      "allocated_operation_id": "802bbec0-fed0-4198-b9e5-fd168a997664",
+      "allocated_idempotency_key": "5c0ccb2d-1e8e-4192-aade-3df48b276845",
+      "insert_after_legacy_event_id": "design-20f84da878f4-contract",
+      "insert_before_legacy_event_id": "git-1c92f41f4cab1b9f",
+      "target_sequence": 3
+    },
+    {
+      "record_id": "7e282a44-ec2e-467e-a3e6-d4153242f5cb",
+      "source_path": "openwiki/concepts/diary-diff-demo.md",
+      "git_commit": "00e0a432208010d2bed2a18cfa4797f13aea949e",
+      "allocated_event_id": "58898c4d-903f-4ab1-9cc3-2cd52caf82ac",
+      "provenance_kind": "git-backfill",
+      "original_time": null,
+      "recorded_at_rule": "fixed migration UTC time after preserved chain",
+      "evidence": "exact Git parent-to-commit source diff; preserve original snapshots",
+      "before_bytes": 622,
+      "after_bytes": 625,
+      "before_sha256": "8f8ef83e4a8f331f31d8f217088c91f4374eca8490b619cf4c29b20bb90279e4",
+      "after_sha256": "6e9ba9c3dc138ab1408384167d9d98741c805504cf6ae24106a77ebf95811380",
+      "allocated_operation_id": "53ffd59b-fc30-4198-9a30-adfadce971ac",
+      "allocated_idempotency_key": "755c7c7a-0ab2-4cf2-bf61-828f9e962b77",
+      "insert_after_legacy_event_id": "demo-native-update-20261110",
+      "insert_before_legacy_event_id": null,
+      "target_sequence": 3
+    }
+  ],
+  "publication_eligibility": {
+    "policy": "reviewed-proposal-only-no-deployment-authorization",
+    "record_ids": [
+      "7e282a44-ec2e-467e-a3e6-d4153242f5cb"
+    ],
+    "event_ids": [
+      "9afb385c-85a2-40b8-9825-883d7a7e80e3",
+      "b0c6dd1d-9556-485a-94ba-0c52d020ea09"
+    ],
+    "actor_labels": [],
+    "review_basis": "Only the public Diary diff demo current source and two public/public legacy snapshots; target generated bytes and normalization/backfill remain unapproved until #36. Private-project linked sources are excluded."
+  },
+  "normalization_event_allocations": [
+    {
+      "record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+      "source_path": "openwiki/CI.md",
+      "allocated_event_id": "f6aae75c-3f68-4197-9b6c-d9f9ef3c6ff0",
+      "allocated_operation_id": "07598605-470c-4d92-8cc9-a465ecb64cbe",
+      "allocated_idempotency_key": "32752366-263f-425a-b318-eae1567517d6",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 5
+    },
+    {
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "source_path": "openwiki/GUIDE.md",
+      "allocated_event_id": "86757b8c-9283-4b0e-825e-788b6e911eb8",
+      "allocated_operation_id": "5429b0fb-3959-4d81-baa9-813c6ec50f6a",
+      "allocated_idempotency_key": "c46a829e-27a5-45aa-b7f1-317a8cefef9a",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 6
+    },
+    {
+      "record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "source_path": "openwiki/adr/0001-private-records-authenticated-app.md",
+      "allocated_event_id": "a3221261-37cf-44b7-8c93-aed5873e445a",
+      "allocated_operation_id": "7c40ffd7-7d96-4da8-9277-fe4dd94ec6bc",
+      "allocated_idempotency_key": "87f02ef3-ea88-4ba8-9fb5-5487fbfb97a9",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 5
+    },
+    {
+      "record_id": "76d983ef-aea6-4b82-a353-2b7f341d3967",
+      "source_path": "openwiki/adr/okf-record-history.md",
+      "allocated_event_id": "cdb04697-0571-4770-a5a0-7f3d2ba147c6",
+      "allocated_operation_id": "01bbc424-90b6-4ff6-bb18-da98bb5b02aa",
+      "allocated_idempotency_key": "084e02c4-cc72-424a-9085-ab6f204030ac",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 4
+    },
+    {
+      "record_id": "7e282a44-ec2e-467e-a3e6-d4153242f5cb",
+      "source_path": "openwiki/concepts/diary-diff-demo.md",
+      "allocated_event_id": "2e595e62-b2e9-43a3-99e8-e6c39e483cd3",
+      "allocated_operation_id": "5eccf898-bd84-4e91-9b44-fe7465a2bdd8",
+      "allocated_idempotency_key": "d2224891-01ca-4921-b279-789175bde2e9",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 4
+    },
+    {
+      "record_id": "e776a3cb-afa9-45ae-b3c1-855cc57aa925",
+      "source_path": "openwiki/design/acceptance.md",
+      "allocated_event_id": "bd5b3a16-9395-4d98-b186-c1f71fcf67d1",
+      "allocated_operation_id": "47fcd123-b018-4bb5-ba3c-92d0a998895e",
+      "allocated_idempotency_key": "1950c3be-c4a9-4963-b7b8-8a94762fbdc5",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "5c337989-dae9-41e2-943c-7dd177b8d898",
+      "source_path": "openwiki/design/migration.md",
+      "allocated_event_id": "0fdb4ba6-676f-488d-a89b-10cf6c9864a9",
+      "allocated_operation_id": "3ac26411-a712-4525-8294-e2885a275d59",
+      "allocated_idempotency_key": "1be7b0c2-dc5f-4e7d-827d-35877bfb2510",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "24a5c390-d17a-4030-9b44-a5281b061bc0",
+      "source_path": "openwiki/design/overview.md",
+      "allocated_event_id": "d040a263-5af1-472f-b582-a9223ca28c82",
+      "allocated_operation_id": "0facf216-f19d-4034-ba74-e2634c9ea202",
+      "allocated_idempotency_key": "e27cfbab-52cf-418d-bfb4-65c53f6d603f",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "57e3b3d0-fcb6-4565-9166-400fceffd91c",
+      "source_path": "openwiki/design/projections.md",
+      "allocated_event_id": "81133111-ead8-4935-9cd4-a52e6b455fac",
+      "allocated_operation_id": "602442d9-d9f8-4d67-a7d8-32b08d1d24d2",
+      "allocated_idempotency_key": "3737d49b-d1e3-4506-bc38-cdfa2eb67aee",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "2bc67db9-2c5b-48b5-922a-33d7983ecffc",
+      "source_path": "openwiki/design/records-and-writes.md",
+      "allocated_event_id": "dd4bc40c-ccb2-4c35-a8d8-eb806cd4521d",
+      "allocated_operation_id": "1d80e442-aa71-497c-9bff-c55bfe2196bd",
+      "allocated_idempotency_key": "d5ee48ec-e16b-4ec4-ac7d-4fa0a54b0dd0",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "2fc98d1e-2c68-44c7-a97d-0e7a8a922c93",
+      "source_path": "openwiki/design/ui-ux.md",
+      "allocated_event_id": "faf94482-6be7-4754-88ac-a745fc5307b9",
+      "allocated_operation_id": "d957fb12-9ab9-4091-886c-5a4cd7acf30b",
+      "allocated_idempotency_key": "ef21357a-acf4-4d63-802e-7b8f679f14c8",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "source_path": "openwiki/journal/2026/11/09/implementation-issues.md",
+      "allocated_event_id": "02f9c77c-a2e6-4987-8b71-b07d6ad9ceb9",
+      "allocated_operation_id": "11954ec3-30aa-46fe-bbe5-03b4676ce593",
+      "allocated_idempotency_key": "e240f6ed-ae59-4d03-813a-a23cce0d688e",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 5
+    },
+    {
+      "record_id": "f207737c-5251-4a55-9e77-a1c644bf88a8",
+      "source_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.md",
+      "allocated_event_id": "e12cdc17-19d3-4768-b50e-8ca1726b38b2",
+      "allocated_operation_id": "dd8de256-53d9-47f3-8e06-c934b29f8bc6",
+      "allocated_idempotency_key": "a1d046c7-ba4e-458d-ba49-72df46c64307",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 3
+    },
+    {
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "source_path": "openwiki/journal/2026/11/09/parallel-deployment.md",
+      "allocated_event_id": "a8b5c63e-aa54-4592-afd5-3f9a81ccd203",
+      "allocated_operation_id": "87adc7b9-90c0-4853-922c-501bc1e0706d",
+      "allocated_idempotency_key": "5fe2dab2-32e2-4162-9499-05e46864c443",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 5
+    },
+    {
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "source_path": "openwiki/journal/2026/11/09/shared-viewer.md",
+      "allocated_event_id": "516adb0e-c43f-40d3-9857-fb55662ab489",
+      "allocated_operation_id": "5a0f5ad0-314d-45cb-9637-740c3cbbad99",
+      "allocated_idempotency_key": "57963a81-ba52-48a4-9b7d-79a9c85d09c9",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 5
+    },
+    {
+      "record_id": "d1b25079-e88d-4c4f-8d87-ba96ab7d8e08",
+      "source_path": "openwiki/journal/2026/11/10/cloudflare-private-public-repositories.md",
+      "allocated_event_id": "3819f025-1600-4464-b714-0e73649144d8",
+      "allocated_operation_id": "dcd03d5f-9a51-4c99-87ef-f1463e040a5f",
+      "allocated_idempotency_key": "fcf22e3f-8886-4de2-b63c-6466c6c6c4cf",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "745b497d-e351-47c7-b7cc-3ab2e41d5978",
+      "source_path": "openwiki/journal/2026/11/10/diary-diff-demo.md",
+      "allocated_event_id": "3a834e5f-5c5f-4c95-9a93-d491eae49270",
+      "allocated_operation_id": "4b6308fd-0db9-4ee5-902f-eb72a1b6e0b4",
+      "allocated_idempotency_key": "021d1aa4-1b5a-4075-9b07-2d132d7aa6e2",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "d947414c-9b86-48c6-8653-7e85846079fc",
+      "source_path": "openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.md",
+      "allocated_event_id": "35cc2c34-f705-41ec-8d0c-bcd7a0d92986",
+      "allocated_operation_id": "3c00a22d-a932-4737-aaf2-1a2c0ad63f5c",
+      "allocated_idempotency_key": "58920d40-1466-4426-91b3-9f8692b3602e",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "c4083a55-7b76-4b8f-92a6-23cdaf241083",
+      "source_path": "openwiki/journal/2026/11/10/weekly-diary-view.md",
+      "allocated_event_id": "3edfdc7d-6963-4bf2-9475-7717e1162815",
+      "allocated_operation_id": "37413f9f-ff11-4df3-a8f4-e749f98451e4",
+      "allocated_idempotency_key": "e227dbc4-01c7-4889-a3db-75c5446b23b0",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 3
+    },
+    {
+      "record_id": "2e6f2b5f-5c19-41f9-bedb-e8dc1c126f0a",
+      "source_path": "openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.md",
+      "allocated_event_id": "129b6862-ede5-43be-ad0d-0a0435260a3a",
+      "allocated_operation_id": "0c85f829-e627-462a-b123-9939c293d494",
+      "allocated_idempotency_key": "9c793c72-879a-47ac-a2f4-5ae306b03cff",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "c612bd17-8e81-4a98-971f-2270784b7b8c",
+      "source_path": "openwiki/journal/2026/11/log.md",
+      "allocated_event_id": "1f2af0b0-417d-4577-a9c2-c61195465cf3",
+      "allocated_operation_id": "3f72b842-fc5e-4515-a63c-8f9719857f37",
+      "allocated_idempotency_key": "a9cd56fd-94b4-4f66-89f4-6364cce8eb03",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 2
+    },
+    {
+      "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+      "source_path": "openwiki/projects/ivanovo-models.md",
+      "allocated_event_id": "7544b6bf-f513-4209-bf84-86cb2e5693af",
+      "allocated_operation_id": "89bd918e-7c0c-46d0-8a0b-9f343726a7f5",
+      "allocated_idempotency_key": "b50ecfce-6840-4478-ba0d-538a9a70bba3",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 4
+    },
+    {
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "source_path": "openwiki/projects/knowledge-hub.md",
+      "allocated_event_id": "fff55986-6a86-49e0-b07f-99e71bb73d0f",
+      "allocated_operation_id": "70d137e0-a1e3-4baa-a70b-b1e31d9480de",
+      "allocated_idempotency_key": "b0be673d-01bc-488e-9a70-4f35765660a5",
+      "recorded_at_rule": "fixed migration UTC time after preserved/backfilled sequence",
+      "target_sequence": 7
+    }
+  ],
+  "legacy_ui_mappings": [
+    {
+      "legacy_ui_id": "2026-11-09-implementation-issues",
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "event_id": null,
+      "source_path": "openwiki/journal/2026/11/09/implementation-issues.md",
+      "resolution": "current-record",
+      "basis": "legacy dated-note YYYY-MM-DD-slug key; independent content retained as record"
+    },
+    {
+      "legacy_ui_id": "2026-11-09-knowledge-hub-kickoff",
+      "record_id": "f207737c-5251-4a55-9e77-a1c644bf88a8",
+      "event_id": null,
+      "source_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.md",
+      "resolution": "current-record",
+      "basis": "legacy dated-note YYYY-MM-DD-slug key; independent content retained as record"
+    },
+    {
+      "legacy_ui_id": "2026-11-09-parallel-deployment",
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "event_id": null,
+      "source_path": "openwiki/journal/2026/11/09/parallel-deployment.md",
+      "resolution": "current-record",
+      "basis": "legacy dated-note YYYY-MM-DD-slug key; independent content retained as record"
+    },
+    {
+      "legacy_ui_id": "2026-11-09-shared-viewer",
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "event_id": null,
+      "source_path": "openwiki/journal/2026/11/09/shared-viewer.md",
+      "resolution": "current-record",
+      "basis": "legacy dated-note YYYY-MM-DD-slug key; independent content retained as record"
+    },
+    {
+      "legacy_ui_id": "2026-11-10-cloudflare-private-public-repositories",
+      "record_id": "d1b25079-e88d-4c4f-8d87-ba96ab7d8e08",
+      "event_id": null,
+      "source_path": "openwiki/journal/2026/11/10/cloudflare-private-public-repositories.md",
+      "resolution": "current-record",
+      "basis": "legacy dated-note YYYY-MM-DD-slug key; independent content retained as record"
+    },
+    {
+      "legacy_ui_id": "2026-11-10-diary-diff-demo",
+      "record_id": "745b497d-e351-47c7-b7cc-3ab2e41d5978",
+      "event_id": null,
+      "source_path": "openwiki/journal/2026/11/10/diary-diff-demo.md",
+      "resolution": "current-record",
+      "basis": "legacy dated-note YYYY-MM-DD-slug key; independent content retained as record"
+    },
+    {
+      "legacy_ui_id": "2026-11-10-legacy-chat-ipad-air-repository",
+      "record_id": "d947414c-9b86-48c6-8653-7e85846079fc",
+      "event_id": null,
+      "source_path": "openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.md",
+      "resolution": "current-record",
+      "basis": "legacy dated-note YYYY-MM-DD-slug key; independent content retained as record"
+    },
+    {
+      "legacy_ui_id": "2026-11-10-weekly-diary-view",
+      "record_id": "c4083a55-7b76-4b8f-92a6-23cdaf241083",
+      "event_id": null,
+      "source_path": "openwiki/journal/2026/11/10/weekly-diary-view.md",
+      "resolution": "current-record",
+      "basis": "legacy dated-note YYYY-MM-DD-slug key; independent content retained as record"
+    },
+    {
+      "legacy_ui_id": "2026-11-12-knowledge-hub-merge-gate-auto-ready",
+      "record_id": "2e6f2b5f-5c19-41f9-bedb-e8dc1c126f0a",
+      "event_id": null,
+      "source_path": "openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.md",
+      "resolution": "current-record",
+      "basis": "legacy dated-note YYYY-MM-DD-slug key; independent content retained as record"
+    },
+    {
+      "legacy_ui_id": "log-135ca27e89e3576de07643f1",
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "event_id": "57dc3489-e31b-425c-a1fb-93018d1524f4",
+      "source_path": "openwiki/journal/2026/11/09/shared-viewer.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-181b93c1615ec5f5e9a2f52a",
+      "record_id": "5c337989-dae9-41e2-943c-7dd177b8d898",
+      "event_id": "6a6c9998-8c32-45f2-9903-13f18b464fa5",
+      "source_path": "openwiki/design/migration.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-201fb3b4d214826c907d3ddf",
+      "record_id": "76d983ef-aea6-4b82-a353-2b7f341d3967",
+      "event_id": "0f5e609a-2c11-4065-851e-e3c433de2a63",
+      "source_path": "openwiki/adr/okf-record-history.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-204c2e8cf0b37f2c6512690d",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "event_id": "2f93a0de-152f-4f9b-b806-e69bd398d01b",
+      "source_path": "openwiki/GUIDE.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-206b98fdc23ab78b54e2f0aa",
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "event_id": "76e458d8-22e7-4165-a1e2-04ad103da1a9",
+      "source_path": "openwiki/journal/2026/11/09/shared-viewer.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-209f22fe816d8439c28a71c9",
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "event_id": "25975992-306c-4f64-a475-78ee859fc50e",
+      "source_path": "openwiki/journal/2026/11/09/implementation-issues.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-2a2b6407249f81aaca278d68",
+      "record_id": "f207737c-5251-4a55-9e77-a1c644bf88a8",
+      "event_id": "0efbbaff-f427-40de-9a2f-528ff4f2f55a",
+      "source_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-2b531755481e9addc5927d7f",
+      "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+      "event_id": "2836665e-a100-4156-be11-b62888336ed3",
+      "source_path": "openwiki/projects/ivanovo-models.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-2df479c7888d7c66e7039f6b",
+      "record_id": "e776a3cb-afa9-45ae-b3c1-855cc57aa925",
+      "event_id": "952638cc-907b-4701-a9ed-792e7226ff20",
+      "source_path": "openwiki/design/acceptance.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-3132aba0d737b0359de9c6dd",
+      "record_id": "d1b25079-e88d-4c4f-8d87-ba96ab7d8e08",
+      "event_id": "05e82883-c5d5-48b6-8756-41b27ff9c8c0",
+      "source_path": "openwiki/journal/2026/11/10/cloudflare-private-public-repositories.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-33a45e2fc3320fe2ee9dfe14",
+      "record_id": "c4083a55-7b76-4b8f-92a6-23cdaf241083",
+      "event_id": "9e2a1485-653b-48c4-9fac-e87dedcb13cb",
+      "source_path": "openwiki/journal/2026/11/10/weekly-diary-view.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-3a17cf2385d8d67ac1bfe544",
+      "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+      "event_id": "097c4af2-01ae-4228-9ee9-24c6e50db4a2",
+      "source_path": "openwiki/projects/ivanovo-models.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-3d2eb2816eee62abc488525b",
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "event_id": "9c42ed68-5a4d-46b4-a755-16cb35394520",
+      "source_path": "openwiki/journal/2026/11/09/implementation-issues.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-5779397cfc25271a75c36ce9",
+      "record_id": "f207737c-5251-4a55-9e77-a1c644bf88a8",
+      "event_id": "4eb50112-7b2b-4a5d-9f58-135e899deb2f",
+      "source_path": "openwiki/journal/2026/11/09/knowledge-hub-kickoff.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-5984c01c058719485006fff3",
+      "record_id": "2bc67db9-2c5b-48b5-922a-33d7983ecffc",
+      "event_id": "91e71f24-a818-44be-a5c1-4fb85d8aaf68",
+      "source_path": "openwiki/design/records-and-writes.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-5a1a1963700d6a5c7adf8658",
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "event_id": "2d002eee-837e-4e28-89c4-dd49a3e3db18",
+      "source_path": "openwiki/journal/2026/11/09/parallel-deployment.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-68262c0c133cdbc41ee40b1b",
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "event_id": "7631ca70-7ed1-45e5-ab73-f5eb4c1d53ff",
+      "source_path": "openwiki/journal/2026/11/09/parallel-deployment.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-7065d9ffdd862f7855e1a2bc",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "event_id": "e2598682-835a-4233-a174-c296a4ecdacd",
+      "source_path": "openwiki/projects/knowledge-hub.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-732f83612ef72210b953cc76",
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "event_id": "54004bd5-1a52-4945-a0bd-7322ab04eb9b",
+      "source_path": "openwiki/journal/2026/11/09/parallel-deployment.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-73fcc8bc1b29961cd33b3737",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "event_id": "9d1211fb-262b-4362-9edf-f26bb56a7248",
+      "source_path": "openwiki/projects/knowledge-hub.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-8101dc2d9bde423a02ec7682",
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "event_id": "1315da91-8143-4ac8-a009-f5a9676eda0a",
+      "source_path": "openwiki/journal/2026/11/09/shared-viewer.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-84938901214585e0d235b6fe",
+      "record_id": "2e6f2b5f-5c19-41f9-bedb-e8dc1c126f0a",
+      "event_id": "05624afe-1fd3-40e8-97d1-2ca4da2228fd",
+      "source_path": "openwiki/journal/2026/11/12/knowledge-hub-merge-gate-auto-ready.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-8716ce24fa143fee258b53d2",
+      "record_id": "7e282a44-ec2e-467e-a3e6-d4153242f5cb",
+      "event_id": "b0c6dd1d-9556-485a-94ba-0c52d020ea09",
+      "source_path": "openwiki/concepts/diary-diff-demo.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-942f04ad671bf323ff0fd3e6",
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "event_id": "fc4103a2-b1a0-4baf-b6f7-37419b5de8f4",
+      "source_path": "openwiki/journal/2026/11/09/implementation-issues.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-973bcc357c07fcfa4a93ec7c",
+      "record_id": "d08851e8-794b-4662-b829-a7d2190b8365",
+      "event_id": "e1f562c8-5b84-4bcc-9189-f7b3afa11fc4",
+      "source_path": "openwiki/projects/ivanovo-models.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-a1c07898f2e26f19c3a13984",
+      "record_id": "24a5c390-d17a-4030-9b44-a5281b061bc0",
+      "event_id": "bda09202-9047-445c-8d01-464068bd7cbb",
+      "source_path": "openwiki/design/overview.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-a73abd662fd61a3491c15eb8",
+      "record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "event_id": "7a7fef13-080c-4e4d-9500-8fc7ccb3feef",
+      "source_path": "openwiki/adr/0001-private-records-authenticated-app.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-ae33ceaa2e9891ca0f76344e",
+      "record_id": "d947414c-9b86-48c6-8653-7e85846079fc",
+      "event_id": "4f6b615b-ed39-4d84-8ce5-a52261e92c4f",
+      "source_path": "openwiki/journal/2026/11/10/legacy-chat-ipad-air-repository.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-af10c96489a16ebc3e69bf50",
+      "record_id": "a23f43ff-b07b-42f3-abb7-479e343b9958",
+      "event_id": "3bf9301b-df54-448b-b217-985fc6e0de42",
+      "source_path": "openwiki/journal/2026/11/09/shared-viewer.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-afa32c4616870394b27ea15a",
+      "record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "event_id": "b039ccba-7ee0-45cd-a347-cc4f90bd25e6",
+      "source_path": "openwiki/adr/0001-private-records-authenticated-app.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-b9b309bc48a90707ae88e354",
+      "record_id": "7e282a44-ec2e-467e-a3e6-d4153242f5cb",
+      "event_id": "9afb385c-85a2-40b8-9825-883d7a7e80e3",
+      "source_path": "openwiki/concepts/diary-diff-demo.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-b9c317fc6811911477a61a82",
+      "record_id": "8c30b945-1325-41e3-a145-a6b10318db3f",
+      "event_id": "95d30174-4b43-4d49-b37f-448f31ac48d6",
+      "source_path": "openwiki/journal/2026/11/09/parallel-deployment.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-bbe6e5835adfd0356c8db94d",
+      "record_id": "745b497d-e351-47c7-b7cc-3ab2e41d5978",
+      "event_id": "770e4a7b-52d9-4af1-9dc8-451699d64ddf",
+      "source_path": "openwiki/journal/2026/11/10/diary-diff-demo.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-bd8b41a07b0ae843a972cc78",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "event_id": "5ff98211-0018-4b69-9bf4-afff2695bbb3",
+      "source_path": "openwiki/GUIDE.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-c41be7b4d54acc6a80831a62",
+      "record_id": "76d983ef-aea6-4b82-a353-2b7f341d3967",
+      "event_id": "7e28abf1-eb43-49da-a8c0-9183b531fce5",
+      "source_path": "openwiki/adr/okf-record-history.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-c6f43c9ee05bcd29e7c11525",
+      "record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "event_id": "4d95f554-7d77-46c4-afb9-9fc746a0821e",
+      "source_path": "openwiki/adr/0001-private-records-authenticated-app.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-c736f7531e4442d7bda9fa8e",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "event_id": "3502e729-34b5-4cd5-a545-fb8325659a4b",
+      "source_path": "openwiki/projects/knowledge-hub.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-c8017121077996ad80ce6412",
+      "record_id": "57e3b3d0-fcb6-4565-9166-400fceffd91c",
+      "event_id": "e2ceb8e1-e6a6-4699-b279-cf945907ea9a",
+      "source_path": "openwiki/design/projections.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-c90af0299ba370c2668d8bda",
+      "record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+      "event_id": "4b1ac760-d964-495d-a085-9246e7e8b0a4",
+      "source_path": "openwiki/CI.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-cc5dd53fe7e928366a0c9ebd",
+      "record_id": "c4083a55-7b76-4b8f-92a6-23cdaf241083",
+      "event_id": "e47c9673-8aac-49cc-95d1-106361e27a7f",
+      "source_path": "openwiki/journal/2026/11/10/weekly-diary-view.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-ce3857a31c2d4461fb32cf88",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "event_id": "767a9a0f-c8a1-4e14-866b-4475ecdefc8d",
+      "source_path": "openwiki/projects/knowledge-hub.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-d42f1dbf7b99307b0288c894",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "event_id": "d0067e71-101a-42d6-a9f0-f67bb93f073a",
+      "source_path": "openwiki/projects/knowledge-hub.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-daf935b5cb19a7434cd2bd05",
+      "record_id": "e837f63c-444c-44c9-aec4-115ef65e210f",
+      "event_id": "fe1fc5d4-20a4-4918-9f36-fe94391a4fba",
+      "source_path": "openwiki/projects/knowledge-hub.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-dde655192c479eb727a02d6e",
+      "record_id": "76d983ef-aea6-4b82-a353-2b7f341d3967",
+      "event_id": "1818892e-a4f3-41b4-96c8-c6840f5fb2a6",
+      "source_path": "openwiki/adr/okf-record-history.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-dfb04fea343b750bccefe13a",
+      "record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+      "event_id": "213d11c8-1fa2-4de9-9769-fe43b29994ba",
+      "source_path": "openwiki/CI.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-e16f94e12e4353e05770e176",
+      "record_id": "b44dd4d6-4b69-4d65-b4af-9ce8106ca759",
+      "event_id": "7a4f214f-7d14-4085-bb34-db830555227b",
+      "source_path": "openwiki/adr/0001-private-records-authenticated-app.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-e53966961e7ab69411d86562",
+      "record_id": "2fc98d1e-2c68-44c7-a97d-0e7a8a922c93",
+      "event_id": "bc741a13-353b-41dc-84da-5a6a6321e147",
+      "source_path": "openwiki/design/ui-ux.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-eab069081d61eaa065eb1e65",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "event_id": "608744e4-5bd3-416c-a722-bc864b8989a0",
+      "source_path": "openwiki/GUIDE.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-eb5dfaf58d4f6b08207f0575",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "event_id": "8dc8dde5-3484-48fb-bc89-ff028e234ca4",
+      "source_path": "openwiki/GUIDE.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-ec40719981a4bf8cb5047be4",
+      "record_id": "bce5e960-2556-406f-919d-bac84c5be8c0",
+      "event_id": "98482a27-8584-43ea-87bc-71d6991eecd2",
+      "source_path": "openwiki/CI.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-f56a694da39ad172a50cb8b1",
+      "record_id": "79d6c2df-3072-4842-a3ce-92022c0163b2",
+      "event_id": "e0fe97b7-83a3-4be2-bcd3-f87f555218fe",
+      "source_path": "openwiki/journal/2026/11/09/implementation-issues.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    },
+    {
+      "legacy_ui_id": "log-fbb3481466978ca11b0a7127",
+      "record_id": "422b444e-cde8-48ac-9165-191927bbc5c1",
+      "event_id": "b79a7b9b-d144-4ee1-aca2-4409d1f1cb61",
+      "source_path": "openwiki/GUIDE.md",
+      "resolution": "event-detail",
+      "basis": "legacy builder log SHA-256(record path + colon + event ID)"
+    }
+  ],
+  "imported_baseline_allocations": [
+    {
+      "record_id": "c612bd17-8e81-4a98-971f-2270784b7b8c",
+      "source_path": "openwiki/journal/2026/11/log.md",
+      "destination_path": "openwiki/notes/knowledge-hub/november-2026-journal-summary.md",
+      "source_sha256": "eb00b4dbcc4d19fd9d7cd0ca988bc1b7112967be45b1667cfa8ef67771bcec18",
+      "action": "IMPORTED",
+      "sequence": 1,
+      "before": null,
+      "after_rule": "exact frozen source bytes",
+      "provenance_kind": "legacy-journal",
+      "source_ref": "openwiki/journal/2026/11/log.md",
+      "original_time": null,
+      "recorded_at_rule": "fixed migration UTC time; no factual occurrence date",
+      "allocated_event_id": "0ef1d839-2589-4d0a-b0cb-aba9a8cdd135",
+      "allocated_operation_id": "1317ebe5-8bea-4235-b038-3ef9700fbf84",
+      "allocated_idempotency_key": "dfe6b745-5dd1-41e5-969e-7d7f8c8bc474"
+    }
+  ]
+}
