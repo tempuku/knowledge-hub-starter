@@ -51,6 +51,35 @@ KH_V1_UI=1 KH_UI_ARTIFACTS=/tmp/knowledge-hub-ui-evidence \
 
 Committed deterministic generator and real measurement are still required. Fixture: 10,000 records, 100,000 events (including 1,000 on the busiest UTC day), 365 dates, nested depth 8, approximately 2 KiB average snapshots and 1,000 reminders. Record exact source bytes and generator revision. On a documented four-core/eight-GiB runner, measure **three clean builds** and report each elapsed time and peak RSS: median must be ≤120 seconds and ≤1 GiB. Measure Diary first usable list after manifest response (≤2 seconds), first-open record after data response (≤1 second), and transfer bytes on 10 Mbit/s, 100 ms RTT, 4× CPU throttling; record browsers and system environment. The evidence validator rejects missing runs, wrong fixture, and over-budget medians.
 
+**Reproducible full-size measurements** (local/isolated runner; not a GitHub browser CI gate):
+
+~~~sh
+python3 scripts/generate_p16_fixture.py \
+  --destination /tmp/kh-p16/source --report /tmp/kh-p16/fixture.json
+python3 scripts/benchmark_p16.py \
+  --source /tmp/kh-p16/source --fixture-report /tmp/kh-p16/fixture.json \
+  --output-dir /tmp/kh-p16/builds --report /tmp/kh-p16/build-report.json
+# This is synthetic source only; the public projection explicitly allowlists
+# safe records and events and excludes private-transition records.
+python3 tools/projection/build.py --root /tmp/kh-p16/source \
+  --revision HEAD --mode public --destination /tmp/kh-p16/public-ui/data
+# Copy/generated browser assets are handled by the local timing script.
+python3 scripts/measure_p16_browser.py --dist /tmp/kh-p16/public-ui \
+  --build-report /tmp/kh-p16/build-report.json \
+  --report /tmp/kh-p16/performance-report.json
+python3 -m unittest discover -s tests -p 'test_p16_fixture.py' -v
+~~~
+
+The P16 build script measures three **fresh processes**, deletes their temporary
+projection outputs and logs real wall time and process peak RSS. The browser
+script uses a local HTTP server, Chromium CDP CPU/network throttling and three
+fresh contexts for each route. It reports the browser/public eligible counts
+separately from the exact 10k/100k **source** workload; noneligible
+public/private transition events are never shown in the public UI. CI only
+executes a small deterministic fixture regression, never a reduced-size P16
+acceptance substitute. An unmeasured/failed metric stays pending. Private data
+and native source bundles must not be uploaded as public artifacts.
+
 No benchmark claim exists yet. Do not reduce the fixture, silently change budgets, drop privacy checks, or count synthetic timings from the evidence-validator unit tests as measurements. Failed budgets require optimization or an explicit #24 design amendment.
 
 ## Release boundary
