@@ -114,8 +114,13 @@ def publish(root: Path | None, destination: Path, revision: str | None = None, *
         selected_event_ids = {event["id"] for events in histories.values() for event in events}
         # Path aliases come only from eligible events; record-level filtering
         # alone would retain an old private path on a currently public record.
+        # Original provenance source_ref is internal evidence, even for an
+        # allowlisted public event. Do NOT publish it as a route alias.
+        # Only explicitly reviewed old UI IDs may be public event aliases.
+        public_derived = derive_aliases(records, histories)
+        public_derived["entries"] = {}
         aliases = _merge_aliases(
-            derive_aliases(records, histories), reviewed,
+            public_derived, reviewed,
             {r["id"] for r in records}, selected_event_ids)
         selected_aliases = aliases
         forbidden.update(forbidden_public_references(
