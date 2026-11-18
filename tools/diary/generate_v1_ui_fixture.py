@@ -213,6 +213,11 @@ def generate(source_dir: Path, dist_dir: Path, *, source_base: str = "source/") 
     fixture.create("day15", "openwiki/notes/daily/day-15.md", source(
         "Sunday marker", "The selected UTC week has a Sunday event.\n", tags=["day-marker"]))
 
+    fixture.create("no_history", "openwiki/notes/history/unpublished-events.md", source(
+        "Public record without published history",
+        "The current public record is visible, but its events are not allowlisted.\n",
+        tags=["no-published-history"]))
+
     fixture.create("private", "openwiki/notes/private/never-export.md", source(
         "PRIVATE SENTINEL must never appear", "PRIVATE BODY SENTINEL browser guard.\n", tags=["private"]).replace('visibility: "public"', 'visibility: "private"'))
 
@@ -226,11 +231,11 @@ def generate(source_dir: Path, dist_dir: Path, *, source_base: str = "source/") 
 
     # A real committed publication policy explicitly allows current public
     # records, their approved histories, and one source-file record.
-    public_keys = ["project", "main", "reuse", "day11", "archived", "large", "body_hit", "day15"]
+    public_keys = ["project", "main", "reuse", "day11", "archived", "large", "body_hit", "day15", "no_history"]
     policy = {
         "schema_version": 1,
         "record_ids": sorted(fixture.ids[k] for k in public_keys),
-        "event_ids": sorted(event_id for k in public_keys for event_id in fixture.event_ids[k]),
+        "event_ids": sorted(event_id for k in public_keys if k != "no_history" for event_id in fixture.event_ids[k]),
         "actor_labels": ["Fixture"],
     }
     # GitRecordWriter publishes commits by updating the shared branch ref while
@@ -290,6 +295,7 @@ def generate(source_dir: Path, dist_dir: Path, *, source_base: str = "source/") 
         "archived_record_id": fixture.ids["archived"],
         "large_record_id": fixture.ids["large"],
         "body_hit_record_id": fixture.ids["body_hit"],
+        "no_history_record_id": fixture.ids["no_history"],
         "project_id": fixture.ids["project"],
         "main_event_ids": fixture.event_ids["main"],
         "reminder_record_id": fixture.ids["main"],
