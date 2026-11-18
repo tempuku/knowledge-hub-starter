@@ -8,6 +8,8 @@ user data is involved. Missing fixture capabilities are hard failures.
 from __future__ import annotations
 
 import functools
+import importlib.metadata
+import subprocess
 import json
 import os
 import re
@@ -99,7 +101,7 @@ class GeneratedV1BrowserAcceptance(unittest.TestCase):
             "kind": "synthetic-v1-browser-acceptance",
             "engine": ENGINE,
             "browser_version": cls.browser_version,
-            "playwright_version": "1.56.0",
+            "playwright_version": importlib.metadata.version("playwright"),
             "fixture_source_revision": cls.fixture["source_revision"],
             "generation": cls.fixture["generation"],
             "fixture_counts": {"records": cls.fixture["record_count"], "events": cls.fixture["event_count"]},
@@ -464,4 +466,33 @@ class GeneratedV1BrowserAcceptance(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    # An old successful report is not evidence for this run. Remove it before
+    # starting so setup/browser failures cannot silently reuse stale status.
+    report_path = ARTIFACTS / f"{ENGINE}-report.json"
+    report_path.unlink(missing_ok=True)
+    program = unittest.main(verbosity=2, exit=False)
+    result = program.result
+    if report_path.is_file():
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        failures = [{"test": case.id().rsplit(".", 1)[-1],
+                     "message": details.splitlines()[-1] if details else ""}
+                    for case, details in result.failures]
+        errors = [{"test": case.id().rsplit(".", 1)[-1],
+                   "message": details.splitlines()[-1] if details else ""}
+                  for case, details in result.errors]
+        skipped = [{"test": case.id().rsplit(".", 1)[-1], "reason": reason}
+                   for case, reason in result.skipped]
+        failed_names = {item["test"] for item in failures + errors}
+        skipped_names = {item["test"] for item in skipped}
+        for case in report.get("tests", []):
+            case["status"] = ("failed" if case["name"] in failed_names else
+                              "skipped" if case["name"] in skipped_names else "passed")
+        head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                              capture_output=True, text=True, check=True).stdout.strip()
+        report["tested_head_sha"] = head
+        report["run"] = {"successful": result.wasSuccessful(),
+                         "tests_run": result.testsRun,
+                         "failures": failures, "errors": errors, "skipped": skipped}
+        report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    if not result.wasSuccessful():
+        raise SystemExit(1)
