@@ -67,6 +67,8 @@ jobs:
         run: python -m unittest discover -s tools/records -p 'test_*.py' -v
       - name: Test M-04 maintenance denial for legacy and v1 writers
         run: python -m unittest discover -s tests -p 'test_cutover_maintenance.py' -v
+      - name: Test M-04 exact-head local CAS and failure injection
+        run: python -m unittest discover -s tools/cutover -p 'test_*.py' -v
       - name: Test deterministic projection primitives (#31)
         run: python -m unittest discover -s tools/projection -p 'test_*.py' -v
       - name: Upload projection and privacy acceptance evidence
