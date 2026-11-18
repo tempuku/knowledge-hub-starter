@@ -105,4 +105,5 @@ jobs:
         run: |
           python tools/diary/build.py --output-dir dist-public --public-only
           python tools/diary/test_build.py --output-dir dist-public --public-only
+          python tools/diary/publish_v1.py --output-dir dist-public
           python tools/diary/test_publication.py dist-public
