@@ -4,8 +4,8 @@ import { validateKnowledgeFrontmatter } from "./knowledge-frontmatter.mjs";
 
 const concept = fields => `---\n${fields}\n---\n\n# Example\n`;
 
-test("accepts standard statuses and the documented completed extension", () => {
-  for (const status of ["draft", "stable", "deprecated", "completed"]) {
+test("accepts standard statuses and documented lifecycle extensions", () => {
+  for (const status of ["draft", "stable", "deprecated", "completed", "in_progress"]) {
     assert.equal(validateKnowledgeFrontmatter(concept(`type: concept\nstatus: ${status}`)).valid, true);
   }
 });

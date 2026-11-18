@@ -131,8 +131,8 @@ def normalized_request(request):
                 raise IntegrityError("record content exceeds 1 MiB")
         if command == "move":
             safe_path(request["destination"], "destination")
-        if command == "reopen" and request["status"] not in ("draft", "stable", "completed"):
-            raise IntegrityError("reopen status must be draft, stable or completed")
+        if command == "reopen" and request["status"] not in ("draft", "stable", "in_progress", "completed"):
+            raise IntegrityError("reopen status must be draft, stable, in_progress or completed")
         if command not in ("create", "update") and "publish_current" in request:
             raise IntegrityError("publish_current is only valid on create/update")
         actor = request["actor"]

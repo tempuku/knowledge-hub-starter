@@ -59,7 +59,7 @@
     return out;
   };
   var catalog = async function () { return dataCall("catalog", {}, "catalog.json"); };
-  var statusNode = function (value) { var labels={draft:"✎ Draft",stable:"✓ Stable",completed:"✓ Completed",deprecated:"▣ Archived"}; var key=value || "unknown"; return text("span",labels[key] || "? Unknown", "status"); };
+  var statusNode = function (value) { var labels={draft:"✎ Draft",stable:"✓ Stable",in_progress:"◷ In progress",completed:"✓ Completed",deprecated:"▣ Archived"}; var key=value || "unknown"; return text("span",labels[key] || "? Unknown", "status"); };
   var statusText = function (parent, value) { var node=statusNode(value); node.setAttribute("data-status",value || "unknown"); parent.appendChild(node); };
   var setupSearch = function (route) {
     var field=document.getElementById("global-search"), form=document.getElementById("global-search-form");

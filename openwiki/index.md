@@ -8,6 +8,7 @@ okf_version: "0.2"
 * [CI validation and troubleshooting](CI.md)
 * [Architecture decision records](adr/)
 * [Projects](projects/)
+* [Private test fixtures](private/)
 * [Journal](journal/)
 * [Concepts](concepts/)
 * [Implementation design](design/)

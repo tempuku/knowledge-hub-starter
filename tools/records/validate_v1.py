@@ -19,8 +19,8 @@ from urllib.parse import urlsplit
 
 import yaml
 
-AREAS = {"projects", "ideas", "notes", "concepts", "adr", "design"}
-STATUSES = {"draft", "stable", "completed", "deprecated"}
+AREAS = {"projects", "private", "ideas", "notes", "concepts", "adr", "design"}
+STATUSES = {"draft", "stable", "in_progress", "completed", "deprecated"}
 ACTIONS = {"CREATED", "UPDATED", "MOVED", "ARCHIVED", "REOPENED", "IMPORTED"}
 PROVENANCE = {"native", "legacy-log", "legacy-journal", "git-backfill"}
 WINDOWS_RESERVED = {"con", "prn", "aux", "nul"} | {"com" + str(i) for i in range(1, 10)} | {"lpt" + str(i) for i in range(1, 10)}
