@@ -54,6 +54,8 @@ class GeneratedV1BrowserAcceptance(unittest.TestCase):
             raise RuntimeError("fixture manifest/policy does not match the generated public fixture")
         if cls.fixture.get("record_count", 0) < 4 or cls.fixture.get("event_count", 0) < 51:
             raise RuntimeError("fixture is missing the multi-record or >50 event scenario")
+        if not cls.fixture.get("no_history_record_id"):
+            raise RuntimeError("fixture lacks the published-record / unpublished-history scenario")
         if not cls.fixture.get("public_source_record_id") or len(cls.fixture.get("main_event_ids", [])) < 50:
             raise RuntimeError("fixture lacks source-link or historical event coverage")
 
@@ -79,6 +81,7 @@ class GeneratedV1BrowserAcceptance(unittest.TestCase):
             "test_today_sections_and_archived_exclusion": ["U13"],
             "test_project_overview_counts_current_non_archived_records": ["U7"],
             "test_detail_gates_full_payload_until_explicit_action": ["U22"],
+            "test_public_record_with_unpublished_history": ["P6", "P7", "U4", "U6"],
             "test_public_payload_privacy_guard_and_scoped_request_surface": ["U15", "U16"],
             "test_accessibility_landmarks_keyboard_and_focus": ["U19"],
             "test_responsive_widths_targets_and_200_percent_zoom": ["U20"],
@@ -299,6 +302,18 @@ class GeneratedV1BrowserAcceptance(unittest.TestCase):
         self.page.get_by_role("button", name=re.compile(r"Load full (content|record)", re.I)).click()
         expect(self.page.get_by_text("LARGE-END", exact=False)).to_be_visible(timeout=15000)
         self.assertTrue(any(detail_request in item["path"] for item in self.requests))
+
+    def test_public_record_with_unpublished_history(self):
+        # P6: a published current record can have zero approved historical
+        # events; neither the UI nor the network may expose those events.
+        rid = self.fixture["no_history_record_id"]
+        self.navigate(f"#/records/{rid}?tab=history")
+        expect(self.page.get_by_role("heading", name="Public record without published history")).to_be_visible()
+        expect(self.page.get_by_text("No published history.", exact=True)).to_be_visible()
+        self.assertFalse(any("/events/" in item["path"] for item in self.requests),
+                         "a record with unpublished history requested an event detail")
+        self.navigate(f"#/records/{rid}?tab=content")
+        expect(self.page.get_by_text("The current public record is visible, but its events are not allowlisted.")).to_be_visible()
 
     def test_public_payload_privacy_guard_and_scoped_request_surface(self):
         public_bytes = b"".join(path.read_bytes() for path in DIST.rglob("*") if path.is_file() and "browser-artifacts" not in path.parts)
