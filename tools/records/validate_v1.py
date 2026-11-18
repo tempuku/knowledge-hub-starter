@@ -140,7 +140,12 @@ def safe_path(value, label, kind="record"):
             not any(ord(c) < 32 or ord(c) == 127 for c in value) and
             len(value.encode("utf-8")) <= 240, f"{label}: unsafe path")
     parts = value.split("/")
-    require(len(parts) >= 3 and parts[1] in AREAS and len(parts[1:-1]) <= 8,
+    # M-01 explicitly keeps only these two legacy guides at the OpenWiki root.
+    # They are first-class v1 records after migration, never arbitrary root paths.
+    root_guide = value in {"openwiki/CI.md", "openwiki/GUIDE.md",
+                           "openwiki/CI.log.md", "openwiki/GUIDE.log.md"}
+    require(root_guide or (len(parts) >= 3 and parts[1] in AREAS and
+                           len(parts[1:-1]) <= 8),
             f"{label}: invalid area or depth")
     require(all(KEBAB.fullmatch(seg) and seg not in WINDOWS_RESERVED for seg in parts[1:-1]),
             f"{label}: unsafe directory segment")
@@ -399,7 +404,7 @@ def repository(root, base=None, strict_indexes=False):
     for path in sorted(tracked):
         if not path.startswith("openwiki/") or not path.endswith(".md") or path.endswith(".log.md"):
             continue
-        if path.rsplit("/", 1)[-1] in {"index.md", "log.md"} or path in {"openwiki/GUIDE.md", "openwiki/CI.md"}:
+        if path.rsplit("/", 1)[-1] in {"index.md", "log.md"}:
             continue
         blob = git(root, "show", ":" + path)
         # Legacy input is NOT a v1 record. New legacy authoring is forbidden below.
