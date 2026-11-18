@@ -44,9 +44,10 @@ def alias_collision_diagnostics(source):
     from git_source import load_revision, derive_aliases
     from publication import select_public, forbidden_public_references, validate_policy
     from build import _merge_aliases
+    from compose import build_projection
     _, _, records, histories, summaries = load_revision(source, "HEAD")
     policy, _ = validate_policy((source / "config/publication.json").read_bytes())
-    published, published_hist, _ = select_public(records, histories, summaries, policy)
+    published, published_hist, selected_summaries = select_public(records, histories, summaries, policy)
     original = derive_aliases(records, histories)
     derived = derive_aliases(published, published_hist)
     derived["entries"] = {}
@@ -57,11 +58,23 @@ def alias_collision_diagnostics(source):
         records, histories, published, published_hist,
         source_aliases=original, selected_aliases=aliases)
     raw = json.dumps({"schema_version": 1, **aliases}, ensure_ascii=False)
+    generated = build_projection(published, published_hist, selected_summaries, aliases=aliases)
+    observed = {k: data.decode("utf-8") for k,data in generated.items()
+                if k=="aliases.json" or k.startswith("calendar/")}
+    public_times = {e["recorded_at"] for chain in published_hist.values() for e in chain}
+    event_days = {value[:10] for value in public_times}
     result = []
     for secret in sorted(blocked):
-        if not secret or secret not in raw:
+        matches = [key for key,value in observed.items() if secret and secret in value]
+        if not matches:
             continue
         result.append({
+            "artifacts": matches[:5],
+            "exact_event_recorded_at": secret in public_times,
+            "exact_public_event_day": secret in event_days,
+            "exact_public_title": secret in {r["title"] for r in published},
+            "exact_public_event_summary": secret in {e["summary"] for e in selected_summaries.values()},
+            "exact_public_event_action": secret in {e["action"] for chain in published_hist.values() for e in chain},
             "length": len(secret),
             "in_path_key": any(secret in x for x in aliases["paths"]),
             "in_ui_event_key": any(secret in x for x in aliases["entries"]),
