@@ -22,19 +22,21 @@ EXPORTER_VERSION = "v1-projection-0.3"
 
 def publish(root: Path | None, destination: Path, revision: str | None = None, *, mode: str = "private",
             bundle: Path | None = None, receipt: Path | None = None,
-            receipt_sha256: str | None = None):
+            receipt_sha256: str | None = None, strict_native: bool = False):
     if mode not in ("private", "public"):
         raise ProjectionError("unknown publication mode")
     if bundle is None:
         if root is None or not revision or receipt is not None or receipt_sha256 is not None:
             raise ProjectionError("Git builds require root and revision only")
-        commit, tree, records, histories, summaries = load_revision(root, revision)
+        commit, tree, records, histories, summaries = load_revision(
+            root, revision, **({"strict_native": True} if strict_native else {}))
         bundle_policy = None
     else:
         if revision is not None or root is not None or receipt is None or receipt_sha256 is None:
             raise ProjectionError("no-Git builds require bundle, receipt and externally pinned receipt digest")
         commit, tree, records, histories, summaries, bundle_policy, _ = load_bundle(
-            bundle, receipt, receipt_sha256)
+            bundle, receipt, receipt_sha256,
+            **({"strict_native": True} if strict_native else {}))
     policy_digest = "private-v1"
     forbidden = set()
     source_aliases = derive_aliases(records, histories)
@@ -102,6 +104,8 @@ def main():
     parser.add_argument("--destination", type=Path, required=True)
     parser.add_argument("--revision")
     parser.add_argument("--mode", choices=("private", "public"), default="private")
+    parser.add_argument("--native-only", action="store_true",
+                        help="Fail closed on any unmigrated source or dated journal (M-04)")
     parser.add_argument("--bundle", type=Path)
     parser.add_argument("--receipt", type=Path)
     parser.add_argument("--receipt-sha256")
@@ -110,7 +114,8 @@ def main():
         root = None if args.bundle else args.root
         print(json.dumps(publish(root, args.destination, args.revision, mode=args.mode,
                                  bundle=args.bundle, receipt=args.receipt,
-                                 receipt_sha256=args.receipt_sha256), indent=2))
+                                 receipt_sha256=args.receipt_sha256,
+                                 strict_native=args.native_only), indent=2))
     except (ProjectionError, OSError, ValueError) as exc:
         parser.exit(1, f"projection failed: {exc}\n")
 
