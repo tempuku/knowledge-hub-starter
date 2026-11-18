@@ -368,7 +368,7 @@ def convert(source, manifest_file, output, expected_head, time=DEFAULT_TIME):
             final = event(item["allocated_record_id"], allocation, len(events) + 1,
                           "IMPORTED", events[-1]["after"], converted, dest, time,
                           "legacy-journal" if item["disposition"] == "summary-note" else "legacy-log",
-                          old, None,
+                          old + "#migration-normalization", None,
                           {"id": "migration", "kind": "migration", "label": "Migration"},
                           "Migrate record to hierarchical storage", events[-1]["id"])
             events.append(final)
