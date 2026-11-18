@@ -106,7 +106,13 @@ for day in calendar["days"]:
     assert found == day["count"]
     assert timestamps == sorted(timestamps, reverse=True), day["date"]
 assert seen == expected, ("missing", sorted(expected - seen), "extra", sorted(seen - expected))
-serialized = b"".join(path.read_bytes() for path in output.rglob("*.json"))
+# This is the legacy diary smoke check. The shared output may also contain
+# an independently privacy-audited v1 generation under data/g/. Inspect only
+# the legacy date/entry data, not the new read-model.
+legacy_data = [output / "data/calendar.json", output / "data/reminders.json"]
+legacy_data.extend((output / "data/days").rglob("*.json"))
+legacy_data.extend((output / "data/entries").rglob("*.json"))
+serialized = b"".join(path.read_bytes() for path in legacy_data)
 for ref in native_v1_refs:
     assert ref.encode("utf-8") not in serialized, f"v1-only reference leaked into legacy diary output: {ref}"
 print(f"Diary smoke check passed: {len(seen)} included entries, public_only={a.public_only}")
