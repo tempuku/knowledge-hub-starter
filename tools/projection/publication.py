@@ -437,6 +437,17 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
     # currently allowlisted. Its record ID is therefore part of the public
     # route/catalog even though the private revision itself stays hidden.
     forbidden.difference_update(selected_record_ids)
+    # Approved current source paths and their exact path components are
+    # independently public. Legacy private prose can mention these common
+    # strings without turning the public URL into a disclosure. Retain every
+    # different private full path and every excluded record/event ID.
+    approved_path_terms = set()
+    for record in selected_records:
+        public_path = record.get("path")
+        if isinstance(public_path, str) and public_path:
+            approved_path_terms.add(public_path)
+            approved_path_terms.update(public_path.split("/"))
+    forbidden.difference_update(approved_path_terms)
     # Dates, lifecycle labels and tags may be intentionally published by a
     # different approved record. They are not private references *when that
     # exact value is independently present in authorized public frontmatter*.
