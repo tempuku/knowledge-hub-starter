@@ -72,6 +72,12 @@ class NativeCutoverTests(unittest.TestCase):
         with self.assertRaisesRegex(ProjectionError, "directory log"):
             load_revision(self.root, rev, strict_native=True)
 
+    def test_old_sibling_log_must_be_archived_before_cutover(self):
+        self.put("openwiki/CI.log.md", "# OKF Record Change Log\\n")
+        rev = self.commit()
+        with self.assertRaisesRegex(ProjectionError, "unmigrated legacy log"):
+            load_revision(self.root, rev, strict_native=True)
+
     def test_root_legacy_guides_explicitly_allowed(self):
         self.put("openwiki/GUIDE.md", "# Legacy guide\n")
         self.put("openwiki/CI.md", "# Legacy CI guide\n")
