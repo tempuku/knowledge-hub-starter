@@ -2,6 +2,9 @@ name: P16 synthetic native performance benchmark (issue 37)
 
 on:
   pull_request:
+    # Avoid relaunching multi-minute full-scale work on every unrelated
+    # acceptance/evidence commit. Explicit workflow_dispatch can rerun it.
+    types: [opened, reopened]
     paths:
       - .github/workflows/p16-benchmark.yml
       - scripts/generate_p16_fixture.py
@@ -9,6 +12,10 @@ on:
       - tools/projection/**
       - tools/records/**
   workflow_dispatch:
+
+concurrency:
+  group: p16-native-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
