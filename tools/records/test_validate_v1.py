@@ -105,6 +105,26 @@ class ValidatorFixtures(unittest.TestCase):
         self.git("add", "-A")
         self.assert_invalid("trusted-base record/history deleted", base=base)
 
+    def test_private_health_fixture_remains_in_progress_after_inactivity(self):
+        # Synthetic example: elapsed time must not infer completion or alter status.
+        self.path = "openwiki/private/health/recovery.md"
+        self.record = self.source(self.record_id, 'occurred_on: "2026-10-27"\n',
+                                  body="Synthetic recovery fixture")
+        self.record = self.record.replace("status: draft", "status: in_progress")
+        self.event = self.make_event(
+            self.record, occurred_on="2026-10-27", recorded_at="2026-11-01T08:00:00Z")
+        self.install()
+        self.write("openwiki/index.md",
+                   '---\nokf_version: "0.2"\n---\n\n# Root\n\n* [Private](private/)\n')
+        self.write("openwiki/private/index.md",
+                   "# Private\n\n* [Health](health/)\n")
+        self.write("openwiki/private/health/index.md",
+                   "# Health\n\n* [Recovery](recovery.md)\n")
+        self.git("add", "-A")
+        self.assertEqual(self.check(strict=True), {"records": 1, "events": 1})
+        self.assertIn("status: in_progress", self.record)
+        self.assertEqual(self.event["recorded_at"], "2026-11-01T08:00:00Z")
+
     def test_valid_native_fixture_and_exact_indexes(self):
         self.assertEqual(self.check(strict=True), {"records": 1, "events": 1})
 
