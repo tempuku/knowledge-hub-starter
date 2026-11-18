@@ -16,7 +16,9 @@ concurrency:
 jobs:
   validate-openwiki:
     name: validate-openwiki
-    runs-on: ubuntu-latest
+    # Playwright 1.56 does not support the current ubuntu-latest (26.04) runner.
+    # Pin to a supported LTS image until browser dependencies are upgraded.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       KH_ACCEPTANCE_REPORT_DIR: acceptance-reports
