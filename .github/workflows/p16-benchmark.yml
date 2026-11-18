@@ -1,0 +1,71 @@
+name: P16 synthetic native performance benchmark (issue 37)
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/p16-benchmark.yml
+      - scripts/generate_p16_fixture.py
+      - scripts/benchmark_p16.py
+      - tools/projection/**
+      - tools/records/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p16-native:
+    # No impact on unrelated pull requests; heavyweight browser/iPad checks remain local-only.
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'agent/issue-37-integrated-acceptance'
+    name: P16 native full-fixture (not browser acceptance)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/diary/requirements.txt
+      - name: Install pinned fixture dependencies
+        run: python -m pip install -r tools/diary/requirements.txt
+      - name: Generate all 10000 records and 100000 events (synthetic only)
+        run: |
+          mkdir -p "$RUNNER_TEMP/p16"
+          python scripts/generate_p16_fixture.py \
+            --destination "$RUNNER_TEMP/p16/source" \
+            --report "$RUNNER_TEMP/p16/fixture.json"
+      - name: Measure 3 clean builds and peak RSS on actual host
+        run: |
+          python scripts/benchmark_p16.py \
+            --source "$RUNNER_TEMP/p16/source" \
+            --fixture-report "$RUNNER_TEMP/p16/fixture.json" \
+            --output-dir "$RUNNER_TEMP/p16/builds" \
+            --report "$RUNNER_TEMP/p16/build.json"
+      - name: Check measured native target (browser remains unverified)
+        run: |
+          python - <<'PY'
+          import json,os,statistics
+          from pathlib import Path
+          report=json.loads((Path(os.environ["RUNNER_TEMP"])/"p16/build.json").read_text())
+          runs=report["build_runs"]
+          assert len(runs)==3, "P16 requires three real clean builds"
+          seconds=statistics.median(run["seconds"] for run in runs)
+          memory=statistics.median(run["peak_rss_bytes"] for run in runs)
+          print(f"P16 native median: {seconds:.3f}s, {memory/1024**3:.3f} GiB RSS")
+          print(f"Actual runner: {report['environment']}")
+          assert seconds<=120, "P16 120-second median budget exceeded"
+          assert memory<=1024**3, "P16 1-GiB peak-RSS median budget exceeded"
+          print("Native-only P16 targets measured. Full P16 remains pending browser evidence.")
+          PY
+      - name: Upload public-safe measurement summary (never source/artifact payloads)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p16-synthetic-native-measurements
+          path: |
+            ${{ runner.temp }}/p16/fixture.json
+            ${{ runner.temp }}/p16/build.json
+          if-no-files-found: warn
