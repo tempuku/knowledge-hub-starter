@@ -49,8 +49,16 @@ jobs:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: tools/diary/requirements.txt
+      - name: Verify integrated #37 evidence ledger structure (pending is not acceptance)
+        run: |
+          python scripts/check_integrated_acceptance.py
+          python -m unittest discover -s tests -p 'test_integrated_acceptance.py' -v
       - name: Install diary builder dependencies
         run: python -m pip install -r tools/diary/requirements.txt
+      - name: Test integrated real CLI-MCP Git, privacy and no-Git projection chain
+        run: python -m unittest discover -s tests -p 'test_issue37_integration.py' -v
+      - name: Verify deterministic P16 synthetic fixture at small smoke scale (not benchmark)
+        run: python -m unittest discover -s tests -p 'test_p16_fixture.py' -v
       - name: "Validate reviewed issue #35 inventory and mutation tests"
         run: |
           python scripts/inventory_legacy.py --revision de749bed9053dd4bc9f96fee3cb7f816e5bdebcb --check
