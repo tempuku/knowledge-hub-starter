@@ -48,6 +48,26 @@ class IntegratedAcceptanceGateTests(unittest.TestCase):
         broken["dependencies"]["69"]["status"] = "passed"
         self.assertTrue(any("Dependency #69: missing completion evidence" in e for e in gate.validate(broken, self.ids)))
 
+    def test_passed_scenario_must_be_bound_to_exact_head(self):
+        broken = copy.deepcopy(self.report)
+        broken["tested_head"] = "1" * 40
+        row = broken["scenarios"]["S1"]
+        row.update({
+            "status": "passed", "command": "python3 -m unittest real_test",
+            "fixture_revision": "fixture-commit", "expected": "success",
+            "observed": "success", "evidence": ["https://github.com/example/run"],
+            "tested_head": "2" * 40,
+        })
+        errors = gate.validate(broken, self.ids, require_complete=True)
+        self.assertTrue(any("S1: evidence is not bound" in error for error in errors))
+
+    def test_malformed_performance_row_fails_instead_of_crashing(self):
+        broken = copy.deepcopy(self.report)
+        broken["scenarios"]["P16"] = None
+        errors = gate.validate(broken, self.ids, require_complete=True)
+        self.assertTrue(any("P16: missing scenario" in error for error in errors))
+        self.assertIn("P16 not accepted", errors)
+
     def test_performance_limits_fail_closed(self):
         benchmark = {
             "fixture": {
