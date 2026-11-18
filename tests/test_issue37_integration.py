@@ -123,6 +123,10 @@ class IntegratedNativeFlow(unittest.TestCase):
             "event_ids": sorted([event["id"] for event in public_history + transition_history]),
             "actor_labels": ["Caller supplied actor"],
         }
+        # GitRecordWriter advances refs without updating the caller worktree.
+        # Resynchronize before making a separate policy-only commit; otherwise
+        # Git's stale index can erase every native record and history file.
+        git(hub.root, "reset", "--hard", "HEAD")
         (hub.root / "config").mkdir(exist_ok=True)
         (hub.root / "config/publication.json").write_text(
             json.dumps(policy, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
