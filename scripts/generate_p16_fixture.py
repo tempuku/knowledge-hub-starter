@@ -118,6 +118,8 @@ def generate(destination: Path, *, records: int = 10000, events_per_record: int 
     stamps = dates(total_events, date_count, busiest_day)
     fixture = GitFixture(destination)
     bytes_snapshots = 0
+    eligible_record_ids = []
+    eligible_event_ids = []
     reminder_set = set()
     for index in range(records):
         if index % len(STATUSES) != 3 and len(reminder_set) < reminder_count:
@@ -127,13 +129,16 @@ def generate(destination: Path, *, records: int = 10000, events_per_record: int 
         raise ValueError("Not enough non-deprecated records for reminders")
     for index in range(records):
         rid = uid(fixture.next_id)  # The actual fixture writer assigns this next.
-        is_public = index % 10 == 1
-        candidate = source(index, 0, reminder=index in reminder_set, public=is_public)
+        # 40 of the 10k sources transition from public to private; the
+        # others retain public current/history so the browser exercises
+        # virtually the entire 100k-event workload via public read models.
+        transitions = index >= (records * 4 // 5) and index % 50 == 0
+        candidate = source(index, 0, reminder=index in reminder_set, public=True)
         edits = []
         for revision in range(1, events_per_record):
             # A smaller test may use fewer than ten revisions. Public/private
             # transitions occur for a subset; other records are always private.
-            eligible = is_public and revision <= max(1, events_per_record // 2)
+            eligible = not transitions or revision < max(1, events_per_record // 2)
             updated = source(index, revision, record_id=rid,
                              reminder=index in reminder_set, public=eligible)
             edits.append((updated, stamps[index + revision * records]))
@@ -141,6 +146,13 @@ def generate(destination: Path, *, records: int = 10000, events_per_record: int 
                                        recorded_at=stamps[index], edits=edits)
         bytes_snapshots += sum(len(event["after"].encode("utf-8"))
                                for event in fixture.events[actual_id])
+        if not transitions:
+            eligible_record_ids.append(actual_id)
+            eligible_event_ids.extend(event["id"] for event in fixture.events[actual_id])
+    fixture.files["config/publication.json"] = json.dumps({
+        "schema_version": 1, "record_ids": sorted(eligible_record_ids),
+        "event_ids": sorted(eligible_event_ids), "actor_labels": ["Fixture"],
+    }, ensure_ascii=False, indent=2) + "\n"
     fill_indexes(fixture)
     with deterministic_git_commit_dates():
         revision = fixture.commit("deterministic P16 synthetic fixture")
@@ -158,6 +170,8 @@ def generate(destination: Path, *, records: int = 10000, events_per_record: int 
         "average_snapshot_bytes": round(bytes_snapshots / snapshot_count, 2),
         "source_bytes": source_bytes,
         "types": list(TYPES), "statuses": list(STATUSES),
+        "public_eligible_record_count": len(eligible_record_ids),
+        "public_eligible_event_count": len(eligible_event_ids),
         "immutable_base_date": "2025-01-01",
     }
     return report
