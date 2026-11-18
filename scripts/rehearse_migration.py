@@ -403,6 +403,7 @@ def convert(source, manifest_file, output, expected_head, time=DEFAULT_TIME):
         policy = manifest["publication_eligibility"]
         demand(policy["policy"] == "reviewed-proposal-only-no-deployment-authorization",
                "public eligibility requires new review")
+        (output / "config").mkdir(parents=True, exist_ok=True)
         (output / "config" / "publication.json").write_text(
             json.dumps({"schema_version": 1, "record_ids": policy["record_ids"],
                         "event_ids": policy["event_ids"],
