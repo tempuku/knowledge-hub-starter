@@ -320,6 +320,9 @@ def update_indexes(candidate):
 def convert(source, manifest_file, output, expected_head, time=DEFAULT_TIME):
     source, output = Path(source).resolve(), Path(output).resolve()
     demand(not output.exists(), "disposable output already exists; refusing overwrite")
+    ephemeral_root = Path(tempfile.gettempdir()).resolve()
+    demand(ephemeral_root in output.parents,
+           "private candidate output must stay under the system temporary directory")
     demand(source != output and source not in output.parents and output not in source.parents,
            "output must not overlap source")
     date_or_time(time, "fixed migration time", False)
