@@ -52,6 +52,7 @@ def empty_report() -> dict:
         "scenarios": {
             item: {
                 "status": "pending",
+                "tested_head": None,
                 "command": None,
                 "fixture_revision": None,
                 "expected": None,
@@ -163,6 +164,8 @@ def validate(report: object, ids: list[str], *, require_complete: bool = False) 
             errors.append(f"{sid}: status must be pending, passed or failed")
             continue
         if state == "passed":
+            if require_complete and entry.get("tested_head") != report.get("tested_head"):
+                errors.append(f"{sid}: evidence is not bound to exact tested_head")
             for key in ("command", "fixture_revision", "expected", "observed"):
                 if not nonempty(entry.get(key)):
                     errors.append(f"{sid}: passed without {key}")
@@ -214,7 +217,8 @@ def validate(report: object, ids: list[str], *, require_complete: bool = False) 
         if report.get("physical_ipad_status") not in ("unverified", "verified"):
             errors.append("Physical iPad status must be explicitly verified or unverified")
         errors.extend(check_performance(report.get("performance")))
-        if matrix.get("P16", {}).get("status") != "passed":
+        p16 = matrix.get("P16")
+        if not isinstance(p16, dict) or p16.get("status") != "passed":
             errors.append("P16 not accepted")
     return errors
 
