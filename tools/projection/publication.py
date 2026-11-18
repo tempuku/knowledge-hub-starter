@@ -77,8 +77,8 @@ def _visibility(snapshot: str | None, *, excluded_legacy: bool = False) -> str |
         metadata, _ = frontmatter(snapshot)
     except (ValueError, TypeError) as exc:
         if excluded_legacy:
-            # Unknown old snapshots are NEVER eligible for public history.
-            # They must instead be denied by the full-byte privacy audit.
+            # An excluded unknown legacy snapshot is always private to the
+            # audit. Explicit public eligibility still requires valid YAML.
             return "private"
         raise ProjectionError("invalid publication snapshot") from exc
     value = metadata.get("visibility")
@@ -311,8 +311,8 @@ def _add_private_snapshot(forbidden: set[str], snapshot: str | None):
     try:
         metadata = _snapshot_metadata(snapshot)
     except ProjectionError:
-        # Historical pre-frontmatter prose is still fully forbidden above.
-        # Never discard the source bytes or interpret them as public.
+        # Unparseable legacy prose is not public: full bytes were added above,
+        # even when historical YAML metadata is unavailable.
         metadata = {}
     # Include user supplied metadata that can be projected into catalogs,
     # reminders, search, aliases, or source links. Ignore very short values:
@@ -361,6 +361,9 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
     prose, URLs, or facts.
     """
     selected_record_ids = {record["id"] for record in selected_records}
+    selected_public_basenames = {
+        posixpath.basename(record["path"]) for record in selected_records
+        if isinstance(record.get("path"), str) and record["path"]}
     selected_event_ids = {
         event["id"] for events in selected_histories.values() for event in events
     }
@@ -388,11 +391,15 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
             private_path = record.get("path")
             add(private_path)
             if private_path:
-                add(posixpath.basename(private_path))
+                # Duplicate basenames can name separately approved public
+                # records in other areas; only a FULL excluded path uniquely
+                # identifies this private record. Never whitelist its full path.
+                if posixpath.basename(private_path) not in selected_public_basenames:
+                    add(posixpath.basename(private_path))
             for event in events:
                 for event_path in (event.get("path_before"), event.get("path_after")):
                     add(event_path)
-                    if event_path:
+                    if event_path and posixpath.basename(event_path) not in selected_public_basenames:
                         add(posixpath.basename(event_path))
             _add_private_snapshot(forbidden, record.get("content"))
 
@@ -414,7 +421,8 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
         for old_path, record_ids in source_paths.items():
             if old_path not in selected_paths:
                 add(old_path)
-                add(posixpath.basename(old_path))
+                if posixpath.basename(old_path) not in selected_public_basenames:
+                    add(posixpath.basename(old_path))
             for rid in record_ids:
                 if rid not in selected_record_ids:
                     add(rid)
@@ -429,6 +437,21 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
     # currently allowlisted. Its record ID is therefore part of the public
     # route/catalog even though the private revision itself stays hidden.
     forbidden.difference_update(selected_record_ids)
+    # Dates, lifecycle labels and tags may be intentionally published by a
+    # different approved record. They are not private references *when that
+    # exact value is independently present in authorized public frontmatter*.
+    # Never exempt record/event IDs, paths, titles, descriptions or bodies.
+    approved_shared_metadata = set()
+    for record in selected_records:
+        public_meta = _snapshot_metadata(record.get("content"))
+        for field in ("status", "occurred_on", "occurred_at"):
+            value = public_meta.get(field)
+            if isinstance(value, str):
+                approved_shared_metadata.add(value)
+        for value in public_meta.get("tags", []):
+            if isinstance(value, str):
+                approved_shared_metadata.add(value)
+    forbidden.difference_update(approved_shared_metadata)
     return forbidden
 
 
