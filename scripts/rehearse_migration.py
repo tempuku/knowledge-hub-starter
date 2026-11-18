@@ -135,9 +135,18 @@ def normalized_record(raw, item, old_to_id, base):
         if name in meta:
             fields[name] = meta[name]
     if item.get("project_mapping"):
-        project_id = item["project_mapping"].get("record_id")
-        demand(project_id is not None, "unresolved project mapping")
-        fields["project_id"] = project_id
+        mapping = item["project_mapping"]
+        project_id = mapping.get("record_id")
+        if fields["type"] != "project" and project_id is not None:
+            fields["project_id"] = project_id
+        elif mapping.get("x_legacy_project") is not None:
+            # Reviewed external project has no v1 project record.
+            fields.setdefault("x_legacy", {})["project"] = mapping["x_legacy_project"]
+        elif fields["type"] == "project" and mapping.get("x_legacy_project_id"):
+            # Project identity is its record UUID, not a self-reference.
+            fields.setdefault("x_legacy", {})["project_id"] = mapping["x_legacy_project_id"]
+        else:
+            demand(False, "unresolved project mapping")
     body = normalized_body(raw, item, old_to_id, base)
     converted = "---\n" + yaml.safe_dump(fields, sort_keys=False, allow_unicode=True,
                                             width=10000) + "---\n" + body
