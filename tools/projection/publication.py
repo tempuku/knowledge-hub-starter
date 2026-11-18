@@ -471,6 +471,10 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
             published_time = public_event["recorded_at"]
             approved_shared_metadata.add(published_time)
             approved_shared_metadata.add(published_time[:10])
+            # Actor role is explicitly part of this eligible public event's
+            # redacted wire representation. A similarly worded private tag is
+            # not evidence that the public actor role is private.
+            approved_shared_metadata.add(public_event["actor"]["kind"])
     forbidden.difference_update(approved_shared_metadata)
     return forbidden
 
