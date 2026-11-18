@@ -291,6 +291,10 @@ def update_indexes(candidate):
     folders = defaultdict(set)
     for path in files:
         folder, leaf = path.rsplit("/", 1)
+        if leaf == "index.md":
+            # Also clear stale links in emptied index-only legacy folders,
+            # retaining explanatory index prose.
+            folders.setdefault(folder, set())
         if leaf != "index.md":
             folders[folder].add(leaf)
         # Existing structural index-only directories still count as children:
