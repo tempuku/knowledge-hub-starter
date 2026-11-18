@@ -167,6 +167,10 @@ class RehearsalAcceptance(unittest.TestCase):
         self.assertEqual(public_aliases["current_entries"], {})
         self.assertEqual(len(public_aliases["paths"]), 1)
         self.assertNotIn("migration/legacy", "".join(file_hashes(public)))
+        public_bytes = b"".join(p.read_bytes() for p in (public / "g").rglob("*.json"))
+        self.assertIn(b"openwiki/concepts/diary-diff-demo.md", public_bytes)
+        self.assertNotIn(b"openwiki/notes/knowledge-hub/diary-diff-demo.md", public_bytes)
+        # Same basename is not a source identity: full excluded path stays denied.
         # No source archive or historical private snapshot may be deployed.
         for p in (public / "g").rglob("*"):
             self.assertNotIn("migration/legacy", p.as_posix())
