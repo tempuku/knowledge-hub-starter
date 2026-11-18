@@ -38,6 +38,42 @@ def file_hashes(root):
             for f in root.rglob("*") if f.is_file() and ".git" not in f.parts}
 
 
+def alias_collision_diagnostics(source):
+    """Safe diagnostics: classify blocked aliases, never print source strings."""
+    sys.path.insert(0, str(ROOT / "tools/projection"))
+    from git_source import load_revision, derive_aliases
+    from publication import select_public, forbidden_public_references, validate_policy
+    from build import _merge_aliases
+    _, _, records, histories, summaries = load_revision(source, "HEAD")
+    policy, _ = validate_policy((source / "config/publication.json").read_bytes())
+    published, published_hist, _ = select_public(records, histories, summaries, policy)
+    original = derive_aliases(records, histories)
+    derived = derive_aliases(published, published_hist)
+    derived["entries"] = {}
+    reviewed = json.loads((source / "migration/aliases-v1.json").read_text())
+    event_ids = {e["id"] for chain in published_hist.values() for e in chain}
+    aliases = _merge_aliases(derived, reviewed, {r["id"] for r in published}, event_ids)
+    blocked = forbidden_public_references(
+        records, histories, published, published_hist,
+        source_aliases=original, selected_aliases=aliases)
+    raw = json.dumps({"schema_version": 1, **aliases}, ensure_ascii=False)
+    result = []
+    for secret in sorted(blocked):
+        if not secret or secret not in raw:
+            continue
+        result.append({
+            "length": len(secret),
+            "in_path_key": any(secret in x for x in aliases["paths"]),
+            "in_ui_event_key": any(secret in x for x in aliases["entries"]),
+            "in_ui_event_value": any(secret in x for x in aliases["entries"].values()),
+            "in_record_id": any(secret in r["id"] for r in published),
+            "in_public_current_path": any(secret in r["path"] for r in published),
+            "is_complete_public_path": any(secret == r["path"] for r in published),
+            "is_complete_public_event": secret in event_ids,
+        })
+    return result
+
+
 class RehearsalAcceptance(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -142,9 +178,13 @@ class RehearsalAcceptance(unittest.TestCase):
         command(ROOT, sys.executable, str(builder), "--root", str(self.first),
                 "--revision", "HEAD", "--mode", "private",
                 "--destination", str(generated), "--published-at", TIME)
-        command(ROOT, sys.executable, str(builder), "--root", str(self.first),
-                "--revision", "HEAD", "--mode", "public",
-                "--destination", str(public), "--published-at", TIME)
+        try:
+            command(ROOT, sys.executable, str(builder), "--root", str(self.first),
+                    "--revision", "HEAD", "--mode", "public",
+                    "--destination", str(public), "--published-at", TIME)
+        except AssertionError as exc:
+            raise AssertionError(str(exc) + "; safe alias collision classification: " +
+                                 repr(alias_collision_diagnostics(self.first))) from exc
         command(ROOT, sys.executable, str(source_bundle), "--root", str(self.first),
                 "--revision", "HEAD", "--output", str(bundle_path),
                 "--receipt-output", str(receipt_path))
