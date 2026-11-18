@@ -60,7 +60,7 @@ def alias_collision_diagnostics(source):
     raw = json.dumps({"schema_version": 1, **aliases}, ensure_ascii=False)
     generated = build_projection(published, published_hist, selected_summaries, aliases=aliases)
     observed = {k: data.decode("utf-8") for k,data in generated.items()
-                if k=="aliases.json" or k.startswith("calendar/")}
+                if k=="aliases.json" or k.startswith(("calendar/", "events/", "records/"))}
     public_times = {e["recorded_at"] for chain in published_hist.values() for e in chain}
     event_days = {value[:10] for value in public_times}
     result = []
@@ -75,6 +75,16 @@ def alias_collision_diagnostics(source):
             "exact_public_title": secret in {r["title"] for r in published},
             "exact_public_event_summary": secret in {e["summary"] for e in selected_summaries.values()},
             "exact_public_event_action": secret in {e["action"] for chain in published_hist.values() for e in chain},
+            "exact_public_event_provenance_kind": secret in {e["provenance"]["kind"] for chain in published_hist.values() for e in chain},
+            "exact_public_event_id": secret in event_ids,
+            "exact_public_event_time": secret in public_times,
+            "exact_public_after_snapshot": secret in {e["after"] for chain in published_hist.values() for e in chain},
+            "substring_of_public_after_snapshot": any(secret in e["after"] for chain in published_hist.values() for e in chain),
+            "substring_of_public_before_snapshot": any(e["before"] and secret in e["before"] for chain in published_hist.values() for e in chain),
+            "substring_of_public_current_record": any(secret in r["content"] for r in published),
+            "exact_public_title": secret in {r["title"] for r in published},
+            "exact_public_event_title": secret in {e["title"] for e in selected_summaries.values()},
+            "exact_public_status": secret in {r["status"] for r in published},
             "length": len(secret),
             "in_path_key": any(secret in x for x in aliases["paths"]),
             "in_ui_event_key": any(secret in x for x in aliases["entries"]),
