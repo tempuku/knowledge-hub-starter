@@ -25,8 +25,12 @@ TIME = "2026-11-18T12:00:00Z"
 
 
 def command(cwd, *args):
-    return subprocess.run(args, cwd=cwd, text=True, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE, check=True).stdout.strip()
+    result = subprocess.run(args, cwd=cwd, text=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    if result.returncode:
+        # Builders print structural errors only; never raw candidate snapshots.
+        raise AssertionError("disposable command failed: " + result.stderr[-1200:])
+    return result.stdout.strip()
 
 
 def file_hashes(root):
@@ -101,7 +105,7 @@ class RehearsalAcceptance(unittest.TestCase):
                          for chunk in text.split("## Entry ")[1:] ])
         ci, demo, summary = logs
         self.assertEqual([e["provenance"]["kind"] for e in ci],
-                         ["legacy-log", "legacy-log", "git-backfill", "legacy-log", "legacy-log"])
+                         ["legacy-log", "legacy-log", "git-backfill", "git-backfill", "legacy-log"])
         self.assertEqual([e["sequence"] for e in ci], list(range(1, 6)))
         self.assertEqual(demo[0]["recorded_at"], "2026-11-10T17:38:34Z")
         self.assertEqual(demo[2]["provenance"]["kind"], "git-backfill")
