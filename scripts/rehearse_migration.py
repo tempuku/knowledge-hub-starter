@@ -256,10 +256,11 @@ def update_indexes(candidate):
                    if not p.name.endswith(".log.md") and p.name != "log.md")
     folders = defaultdict(set)
     for path in files:
-        if path.endswith("/index.md"):
-            continue
         folder, leaf = path.rsplit("/", 1)
-        folders[folder].add(leaf)
+        if leaf != "index.md":
+            folders[folder].add(leaf)
+        # Existing structural index-only directories still count as children:
+        # the v1 validator traverses their ancestors, even without records.
         while folder != "openwiki":
             parent, name = folder.rsplit("/", 1)
             folders[parent].add(name + "/")
