@@ -72,6 +72,10 @@ def runner_environment() -> dict:
 def run_child(source: Path, destination: Path, revision: str) -> None:
     start = time.perf_counter()
     manifest = publish(source, destination, revision, mode="private")
+    catalog_path = destination / "g" / manifest["generation"] / "catalog.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    calendar_path = destination / "g" / manifest["generation"] / "calendar" / "2025.json"
+    calendar = json.loads(calendar_path.read_text(encoding="utf-8"))
     elapsed = time.perf_counter() - start
     maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     if sys.platform.startswith("linux"):
@@ -82,6 +86,9 @@ def run_child(source: Path, destination: Path, revision: str) -> None:
         "generation": manifest["generation"],
         "source_revision": manifest["source_revision"],
         "mode": manifest["mode"],
+        "catalog_record_count": catalog["record_count"],
+        "catalog_event_count": catalog["event_count"],
+        "calendar_days": len(calendar["days"]),
     }))
 
 
@@ -112,6 +119,10 @@ def benchmark(source: Path, fixture_report: dict, output_dir: Path, *,
         record = json.loads(result.stdout)
         if record["source_revision"] != revision or record["mode"] != "private":
             raise RuntimeError("P16 build used an incorrect source revision or mode")
+        if (record.get("catalog_record_count") != fixture_report["records"]
+                or record.get("catalog_event_count") != fixture_report["events"]
+                or record.get("calendar_days") != fixture_report["dates"]):
+            raise RuntimeError("P16 build dropped source records, events or diary dates")
         runs.append({"seconds": record["seconds"], "peak_rss_bytes": record["peak_rss_bytes"]})
         # These are generated synthetic artifacts, not canonical source. Keep only
         # the run evidence to avoid keeping three large unreviewed data copies.
