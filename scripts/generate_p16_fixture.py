@@ -35,7 +35,7 @@ def source(record_number: int, revision: int, *, record_id: str | None = None,
     status = STATUSES[record_number % len(STATUSES)] if revision == 9 else "stable"
     fields.extend((
         f"type: {TYPES[record_number % len(TYPES)]}",
-        f'title: "Record-{record_number:06d}-Δ"',
+        f'title: "t{record_number:06d}δ"',
         f"status: {status}",
         f"visibility: {'public' if public else 'private'}",
     ))
