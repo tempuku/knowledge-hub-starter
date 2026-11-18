@@ -228,13 +228,35 @@ def derive_aliases(records: list[dict], histories: dict[str, list[dict]]) -> dic
             "entries": dict(sorted(entries.items()))}
 
 
-def load_revision(root: Path, revision: str):
+def _require_migrated_tree(paths, read_blob):
+    """M-04 cutover gate: never silently omit legacy knowledge in native mode.
+
+    Pre-cutover projections intentionally ignore legacy Markdown. The final
+    candidate must instead reject any remaining unmigrated record/journal.
+    Root GUIDE and CI are explicitly allowed legacy guides in S-01.
+    """
+    for path in sorted(paths):
+        if not path.startswith("openwiki/"):
+            continue
+        if path.startswith("openwiki/journal/") or path.endswith("/log.md"):
+            raise ProjectionError("native-only build contains active legacy journal or directory log")
+        if (not path.endswith(".md") or path.endswith(".log.md") or
+                path.rsplit("/", 1)[-1] == "index.md" or
+                path in ("openwiki/GUIDE.md", "openwiki/CI.md")):
+            continue
+        if not _v1_record_candidate(read_blob(path)):
+            raise ProjectionError("native-only build contains an unmigrated record: " + path)
+
+
+def load_revision(root: Path, revision: str, *, strict_native=False):
     """Return (commit, tree, records, histories, summaries) from immutable Git."""
     source_root = Path(root).resolve()
     commit = git(source_root, "rev-parse", "--verify", revision + "^{commit}").decode().strip()
     tree = git(source_root, "rev-parse", commit + "^{tree}").decode().strip()
     tree_entries = _git_tree_entries(source_root, commit)
     paths = sorted(path for path in tree_entries if path.startswith("openwiki/"))
+    if strict_native:
+        _require_migrated_tree(paths, lambda p: git(source_root, "show", f"{commit}:{p}"))
     record_blobs, log_blobs = {}, {}
     native_logs = set()
     for path in paths:
@@ -269,7 +291,7 @@ def load_revision(root: Path, revision: str):
     return commit, tree, records, histories, summaries
 
 
-def load_bundle(bundle_path: Path, receipt_path: Path, expected_receipt_sha256: str):
+def load_bundle(bundle_path: Path, receipt_path: Path, expected_receipt_sha256: str, *, strict_native=False):
     """Load raw source blobs from an externally pinned no-Git bundle."""
     from sourcebundle import load_bundle as verify_bundle
 
@@ -277,6 +299,8 @@ def load_bundle(bundle_path: Path, receipt_path: Path, expected_receipt_sha256: 
         bundle_path, receipt_path, expected_receipt_sha256)
     record_blobs, log_blobs = {}, {}
     by_path = {entry["path"]: entry for entry in manifest}
+    if strict_native:
+        _require_migrated_tree(by_path, lambda p: blobs[by_path[p]["oid"]])
     for path, entry in sorted(by_path.items()):
         if not path.startswith("openwiki/") or not path.endswith(".md") or path.endswith(".log.md") or path.rsplit("/", 1)[-1] in ("index.md", "log.md"):
             continue
