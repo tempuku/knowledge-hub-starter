@@ -152,7 +152,8 @@ def safe_path(value, label, kind="record"):
     suffix = ".log.md" if kind == "log" else ".md"
     require(parts[-1].endswith(suffix), f"{label}: invalid extension")
     slug = parts[-1][:-len(suffix)]
-    require(KEBAB.fullmatch(slug) and slug not in {"index", "log"} | WINDOWS_RESERVED,
+    require(root_guide or (KEBAB.fullmatch(slug) and
+                           slug not in {"index", "log"} | WINDOWS_RESERVED),
             f"{label}: reserved or invalid slug")
     return value
 
