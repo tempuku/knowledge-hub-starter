@@ -56,10 +56,43 @@ class P16GeneratorTests(unittest.TestCase):
             self.assertEqual(catalog["record_count"], 8)
             self.assertEqual(catalog["event_count"], 24)
 
+            public_destination = parent / "public-output"
+            public_manifest = publish(source, public_destination, "HEAD", mode="public")
+            public_catalog = json.loads((public_destination / "g" / public_manifest["generation"] / "catalog.json").read_text())
+            self.assertEqual(public_catalog["record_count"], 8)
+            self.assertEqual(public_catalog["event_count"], 24)
+
             again = generator.generate(parent / "source-two", records=8,
                                        events_per_record=3, date_count=5,
                                        busiest_day=3, reminder_count=4)
             self.assertEqual(report, again, "Source fixture must be commit- and byte-deterministic")
+
+
+    def test_public_transition_remains_in_source_but_not_public_generation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            source = parent / "source"
+            report = generator.generate(source, records=60, events_per_record=3,
+                                        date_count=5, busiest_day=3, reminder_count=5)
+            self.assertEqual(report["records"], 60)
+            self.assertEqual(report["events"], 180)
+            self.assertEqual(report["public_eligible_record_count"], 59)
+            self.assertEqual(report["public_eligible_event_count"], 177)
+            revision, _, records, histories, _ = load_revision(source, "HEAD")
+            self.assertEqual(len(records), 60)
+            private_current = next(record for record in records if record["path"].endswith("record-000050.md"))
+            self.assertEqual(private_current["content"].split("visibility: ", 1)[1].splitlines()[0], "private")
+            output = parent / "public"
+            manifest = publish(source, output, revision, mode="public")
+            root = output / "g" / manifest["generation"]
+            catalog = json.loads((root / "catalog.json").read_text())
+            self.assertEqual(catalog["record_count"], 59)
+            self.assertEqual(catalog["event_count"], 177)
+            self.assertFalse((root / "records" / f'{private_current["id"]}.json').exists())
+            # Audit the serialized output bytes as a guard, not merely catalog counts.
+            forbidden_id = private_current["id"].encode()
+            for artifact in list(root.rglob("*.json")) + [output / "manifest.json"]:
+                self.assertNotIn(forbidden_id, artifact.read_bytes(), str(artifact))
 
 
 if __name__ == "__main__":
