@@ -76,6 +76,7 @@ def alias_collision_diagnostics(source):
             "exact_public_event_summary": secret in {e["summary"] for e in selected_summaries.values()},
             "exact_public_event_action": secret in {e["action"] for chain in published_hist.values() for e in chain},
             "exact_public_event_provenance_kind": secret in {e["provenance"]["kind"] for chain in published_hist.values() for e in chain},
+            "exact_public_event_actor_kind": secret in {e["actor"]["kind"] for chain in published_hist.values() for e in chain},
             "exact_public_event_id": secret in event_ids,
             "exact_public_event_time": secret in public_times,
             "exact_public_after_snapshot": secret in {e["after"] for chain in published_hist.values() for e in chain},
