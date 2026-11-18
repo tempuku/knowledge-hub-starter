@@ -10,7 +10,7 @@ Normative target under [the design baseline](overview.md). Implementation is pen
 
 ## S-01: Files and identity
 
-Canonical records are `openwiki/<area>/<optional-subareas>/<slug>.md`. Top-level areas are `projects`, `ideas`, `notes`, `concepts`, `adr`, `design`; `GUIDE.md` and `CI.md` remain allowed legacy root guides. `journal/` is migration input only. New path segments and slugs match `[a-z0-9]+(?:-[a-z0-9]+)*`; reject absolute paths, dot segments, backslashes, control characters, symlinks at any component and case-insensitive collisions. At most eight directory segments below `openwiki/`; full repository-relative path at most 240 bytes. Paths are case-sensitive but uniqueness is checked case-insensitively for cross-platform safety.
+Canonical records are `openwiki/<area>/<optional-subareas>/<slug>.md`. Top-level areas are `private`, `projects`, `ideas`, `notes`, `concepts`, `adr`, `design`; `GUIDE.md` and `CI.md` remain allowed legacy root guides. `journal/` is migration input only. New path segments and slugs match `[a-z0-9]+(?:-[a-z0-9]+)*`; reject absolute paths, dot segments, backslashes, control characters, symlinks at any component and case-insensitive collisions. At most eight directory segments below `openwiki/`; full repository-relative path at most 240 bytes. Paths are case-sensitive but uniqueness is checked case-insensitively for cross-platform safety.
 
 Each record has a permanent lowercase UUIDv4 `id`, allocated by the writer on create. A move preserves it. An event has a separate globally unique UUIDv4 `id`. IDs must not be recycled. A source filename is never an identity. IDs are opaque to users.
 
@@ -27,7 +27,7 @@ File bytes MUST be valid UTF-8 without BOM, use LF, and end with one newline. Wr
 | `type` | Required nonempty kebab-case string, maximum 64 characters; known types `project`, `note`, `idea`, `decision`, `guide`, `concept`; other values display literally, without invented behavior |
 | `title` | Required trimmed string, 1–200 characters, one line |
 | `description` | Optional string, 0–500 characters, one line; default empty |
-| `status` | Required: `draft`, `stable`, `completed`, `deprecated`; default for create `draft` |
+| `status` | Required: `draft`, `stable`, `in_progress`, `completed`, `deprecated`; default for create `draft` |
 | `visibility` | Required `private` or `public`; create default `private` |
 | `project_id` | Optional UUID referencing an existing `type: project` record; omit for no project; a project cannot reference itself or another project |
 | `tags` | Optional list of unique lowercase kebab-case strings, each 1–64 characters, at most 32; default empty |
@@ -37,7 +37,7 @@ File bytes MUST be valid UTF-8 without BOM, use LF, and end with one newline. Wr
 | `sources` | Optional list of mappings `{resource: string, title?: string}`; resource must be an HTTPS/HTTP URL or `record:<uuid>`; title 1–200 characters if present |
 | `x_*` | Optional YAML-safe JSON-compatible extension data; retained and rendered only in Source; no behavioral meaning |
 
-Unknown unprefixed fields fail validation, not disappear. Migration maps legacy metadata explicitly. `draft` means unreviewed; `stable` means reviewed/current; `completed` means work is finished; `deprecated` means archived or superseded. This remains ONE status field, not separate review/task statuses. Any transition between these values requires an explicit write and summary. Archive sets `deprecated`; reopen explicitly chooses `draft`, `stable` or `completed`. No automatic status changes based on dates. Completing a record does not remove reminders. Deprecated records are hidden from default record lists and Today, but remain directly readable and retain diary/history.
+Unknown unprefixed fields fail validation, not disappear. Migration maps legacy metadata explicitly. `draft` means unreviewed; `stable` means reviewed/current; `in_progress` means unfinished, persistently active work regardless of last update; `completed` means work is finished; `deprecated` means archived or superseded. This remains ONE status field, not separate review/task statuses. Any transition between these values requires an explicit write and summary. Archive sets `deprecated`; reopen explicitly chooses `draft`, `stable`, `in_progress` or `completed`. No automatic status changes based on dates. Completing a record does not remove reminders. Deprecated records are hidden from default record lists and Today, but remain directly readable and retain diary/history.
 
 Example target record (IDs illustrative):
 
