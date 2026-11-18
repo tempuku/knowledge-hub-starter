@@ -80,8 +80,7 @@ class RehearsalAcceptance(unittest.TestCase):
             if item["disposition"] != "structural":
                 dest = self.first / item["destination_path"]
                 self.assertTrue(dest.is_file())
-                self.assertTrue((self.first / item["destination_path"][:-3]
-                                 + ".log.md").is_file())
+                self.assertTrue((self.first / (item["destination_path"][:-3] + ".log.md")).is_file())
         # A distinct dated note is retained, not deduplicated by title.
         independent = "openwiki/notes/knowledge-hub/diary-diff-demo.md"
         self.assertTrue((self.first / independent).is_file())
