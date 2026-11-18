@@ -5,7 +5,8 @@ from pathlib import Path
 
 from deterministic import ProjectionError
 from publication import (load_policy, validate_policy, select_public, audit_public,
-                         forbidden_public_references, _rewrite_markdown_links)
+                         forbidden_public_references, _rewrite_markdown_links,
+                         _add_private_snapshot)
 
 RID = "123e4567-e89b-42d3-a456-426614174000"
 EID = "123e4567-e89b-42d3-a456-426614174001"
@@ -75,6 +76,18 @@ class PolicyTests(unittest.TestCase):
         record = {"id": RID, "path": "openwiki/secret.md", "content": "not frontmatter"}
         with self.assertRaises(ProjectionError):
             forbidden_public_references([record], {RID: []}, [], {})
+
+    def test_legacy_prefrontmatter_history_is_still_forbidden(self):
+        excluded = "# Legacy note without YAML\nUnique archived prose\n"
+        forbidden = set()
+        _add_private_snapshot(forbidden, excluded, legacy_history=True)
+        self.assertIn(excluded, forbidden)
+        self.assertIn("Unique archived prose", forbidden)
+        with self.assertRaises(ProjectionError):
+            _add_private_snapshot(set(), "---\ninvalid: [\n---\ncontent\n",
+                                  legacy_history=True)
+        with self.assertRaises(ProjectionError):
+            _add_private_snapshot(set(), excluded)
 
     def test_filtered_alias_targets_and_keys_are_forbidden(self):
         aliases = {"paths": {"openwiki/old-secret.md": [RID]},
