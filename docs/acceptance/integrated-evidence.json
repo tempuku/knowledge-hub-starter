@@ -29,6 +29,7 @@
   "scenarios": {
     "S1": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -37,6 +38,7 @@
     },
     "S2": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -45,6 +47,7 @@
     },
     "S3": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -53,6 +56,7 @@
     },
     "S4": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -61,6 +65,7 @@
     },
     "S5": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -69,6 +74,7 @@
     },
     "S6": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -77,6 +83,7 @@
     },
     "S7": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -85,6 +92,7 @@
     },
     "S8": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -93,6 +101,7 @@
     },
     "S9": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -101,6 +110,7 @@
     },
     "S10": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -109,6 +119,7 @@
     },
     "S11": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -117,6 +128,7 @@
     },
     "S12": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -125,6 +137,7 @@
     },
     "S13": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -133,6 +146,7 @@
     },
     "S14": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -141,6 +155,7 @@
     },
     "S15": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -149,6 +164,7 @@
     },
     "S16": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -157,6 +173,7 @@
     },
     "S17": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -165,6 +182,7 @@
     },
     "S18": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -173,6 +191,7 @@
     },
     "S19": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -181,6 +200,7 @@
     },
     "S20": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -189,6 +209,7 @@
     },
     "P1": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -197,6 +218,7 @@
     },
     "P2": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -205,6 +227,7 @@
     },
     "P3": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -213,6 +236,7 @@
     },
     "P4": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -221,6 +245,7 @@
     },
     "P5": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -229,6 +254,7 @@
     },
     "P6": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -237,6 +263,7 @@
     },
     "P7": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -245,6 +272,7 @@
     },
     "P8": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -253,6 +281,7 @@
     },
     "P9": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -261,6 +290,7 @@
     },
     "P10": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -269,6 +299,7 @@
     },
     "P11": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -277,6 +308,7 @@
     },
     "P12": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -285,6 +317,7 @@
     },
     "P13": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -293,6 +326,7 @@
     },
     "P14": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -301,6 +335,7 @@
     },
     "P15": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -309,6 +344,7 @@
     },
     "P16": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -317,6 +353,7 @@
     },
     "U1": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -325,6 +362,7 @@
     },
     "U2": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -333,6 +371,7 @@
     },
     "U3": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -341,6 +380,7 @@
     },
     "U4": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -349,6 +389,7 @@
     },
     "U5": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -357,6 +398,7 @@
     },
     "U6": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -365,6 +407,7 @@
     },
     "U7": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -373,6 +416,7 @@
     },
     "U8": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -381,6 +425,7 @@
     },
     "U9": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -389,6 +434,7 @@
     },
     "U10": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -397,6 +443,7 @@
     },
     "U11": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -405,6 +452,7 @@
     },
     "U12": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -413,6 +461,7 @@
     },
     "U13": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -421,6 +470,7 @@
     },
     "U14": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -429,6 +479,7 @@
     },
     "U15": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -437,6 +488,7 @@
     },
     "U16": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -445,6 +497,7 @@
     },
     "U17": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -453,6 +506,7 @@
     },
     "U18": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -461,6 +515,7 @@
     },
     "U19": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -469,6 +524,7 @@
     },
     "U20": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -477,6 +533,7 @@
     },
     "U21": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -485,6 +542,7 @@
     },
     "U22": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -493,6 +551,7 @@
     },
     "U23": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
@@ -501,6 +560,7 @@
     },
     "U24": {
       "status": "pending",
+      "tested_head": null,
       "command": null,
       "fixture_revision": null,
       "expected": null,
