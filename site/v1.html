@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#355b89">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Knowledge Hub">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
   <title>Knowledge Hub</title>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./v1.css">
@@ -35,11 +39,10 @@
         <div id="route-content" aria-busy="true">Loading Knowledge Hub…</div>
       </main>
     </div>
-    <footer id="app-footer" class="app-footer">Published data loading · <span id="source-revision">—</span> · <button id="refresh" type="button">Refresh</button></footer>
+    <footer id="app-footer" class="app-footer">Published data loading · <span id="source-revision">—</span> · <a href="./legacy.html">Legacy diary</a> · <button id="refresh" type="button">Refresh</button></footer>
   </div>
   <script src="./v1_data.js" defer></script>
   <script src="./vendor/markdown-it-13.0.2.min.js" defer></script>
-  <script src="./v1-config.js" defer></script>
   <script src="./v1_markdown.js" defer></script>
   <script src="./v1.js" defer></script>
 </body>

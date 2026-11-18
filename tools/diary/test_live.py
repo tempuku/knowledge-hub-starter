@@ -61,6 +61,44 @@ def check() -> int:
     doc = json.loads(get("data/entries/" + quote(notes[0]["id"], safe="") + ".json"))
     if not doc.get("body") or doc.get("date") != first_day:
         raise AssertionError("A hosted entry cannot be opened by its ID.")
+    # The root must serve the actual v1 app, not only the legacy diary.
+    if 'id="primary-nav"' not in html or 'href="#/records"' not in html:
+        raise AssertionError("The live root is still the old Diary shell.")
+    for asset in ("v1.js", "v1_data.js", "v1_markdown.js", "v1.css",
+                  "vendor/markdown-it-13.0.2.min.js"):
+        if not get(asset):
+            raise AssertionError("Missing v1 browser asset: " + asset)
+    import re
+    manifest = json.loads(get("data/manifest.json"))
+    generation = manifest.get("generation", "")
+    if (manifest.get("mode") != "public" or
+            not re.fullmatch(r"[a-f0-9]{64}", generation) or
+            manifest.get("root") != "g/" + generation + "/"):
+        raise AssertionError("Invalid live public read-model generation")
+    prefix = "data/g/" + generation + "/"
+    catalog = json.loads(get(prefix + "catalog.json"))
+    if catalog.get("record_count", 0) < cal["total"] + 3:
+        raise AssertionError("Legacy entries or public demo records missing in v1 catalog")
+    pages = json.loads(get(prefix + "records/catalog/index.json"))
+    items = []
+    for page in pages["pages"]:
+        items.extend(json.loads(get(prefix + page["url"]))["items"])
+    titles = {item["title"] for item in items}
+    required = {"Knowledge Hub (public demo)", "Ivanovo Models (public demo)",
+                "Recovery timeline (synthetic public demo)"}
+    if not required.issubset(titles):
+        raise AssertionError("Public Records/Projects UI is missing synthetic fixtures")
+    demo = next(item for item in items if item["title"] ==
+                "Recovery timeline (synthetic public demo)")
+    if demo["status"] != "in_progress":
+        raise AssertionError("Synthetic recovery is not persistently in progress")
+    detail = json.loads(get(prefix + "records/" + demo["id"] + ".json"))
+    if "October 27, 2026" not in detail.get("content", ""):
+        raise AssertionError("Synthetic recovery record is not readable over HTTPS")
+    if any(item["id"] == "5b82fc58-cccd-4997-ad93-b74b07ce3640"
+           for item in items):
+        raise AssertionError("Original private test record leaked publicly")
+    print(f"Hosted v1 Records: {len(items)} entries, including public synthetic recovery")
     print(f"Verified LIVE HTTPS Knowledge Hub: {base}")
     print(f"Hosted diary: {cal['total']} records; sample entry: {doc['title']}")
     return cal["total"]

@@ -10,5 +10,6 @@ okf_version: "0.2"
 * [Projects](projects/)
 * [Private test fixtures](private/)
 * [Journal](journal/)
+* [Public demo notes](notes/)
 * [Concepts](concepts/)
 * [Implementation design](design/)

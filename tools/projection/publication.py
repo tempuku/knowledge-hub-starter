@@ -418,6 +418,21 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
     # currently allowlisted. Its record ID is therefore part of the public
     # route/catalog even though the private revision itself stays hidden.
     forbidden.difference_update(selected_record_ids)
+    # Dates, lifecycle labels and tags may be intentionally published by a
+    # different approved record. They are not private references *when that
+    # exact value is independently present in authorized public frontmatter*.
+    # Never exempt record/event IDs, paths, titles, descriptions or bodies.
+    approved_shared_metadata = set()
+    for record in selected_records:
+        public_meta = _snapshot_metadata(record.get("content"))
+        for field in ("status", "occurred_on", "occurred_at"):
+            value = public_meta.get(field)
+            if isinstance(value, str):
+                approved_shared_metadata.add(value)
+        for value in public_meta.get("tags", []):
+            if isinstance(value, str):
+                approved_shared_metadata.add(value)
+    forbidden.difference_update(approved_shared_metadata)
     return forbidden
 
 

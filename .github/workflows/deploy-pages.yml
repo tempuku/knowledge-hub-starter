@@ -10,6 +10,7 @@ on:
       - "site/**"
       - "tools/diary/**"
       - "openwiki/**"
+      - "config/publication.json"
   workflow_dispatch:
 
 permissions:
@@ -44,6 +45,9 @@ jobs:
 
       - name: Build only explicitly public OKF records
         run: python tools/diary/build.py --public-only --output-dir dist-public
+
+      - name: Publish reviewed native v1 and legacy public diary records to the HTTP UI
+        run: python tools/diary/publish_v1.py --output-dir dist-public
 
       - name: Validate built content, privacy, and publication allowlist
         run: |
