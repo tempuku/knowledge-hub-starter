@@ -462,6 +462,15 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
         for value in public_meta.get("tags", []):
             if isinstance(value, str):
                 approved_shared_metadata.add(value)
+    # A day recorded by an explicitly approved public event is already
+    # independently public in Diary and Calendar. An excluded legacy record
+    # mentioning that same day cannot make the public event's date private.
+    # Do not approve any other date/time or excluded event identity.
+    for public_events in selected_histories.values():
+        for public_event in public_events:
+            published_time = public_event["recorded_at"]
+            approved_shared_metadata.add(published_time)
+            approved_shared_metadata.add(published_time[:10])
     forbidden.difference_update(approved_shared_metadata)
     return forbidden
 
