@@ -13,7 +13,7 @@
   var DATE = /^\d{4}-\d{2}-\d{2}$/;
   var MONTH = /^\d{4}-\d{2}$/;
   var actionNames = {CREATED: 1, UPDATED: 1, MOVED: 1, ARCHIVED: 1, REOPENED: 1, IMPORTED: 1};
-  var statusNames = {draft: 1, stable: 1, completed: 1, deprecated: 1};
+  var statusNames = {draft: 1, stable: 1, in_progress: 1, completed: 1, deprecated: 1};
   var routeQuery = {
     "/today": [], "/projects": [], "/records": ["q", "area", "project", "type", "status", "tag", "archived", "sort"],
     "/diary": ["date", "mode", "project", "area", "type", "status", "tag", "action"],
