@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Local-only real-browser P16 timing on a generated synthetic *private* v1 tree.
+"""Local-only real-browser P16 timing on a generated synthetic *public* v1 tree.
 
-No user data. Operates on the full deterministic 10k/100k private projection,
+No user data. Operates on the deterministic 10k/100k synthetic source,
 served only from 127.0.0.1. Chromium 4x CPU and 10 Mbit/s/100 ms RTT emulation
 are applied through CDP; WebKit acceptance remains a separate local suite.
 Browser timings measured here must not be passed off as physical iPad results.
@@ -98,10 +98,15 @@ def sample(browser, url: str, *, route: str, expected_heading: str | None) -> tu
 def run(dist: Path, build_report: dict) -> dict:
     from playwright.sync_api import sync_playwright
     manifest = json.loads((dist / "data/manifest.json").read_text(encoding="utf-8"))
-    if manifest.get("mode") != "private":
-        raise ValueError("Must measure isolated synthetic private fixture, never a public deployment")
+    if manifest.get("mode") != "public":
+        raise ValueError("Browser v1 client requires a synthetic public projection")
     if manifest.get("source_revision") != build_report.get("fixture_source_revision"):
         raise ValueError("Browser and build measurement source revisions differ")
+    catalog = json.loads((dist / "data" / "g" / manifest["generation"] / "catalog.json").read_text(encoding="utf-8"))
+    source_fixture = build_report.get("fixture", {})
+    if (catalog.get("record_count", 0) < 0.99 * source_fixture.get("records", 0)
+            or catalog.get("event_count", 0) < 0.99 * source_fixture.get("events", 0)):
+        raise ValueError("Browser candidate omits over 1% of source fixture; refusing a reduced-workload pass")
     prepare_site(dist)
     server = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(QuietHandler, directory=str(dist)))
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -148,6 +153,9 @@ def run(dist: Path, build_report: dict) -> dict:
         "network_mbit": 10, "rtt_ms": LATENCY_MS, "cpu_slowdown": CPU_SLOWDOWN,
     })
     report["browser_status"] = "measured-throttled-chromium-only"
+    report["browser_public_generation_counts"] = {
+        "records": catalog["record_count"], "events": catalog["event_count"],
+    }
     return report
 
 
