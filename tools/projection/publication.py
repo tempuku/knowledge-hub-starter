@@ -303,7 +303,8 @@ def _snapshot_metadata(snapshot: str | None) -> dict:
         raise ProjectionError("invalid publication audit snapshot") from exc
 
 
-def _add_private_snapshot(forbidden: set[str], snapshot: str | None):
+def _add_private_snapshot(forbidden: set[str], snapshot: str | None, *,
+                          legacy_history: bool = False):
     """Add full bytes and user-facing private metadata from an excluded source."""
     if not snapshot:
         return
@@ -311,8 +312,10 @@ def _add_private_snapshot(forbidden: set[str], snapshot: str | None):
     try:
         metadata = _snapshot_metadata(snapshot)
     except ProjectionError:
-        # Unparseable legacy prose is not public: full bytes were added above,
-        # even when historical YAML metadata is unavailable.
+        # Only immutable old history with no frontmatter may lack metadata.
+        # Current records, native events and malformed YAML still fail closed.
+        if not legacy_history or snapshot.startswith("---\n"):
+            raise
         metadata = {}
     # Include user supplied metadata that can be projected into catalogs,
     # reminders, search, aliases, or source links. Ignore very short values:
@@ -413,7 +416,10 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
                     # full current records and all private transitions are
                     # independently audited below.
                     if snapshot is not None and _visibility(snapshot, excluded_legacy=True) == "private":
-                        _add_private_snapshot(forbidden, snapshot)
+                        _add_private_snapshot(
+                            forbidden, snapshot,
+                            legacy_history=event.get("provenance", {}).get("kind") in
+                            {"legacy-log", "legacy-journal", "git-backfill"})
     if source_aliases is not None:
         selected_aliases = selected_aliases or {"paths": {}, "entries": {}}
         source_paths = source_aliases.get("paths", {})
