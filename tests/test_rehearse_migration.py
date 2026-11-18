@@ -163,7 +163,7 @@ class RehearsalAcceptance(unittest.TestCase):
         self.assertEqual(public_catalog["record_count"], 1)
         self.assertEqual(public_catalog["event_count"], 2)
         public_aliases = json.loads(next((public / "g").rglob("aliases.json")).read_text())
-        self.assertEqual(len(public_aliases["entries"]), 4)  # 2 source refs and 2 old UI IDs
+        self.assertEqual(len(public_aliases["entries"]), 2)  # reviewed UI IDs only; provenance is private
         self.assertEqual(public_aliases["current_entries"], {})
         self.assertEqual(len(public_aliases["paths"]), 1)
         self.assertNotIn("migration/legacy", "".join(file_hashes(public)))
