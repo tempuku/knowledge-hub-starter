@@ -63,6 +63,8 @@ jobs:
           name: reviewed-inventory-validation
           path: ${{ runner.temp }}/inventory-validation.json
           if-no-files-found: warn
+      - name: Rehearse #36 frozen-source migration in disposable private Git copies
+        run: python -m unittest discover -s tests -p 'test_rehearse_migration.py' -v
       - name: Test v1 storage schemas and histories in disposable Git repositories
         run: python -m unittest discover -s tools/records -p 'test_*.py' -v
       - name: Test deterministic projection primitives (#31)
