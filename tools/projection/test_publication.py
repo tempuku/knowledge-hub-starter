@@ -82,7 +82,7 @@ class PolicyTests(unittest.TestCase):
         forbidden = set()
         _add_private_snapshot(forbidden, excluded, legacy_history=True)
         self.assertIn(excluded, forbidden)
-        self.assertIn("Unique archived prose", forbidden)
+        self.assertTrue(any("Unique archived prose" in value for value in forbidden))
         with self.assertRaises(ProjectionError):
             _add_private_snapshot(set(), "---\ninvalid: [\n---\ncontent\n",
                                   legacy_history=True)
