@@ -40,7 +40,7 @@ class MaintenanceTests(unittest.TestCase):
         git(self.root, "config", "user.name", "Cutover test")
         (self.root / "openwiki").mkdir()
         (self.root / "openwiki" / "index.md").write_text(
-            '---\\nokf_version: "0.2"\\n---\\n\\n# Knowledge Hub\\n')
+            '---\nokf_version: "0.2"\n---\n\n# Knowledge Hub\n')
         git(self.root, "add", "-A")
         git(self.root, "commit", "-qm", "initial")
         self.original = git(self.root, "rev-parse", "HEAD")
