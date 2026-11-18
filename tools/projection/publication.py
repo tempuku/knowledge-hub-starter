@@ -66,7 +66,7 @@ def load_policy(root: Path, mode: str, *, revision_bytes: bytes | None = None):
     return validate_policy(revision_bytes)
 
 
-def _visibility(snapshot: str | None) -> str | None:
+def _visibility(snapshot: str | None, *, excluded_legacy: bool = False) -> str | None:
     if snapshot is None:
         return None
     # Reuse canonical frontmatter parsing, never infer visibility from body text.
@@ -76,9 +76,15 @@ def _visibility(snapshot: str | None) -> str | None:
     try:
         metadata, _ = frontmatter(snapshot)
     except (ValueError, TypeError) as exc:
+        if excluded_legacy:
+            # Unknown old snapshots are NEVER eligible for public history.
+            # They must instead be denied by the full-byte privacy audit.
+            return "private"
         raise ProjectionError("invalid publication snapshot") from exc
     value = metadata.get("visibility")
     if value not in ("public", "private"):
+        if excluded_legacy:
+            return "private"
         raise ProjectionError("missing or invalid snapshot visibility")
     return value
 
@@ -302,7 +308,12 @@ def _add_private_snapshot(forbidden: set[str], snapshot: str | None):
     if not snapshot:
         return
     forbidden.add(snapshot)
-    metadata = _snapshot_metadata(snapshot)
+    try:
+        metadata = _snapshot_metadata(snapshot)
+    except ProjectionError:
+        # Historical pre-frontmatter prose is still fully forbidden above.
+        # Never discard the source bytes or interpret them as public.
+        metadata = {}
     # Include user supplied metadata that can be projected into catalogs,
     # reminders, search, aliases, or source links. Ignore very short values:
     # common labels such as "note" or "draft" would make a useful audit
@@ -394,7 +405,7 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
                     # Scan omitted snapshots for private material specifically;
                     # full current records and all private transitions are
                     # independently audited below.
-                    if snapshot is not None and _visibility(snapshot) == "private":
+                    if snapshot is not None and _visibility(snapshot, excluded_legacy=True) == "private":
                         _add_private_snapshot(forbidden, snapshot)
     if source_aliases is not None:
         selected_aliases = selected_aliases or {"paths": {}, "entries": {}}
