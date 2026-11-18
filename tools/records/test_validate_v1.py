@@ -115,7 +115,7 @@ class ValidatorFixtures(unittest.TestCase):
             self.record, occurred_on="2026-10-27", recorded_at="2026-11-01T08:00:00Z")
         self.install()
         self.write("openwiki/index.md",
-                   '---\nokf_version: "0.2"\n---\n\n# Root\n\n* [Private](private/)\n')
+                   '---\nokf_version: "0.2"\n---\n\n# Root\n\n* [Notes](notes/)\n* [Private](private/)\n')
         self.write("openwiki/private/index.md",
                    "# Private\n\n* [Health](health/)\n")
         self.write("openwiki/private/health/index.md",
