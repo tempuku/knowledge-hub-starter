@@ -240,7 +240,11 @@ def _require_migrated_tree(paths, read_blob):
             continue
         if path.startswith("openwiki/journal/") or path.endswith("/log.md"):
             raise ProjectionError("native-only build contains active legacy journal or directory log")
-        if (not path.endswith(".md") or path.endswith(".log.md") or
+        if path.endswith(".log.md"):
+            if not _v1_log_candidate(read_blob(path)):
+                raise ProjectionError("native-only build contains an unmigrated legacy log: " + path)
+            continue
+        if (not path.endswith(".md") or
                 path.rsplit("/", 1)[-1] == "index.md" or
                 path in ("openwiki/GUIDE.md", "openwiki/CI.md")):
             continue
