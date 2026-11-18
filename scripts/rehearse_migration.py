@@ -154,6 +154,32 @@ def normalized_record(raw, item, old_to_id, base):
     return converted
 
 
+def reviewed_occurrence(snapshot, item):
+    """Keep factual dates only if actually present in a historical snapshot."""
+    if not snapshot.startswith("---\n"):
+        return None, None
+    end = snapshot.find("\n---\n", 4)
+    if end == -1:
+        return None, None
+    try:
+        original = yaml.load(snapshot[4:end], Loader=yaml.BaseLoader)
+    except yaml.YAMLError as exc:
+        raise RehearsalError("invalid legacy occurrence metadata") from exc
+    if not isinstance(original, dict):
+        return None, None
+    day, when = original.get("occurred_on"), original.get("occurred_at")
+    if day is not None:
+        date_or_time(day, "original occurred_on")
+        demand(day == item["metadata_mapping"].get("occurred_on"),
+               "unreviewed historical occurrence day")
+    if when is not None:
+        date_or_time(when, "original occurred_at", False)
+        demand(when == item["metadata_mapping"].get("occurred_at"),
+               "unreviewed historical occurrence time")
+        demand(day == when[:10], "inconsistent historical occurrence")
+    return day, when
+
+
 def event(record_id, allocation, sequence, action, before, after, dest,
           timestamp, kind, ref, original_time, actor, summary, previous,
           occurred_on=None, occurred_at=None):
@@ -252,9 +278,12 @@ def history(root, manifest, item, time):
             summary = "Recover exact reviewed Git-backed revision"
         demand(not events or when >= events[-1]["recorded_at"],
                "nonmonotonic converted timestamp")
+        factual_day, factual_time = (reviewed_occurrence(after, item)
+                                    if kind == "legacy" else (None, None))
         events.append(event(record_id, mapping, n, action, before, after, dest,
                             when, provenance, ref, original_time, actor, summary,
-                            events[-1]["id"] if events else None))
+                            events[-1]["id"] if events else None,
+                            occurred_on=factual_day, occurred_at=factual_time))
     return events
 
 
