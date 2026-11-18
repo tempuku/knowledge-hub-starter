@@ -429,6 +429,16 @@ def convert(source, manifest_file, output, expected_head, time=DEFAULT_TIME):
                   "migrated_event_count": sum(len(events) for events in all_events.values()),
                   "legacy_ui_mapping_count": len(manifest["legacy_ui_mappings"]),
                   "archived_source_hashes": archived,
+                  "timestamp_normalizations": [
+                      {"record_id": m["record_id"], "event_id": m["allocated_event_id"],
+                       "original_time": m["original_time"], "rule": m["recorded_at_rule"]}
+                      for m in manifest["legacy_event_mappings"]
+                      if m["recorded_at_rule"] == "fixed-migration-time"],
+                  "final_heads": {
+                      record_id: {"event_id": entries[-1]["id"],
+                                  "path": entries[-1]["path_after"],
+                                  "sha256": entries[-1]["after_sha256"]}
+                      for record_id, entries in sorted(all_events.items())},
                   "validation": result,
                   "publication_policy": "preview-only; never deploy"}
         return report
