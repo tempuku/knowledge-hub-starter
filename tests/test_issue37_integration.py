@@ -92,6 +92,9 @@ class IntegratedNativeFlow(unittest.TestCase):
         self.assertFalse(error)
         published = secret_current["content"].replace('visibility: "private"', 'visibility: "public"')
         published = published.replace(private_marker, "Approved public-after content")
+        # Private historical title must not be silently reused as a public
+        # current title; the byte-level publication audit rejects that leak.
+        published = published.replace("Transition test", "Approved transition record")
         self.assertNotIn(private_marker, published)
         publish_request = hub.command(
             "update", record_id=secret["record_id"],
