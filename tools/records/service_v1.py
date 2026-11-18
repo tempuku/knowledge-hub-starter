@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from validate_v1 import IntegrityError, parse_log, parse_record, repository
+from maintenance_v1 import writes_paused
 from writer_v1 import (WriterError, append_log, create_source, make_event,
                        normalized_request, receipt_from_logs, require_capability,
                        reject)
@@ -209,6 +210,11 @@ class GitRecordWriter:
                     "version": events[-1]["id"], "head": head}
 
     def write(self, request):
+        # M-04: reject every domain mutation before validating or executing it.
+        # This includes durable idempotent retries and extended move commands.
+        if writes_paused():
+            raise WriterError("MAINTENANCE", "Knowledge Hub writes are paused for cutover",
+                              retryable=True)
         normalized = normalized_request(request)
         # Authorization before revealing any committed receipt.
         require_capability(normalized, self.capability)

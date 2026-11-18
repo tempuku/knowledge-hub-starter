@@ -9,7 +9,12 @@ import datetime as dt
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
+
+# One maintenance flag also protects the legacy writers until cutover.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "records"))
+from maintenance_v1 import writes_paused
 
 import yaml
 
@@ -23,6 +28,8 @@ def git(*args):
 
 
 def publish(request):
+    if writes_paused():
+        raise ValueError("MAINTENANCE: Knowledge Hub writes are paused for cutover")
     """Publish an existing OKF record revision and one dated journal record.
 
     Caller must stage no unrelated changes; only two exact paths are committed.
