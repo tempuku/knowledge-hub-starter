@@ -79,20 +79,28 @@ The repository includes `.github/workflows/deploy-pages.yml`, which packages the
 
 For any deployment failure check the GitHub Actions run and Pages settings. No credentials are stored in the repository: Pages deployment uses GitHub's scoped `GITHUB_TOKEN` and OIDC permissions. The shared URL becomes the acceptance proof only after a successful real deployment and device-level test.
 
-## Responsive browser tests
+## Validation tiers: fast CI and local-only UI/iPad checks
 
-The repository keeps **real headless Chromium checks** alongside the UI source in `tools/diary/test_ui.py`. They test the iPhone single-column layout, early-iPad split views at tablet and desktop widths, horizontal overflow, sidebar/date selection, Day/Week/Month switching, and opening lazy-loaded records. GitHub Actions runs these tests for every PR and `main` push.
+GitHub Actions **required CI** validates OKF/frontmatter, native record and log integrity, deterministic projections, publication/privacy boundaries, the diary build and JavaScript syntax. These checks still run on PRs and `main`. **Chromium, WebKit, static iOS 12 compatibility tests and physical iPad acceptance do not run in required CI.**
 
-To run locally (requires the one-time Chromium browser download):
+Browser tests are still available on demand for a developer workstation, especially before significant UI releases. One-time setup (Python 3.10+ and a supported local OS):
 
 ```sh
-python3 -m pip install -r tools/diary/requirements.txt -r tools/diary/requirements-ui.txt
-python3 -m playwright install chromium
-python3 tools/diary/build.py
-python3 tools/diary/test_ui.py
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r tools/diary/requirements.txt -r tools/diary/requirements-ui.txt
+python -m playwright install chromium webkit
 ```
 
-The tests serve the generated `dist/` folder on localhost and never publish private entries. CI additionally runs `node --check site/app.js` and tests the separate `--public-only` export.
+Then run whenever UI acceptance is needed, reusing installed dependencies and browsers:
+
+```sh
+sh tools/diary/run_local_ui_checks.sh
+```
+
+This builds `dist/`, checks Safari 12 syntax/PWA metadata via `test_ios12.py`, and runs `test_ui.py` using Chromium and modern WebKit against a localhost server. These are real browser tests, but modern WebKit **cannot prove compatibility with the original iPad Air**.
+
+The original iPad Air on iOS 12 has a separate **physical on-device manual checklist** in [local iPad/browser acceptance](docs/acceptance/ipad-local.md), tracked in [issue #2](https://github.com/tempuku/knowledge-hub-starter/issues/2). Record a tested HTTPS URL, source commit, device version and actual observations; no automatic device-signoff claims. Skipping browser CI does not mean passing UI or iPad acceptance.
 
 ## Authoring and migration
 
