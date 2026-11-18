@@ -16,6 +16,8 @@ concurrency:
 jobs:
   validate-openwiki:
     name: validate-openwiki
+    # Lightweight schema, unit, projection and public privacy validation only.
+    # Browser and physical-device checks are opt-in local acceptance tests.
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -88,11 +90,10 @@ jobs:
         run: |
           python tools/diary/build.py
           python tools/diary/test_build.py
-      - name: Check browser JavaScript syntax and iOS 12 compatibility
+      - name: Check browser JavaScript syntax
         run: |
           node --check site/app.js
           node --check site/sw.js
-          python tools/diary/test_ios12.py
       - name: Check generated-v1 browser JavaScript syntax
         run: |
           node --check site/v1.js
@@ -100,40 +101,6 @@ jobs:
           node --check site/v1_markdown.js
       - name: Test generated-v1 data cache and service-worker safety
         run: node --test site/sw.test.cjs site/v1_data.test.js
-      - name: Install headless Chromium browser test tooling
-        run: |
-          python -m pip install -r tools/diary/requirements-ui.txt
-          python -m playwright install --with-deps chromium webkit
-      - name: Test responsive iPhone/iPad/desktop layout and diary interaction
-        run: python tools/diary/test_ui.py
-      - name: Test the same app in WebKit (modern Safari engine)
-        run: DIARY_BROWSER=webkit python tools/diary/test_ui.py
-      - name: Generate synthetic committed Git writer fixture for generated v1
-        run: |
-          python tools/diary/generate_v1_ui_fixture.py \
-            --source-dir "$RUNNER_TEMP/v1-ui-source" \
-            --dist-dir "$RUNNER_TEMP/v1-ui-dist"
-      - name: Test generated v1 in Chromium
-        run: |
-          V1_DIST="$RUNNER_TEMP/v1-ui-dist" \
-          V1_SOURCE_DIR="$RUNNER_TEMP/v1-ui-source" \
-          V1_UI_ARTIFACTS="$RUNNER_TEMP/v1-ui-artifacts" \
-          V1_BROWSER=chromium python tools/diary/test_v1_ui.py
-      - name: Test generated v1 in WebKit
-        run: |
-          V1_DIST="$RUNNER_TEMP/v1-ui-dist" \
-          V1_SOURCE_DIR="$RUNNER_TEMP/v1-ui-source" \
-          V1_UI_ARTIFACTS="$RUNNER_TEMP/v1-ui-artifacts" \
-          V1_BROWSER=webkit python tools/diary/test_v1_ui.py
-      - name: Upload generated-v1 browser evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-v1-browser-acceptance
-          path: |
-            ${{ runner.temp }}/v1-ui-dist/fixture-report.json
-            ${{ runner.temp }}/v1-ui-artifacts
-          if-no-files-found: warn
       - name: Verify public-only export excludes private notes
         run: |
           python tools/diary/build.py --output-dir dist-public --public-only

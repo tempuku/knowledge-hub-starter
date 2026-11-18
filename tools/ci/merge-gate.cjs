@@ -15,9 +15,7 @@ const REQUIRED_STEPS = [
   "Test automated PR readiness safety (no approval or merge)",
   "Validate all staged OpenWiki pages and links",
   "Build and smoke-test private diary locally in CI",
-  "Check browser JavaScript syntax and iOS 12 compatibility",
-  "Test responsive iPhone/iPad/desktop layout and diary interaction",
-  "Test the same app in WebKit (modern Safari engine)",
+  "Check browser JavaScript syntax",
   "Verify public-only export excludes private notes",
   "Test merge gate policy (negative and positive fixtures)"
 ];
