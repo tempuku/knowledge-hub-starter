@@ -20,9 +20,66 @@ from publication import (load_policy, select_public, audit_public,
 EXPORTER_VERSION = "v1-projection-0.3"
 
 
+def _reviewed_aliases(raw: bytes | None, records, histories):
+    """Validated optional aliases from the SAME immutable source generation."""
+    import re
+    if raw is None:
+        return None
+    try:
+        data = json.loads(raw)
+    except (ValueError, UnicodeError) as exc:
+        raise ProjectionError("invalid immutable migration alias JSON") from exc
+    if (type(data) is not dict or
+            set(data) != {"schema_version", "source_revision", "paths", "entries", "current_entries"} or
+            type(data["schema_version"]) is not int or data["schema_version"] != 1 or
+            type(data["source_revision"]) is not str or
+            not re.fullmatch("[0-9a-f]{40}", data["source_revision"])):
+        raise ProjectionError("invalid reviewed migration alias schema")
+    # Semantic validation of paths/IDs is performed by build_projection.
+    if any(type(data[name]) is not dict for name in ("paths", "entries", "current_entries")):
+        raise ProjectionError("invalid migration alias mappings")
+    return data
+
+
+def _read_aliases(root, commit, bundle, receipt, receipt_sha256):
+    if bundle is None:
+        try:
+            return git(root, "show", f"{commit}:migration/aliases-v1.json")
+        except ProjectionError:
+            return None
+    # Read the verified, externally pinned bundle, never local unpinned JSON.
+    from sourcebundle import load_bundle as read_verified_bundle
+    _, _, manifest, blobs, _ = read_verified_bundle(bundle, receipt, receipt_sha256)
+    matches = [x for x in manifest if x["path"] == "migration/aliases-v1.json"]
+    return blobs[matches[0]["oid"]] if matches else None
+
+
+def _merge_aliases(derived, registry, record_ids, event_ids):
+    result = {"paths": {k: list(v) for k, v in derived["paths"].items()},
+              "entries": dict(derived["entries"])}
+    if registry is None:
+        return result
+    result["current_entries"] = {}
+    for old_path, ids in registry["paths"].items():
+        eligible = sorted(set(ids) & record_ids)
+        if eligible:
+            current = result["paths"].get(old_path, [])
+            result["paths"][old_path] = sorted(set(current) | set(eligible))
+    for alias, eid in registry["entries"].items():
+        if eid in event_ids:
+            if alias in result["entries"] and result["entries"][alias] != eid:
+                raise ProjectionError("contradictory reviewed migration entry alias")
+            result["entries"][alias] = eid
+    for alias, rid in registry["current_entries"].items():
+        if rid in record_ids:
+            result["current_entries"][alias] = rid
+    return result
+
+
 def publish(root: Path | None, destination: Path, revision: str | None = None, *, mode: str = "private",
             bundle: Path | None = None, receipt: Path | None = None,
-            receipt_sha256: str | None = None):
+            receipt_sha256: str | None = None,
+            published_at: str | None = None):
     if mode not in ("private", "public"):
         raise ProjectionError("unknown publication mode")
     if bundle is None:
@@ -37,9 +94,14 @@ def publish(root: Path | None, destination: Path, revision: str | None = None, *
             bundle, receipt, receipt_sha256)
     policy_digest = "private-v1"
     forbidden = set()
+    reviewed = _reviewed_aliases(
+        _read_aliases(root, commit, bundle, receipt, receipt_sha256),
+        records, histories)
     source_aliases = derive_aliases(records, histories)
-    aliases = source_aliases
-    selected_aliases = source_aliases
+    complete_ids = {r["id"] for r in records}
+    complete_events = {e["id"] for chain in histories.values() for e in chain}
+    aliases = _merge_aliases(source_aliases, reviewed, complete_ids, complete_events)
+    selected_aliases = aliases
     if mode == "public":
         if bundle is None:
             policy_bytes = git(root, "show", f"{commit}:config/publication.json")
@@ -52,11 +114,9 @@ def publish(root: Path | None, destination: Path, revision: str | None = None, *
         selected_event_ids = {event["id"] for events in histories.values() for event in events}
         # Path aliases come only from eligible events; record-level filtering
         # alone would retain an old private path on a currently public record.
-        aliases = derive_aliases(records, histories)
-        aliases["entries"] = {
-            legacy_id: event_id for legacy_id, event_id in source_aliases["entries"].items()
-            if event_id in selected_event_ids
-        }
+        aliases = _merge_aliases(
+            derive_aliases(records, histories), reviewed,
+            {r["id"] for r in records}, selected_event_ids)
         selected_aliases = aliases
         forbidden.update(forbidden_public_references(
             original_records, original_histories, records, histories,
@@ -71,7 +131,8 @@ def publish(root: Path | None, destination: Path, revision: str | None = None, *
     manifest_payload = {"schema_version": 1, "generation": generation,
                         "source_revision": commit, "exporter_version": EXPORTER_VERSION,
                         "policy_digest": policy_digest,
-                        "published_at": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
+                        "published_at": (published_at if published_at is not None else
+                                         dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z")),
                         "mode": mode, "root": f"g/{generation}/"}
     if mode == "public":
         # Audit generated JSON and the exact root pointer bytes as one release
@@ -105,12 +166,14 @@ def main():
     parser.add_argument("--bundle", type=Path)
     parser.add_argument("--receipt", type=Path)
     parser.add_argument("--receipt-sha256")
+    parser.add_argument("--published-at", help="fixed UTC timestamp for deterministic disposable rehearsal")
     args = parser.parse_args()
     try:
         root = None if args.bundle else args.root
         print(json.dumps(publish(root, args.destination, args.revision, mode=args.mode,
                                  bundle=args.bundle, receipt=args.receipt,
-                                 receipt_sha256=args.receipt_sha256), indent=2))
+                                 receipt_sha256=args.receipt_sha256,
+                                 published_at=args.published_at), indent=2))
     except (ProjectionError, OSError, ValueError) as exc:
         parser.exit(1, f"projection failed: {exc}\n")
 
