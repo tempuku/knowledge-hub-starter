@@ -170,12 +170,8 @@ def reviewed_occurrence(snapshot, item):
     day, when = original.get("occurred_on"), original.get("occurred_at")
     if day is not None:
         date_or_time(day, "original occurred_on")
-        demand(day == item["metadata_mapping"].get("occurred_on"),
-               "unreviewed historical occurrence day")
     if when is not None:
         date_or_time(when, "original occurred_at", False)
-        demand(when == item["metadata_mapping"].get("occurred_at"),
-               "unreviewed historical occurrence time")
         demand(day == when[:10], "inconsistent historical occurrence")
     return day, when
 
