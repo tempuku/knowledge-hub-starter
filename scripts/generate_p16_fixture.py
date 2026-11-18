@@ -130,17 +130,17 @@ def generate(destination: Path, *, records: int = 10000, events_per_record: int 
         is_public = index % 10 == 1
         candidate = source(index, 0, reminder=index in reminder_set, public=is_public)
         edits = []
-        bytes_snapshots += len(candidate.encode("utf-8")) + 70  # approximate canonical create header
         for revision in range(1, events_per_record):
             # A smaller test may use fewer than ten revisions. Public/private
             # transitions occur for a subset; other records are always private.
             eligible = is_public and revision <= max(1, events_per_record // 2)
             updated = source(index, revision, record_id=rid,
                              reminder=index in reminder_set, public=eligible)
-            bytes_snapshots += len(updated.encode("utf-8"))
             edits.append((updated, stamps[index + revision * records]))
-        fixture.add_record(record_path(index), candidate,
-                           recorded_at=stamps[index], edits=edits)
+        actual_id = fixture.add_record(record_path(index), candidate,
+                                       recorded_at=stamps[index], edits=edits)
+        bytes_snapshots += sum(len(event["after"].encode("utf-8"))
+                               for event in fixture.events[actual_id])
     fill_indexes(fixture)
     with deterministic_git_commit_dates():
         revision = fixture.commit("deterministic P16 synthetic fixture")
