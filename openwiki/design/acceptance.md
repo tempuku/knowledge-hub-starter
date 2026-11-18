@@ -8,6 +8,10 @@ status: draft
 
 This is a required future verification plan, not a record of passed implementation tests. Link evidence for every row from the implementation PR/issue. A design merge checks documentation only. Use real temporary Git repositories, real writer/MCP calls, generated artifacts and browser interactions; mocks alone do not establish completion.
 
+## Test execution policy — 2026-11-18 owner amendment
+
+All applicable acceptance requirements remain in force, but the **required GitHub Actions CI** runs only non-browser automation: source/OKF validation, writer/record integrity, projections, public/private publication checks, build smoke tests and JavaScript syntax. Heavyweight Playwright Chromium and WebKit browser acceptance, static iOS 12 compatibility checks, and physical iPad Air verification are **local/on-demand only**; they are not merge gates. For commands and physical device evidence, see [Local browser and iPad acceptance](../../docs/acceptance/ipad-local.md). A local pass must identify its tested commit and environment; unrun checks remain pending. Modern WebKit never establishes physical iPad compatibility.
+
 ## A-01: Storage and writing
 
 | ID | Scenario | Required result |
