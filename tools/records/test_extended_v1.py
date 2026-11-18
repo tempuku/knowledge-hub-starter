@@ -70,6 +70,26 @@ class LifecycleGitFixtures(unittest.TestCase):
             ["git", "show", "main:" + path[:-3] + ".log.md"], cwd=self.root)
         return parse_log(source, path)
 
+    def test_reused_old_path_does_not_replace_trusted_moved_record_identity(self):
+        original = self.create("openwiki/notes/original.md")
+        moved = self.writer.write(self.request(
+            "move", record_id=original["record_id"],
+            expected_version=original["version"], destination="openwiki/notes/moved.md"))
+        replacement = self.create("openwiki/notes/original.md", title="Different record")
+        trusted = git(self.root, "rev-parse", "main")
+        self.create("openwiki/notes/unrelated.md")
+        self.assertNotEqual(replacement["record_id"], original["record_id"])
+        self.assertEqual(self.writer.read(original["record_id"])["version"], moved["version"])
+        self.assertEqual(len(self.history("openwiki/notes/moved.md")), 2)
+        git(self.root, "reset", "--hard", "main")
+        repository(self.root, base=trusted)
+        log = self.root / "openwiki/notes/moved.log.md"
+        log.write_text(log.read_text().replace("Fixture create", "Rewritten create", 1))
+        git(self.root, "add", "-A")
+        from validate_v1 import IntegrityError
+        with self.assertRaisesRegex(IntegrityError, "trusted-base history prefix rewritten"):
+            repository(self.root, base=trusted)
+
     def test_archive_reopen_status_and_visibility(self):
         first = self.create("openwiki/notes/record.md")
         original = self.writer.read(first["record_id"])["content"]

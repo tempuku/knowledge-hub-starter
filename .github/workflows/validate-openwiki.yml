@@ -51,7 +51,7 @@ jobs:
           cache-dependency-path: tools/diary/requirements.txt
       - name: Install diary builder dependencies
         run: python -m pip install -r tools/diary/requirements.txt
-      - name: Validate reviewed issue #35 inventory and mutation tests
+      - name: "Validate reviewed issue #35 inventory and mutation tests"
         run: |
           python scripts/inventory_legacy.py --revision de749bed9053dd4bc9f96fee3cb7f816e5bdebcb --check
           python scripts/validate_inventory.py --manifest migration/records-v1.json --report-json "$RUNNER_TEMP/inventory-validation.json"
@@ -94,6 +94,13 @@ jobs:
         run: |
           node --check site/app.js
           node --check site/sw.js
+      - name: Check generated-v1 browser JavaScript syntax
+        run: |
+          node --check site/v1.js
+          node --check site/v1_data.js
+          node --check site/v1_markdown.js
+      - name: Test generated-v1 data cache and service-worker safety
+        run: node --test site/sw.test.cjs site/v1_data.test.js
       - name: Verify public-only export excludes private notes
         run: |
           python tools/diary/build.py --output-dir dist-public --public-only

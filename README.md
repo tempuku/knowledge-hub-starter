@@ -98,6 +98,12 @@ Then run whenever UI acceptance is needed, reusing installed dependencies and br
 sh tools/diary/run_local_ui_checks.sh
 ```
 
+The generated native-v1 browser suite is also local-only. Include its disposable Git fixture and keep browser evidence with:
+
+```sh
+KH_V1_UI=1 KH_UI_ARTIFACTS=/tmp/knowledge-hub-ui-evidence sh tools/diary/run_local_ui_checks.sh
+```
+
 This builds `dist/`, checks Safari 12 syntax/PWA metadata via `test_ios12.py`, and runs `test_ui.py` using Chromium and modern WebKit against a localhost server. These are real browser tests, but modern WebKit **cannot prove compatibility with the original iPad Air**.
 
 The original iPad Air on iOS 12 has a separate **physical on-device manual checklist** in [local iPad/browser acceptance](docs/acceptance/ipad-local.md), tracked in [issue #2](https://github.com/tempuku/knowledge-hub-starter/issues/2). Record a tested HTTPS URL, source commit, device version and actual observations; no automatic device-signoff claims. Skipping browser CI does not mean passing UI or iPad acceptance.

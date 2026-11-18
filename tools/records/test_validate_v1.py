@@ -97,6 +97,14 @@ class ValidatorFixtures(unittest.TestCase):
         if needle:
             self.assertIn(needle, str(context.exception))
 
+    def test_trusted_record_and_history_cannot_both_disappear(self):
+        self.git("commit", "-qm", "trusted native record")
+        base = self.git("rev-parse", "HEAD")
+        (self.root / self.path).unlink()
+        (self.root / (self.path[:-3] + ".log.md")).unlink()
+        self.git("add", "-A")
+        self.assert_invalid("trusted-base record/history deleted", base=base)
+
     def test_valid_native_fixture_and_exact_indexes(self):
         self.assertEqual(self.check(strict=True), {"records": 1, "events": 1})
 
