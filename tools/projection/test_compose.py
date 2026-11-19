@@ -38,6 +38,29 @@ class CompositionTests(unittest.TestCase):
             self.assertTrue(files[path].endswith(b"\n"))
         self.assertEqual(json.loads(files["catalog.json"])["event_count"], 1)
 
+    def test_inverse_record_links_are_deterministic_and_visibility_scoped(self):
+        records, histories, summaries = fixture()
+        a = records[0]
+        b = {**a, "id": "r2", "title": "Linked record",
+             "path": "openwiki/notes/linked.md", "links": [
+                {"target_id": "r1", "available": True},
+                {"target_id": "r1", "available": True},
+                {"target_id": "hidden", "available": False}]}
+        event = {**histories["r1"][0], "id": "e2", "record_id": "r2",
+                 "path_after": b["path"]}
+        files = build_projection([b, a], {"r1": histories["r1"], "r2": [event]},
+                                 {**summaries, "e2": {**summaries["e1"],
+                                   "id": "e2", "record_id": "r2"}})
+        original = json.loads(files["records/r1.json"])
+        self.assertEqual(original["backlinks"],
+                         [{"source_id": "r2", "title": "Linked record"}])
+        self.assertEqual(json.loads(files["records/r2.json"])["backlinks"], [])
+        self.assertEqual(files, build_projection([a, b],
+                         {"r2": [event], "r1": histories["r1"]},
+                         {**summaries, "e2": {**summaries["e1"],
+                           "id": "e2", "record_id": "r2"}}))
+        self.assertNotIn(b"hidden", files["records/r1.json"])
+
     def test_missing_history_and_summary_rejected(self):
         records, histories, summaries = fixture()
         with self.assertRaises(ProjectionError):

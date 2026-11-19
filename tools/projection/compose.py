@@ -57,7 +57,27 @@ def build_projection(records: list[dict], histories: dict[str, list[dict]],
     expected_events = {e["id"] for events in histories.values() for e in events}
     if len(expected_events) != sum(map(len, histories.values())) or set(summaries) != expected_events:
         raise ProjectionError("event summary set mismatch")
-    files = build_record_pages(records)
+    # Backlinks are a read model: compute solely from visible, validated outgoing
+    # links after publication filtering. Never copy the source's private identity
+    # or content into a public destination, and never write a backlink to source.
+    incoming = {rid: [] for rid in by_id}
+    for source in records:
+        seen = set()
+        for edge in source.get("links", []):
+            if not isinstance(edge, dict):
+                raise ProjectionError("invalid canonical link metadata")
+            target_id = edge.get("target_id")
+            if (edge.get("available") is False or target_id not in by_id or
+                    target_id == source["id"] or target_id in seen):
+                continue
+            seen.add(target_id)
+            incoming[target_id].append({"source_id": source["id"], "title": source["title"]})
+    with_backlinks = [
+        {**record, "backlinks": sorted(incoming[record["id"]],
+          key=lambda link: (link["title"].casefold(), link["source_id"]))}
+        for record in records
+    ]
+    files = build_record_pages(with_backlinks)
     for path, content in build_event_pages(histories, summaries).items():
         if path in files:
             raise ProjectionError("projection output path collision")
