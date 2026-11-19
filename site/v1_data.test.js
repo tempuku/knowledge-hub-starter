@@ -54,7 +54,7 @@ async function run() {
   const all = await client.catalogRecords();
   assert.strictEqual(all.length, 2);
   assert.strictEqual((await client.resolveRecords({area: "notes"})).items.length, 2);
-  assert.deepStrictEqual(await client.projectCounts(recA[0].project_id), {draft: 1, stable: 1, completed: 0});
+  assert.deepStrictEqual(await client.projectCounts(recA[0].project_id), {draft: 1, in_progress: 0, stable: 1, completed: 0});
   const initial = await client.diaryInitialRange({start: "2026-01-01", end: "2026-01-02"});
   assert.strictEqual(initial.items.length, 2);
   assert.strictEqual(initial.countsExact, false);

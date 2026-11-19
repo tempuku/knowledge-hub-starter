@@ -613,7 +613,7 @@
     }
     function projectCounts(projectId) {
       return catalogPages().then(function (items) {
-        var counts = {draft: 0, stable: 0, completed: 0};
+        var counts = {draft: 0, in_progress: 0, stable: 0, completed: 0};
         items.forEach(function (item) { if (item.id !== projectId && item.project_id === projectId && counts[item.status] !== undefined) counts[item.status] += 1; });
         return counts;
       });

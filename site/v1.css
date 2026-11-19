@@ -60,6 +60,69 @@
    They are not keyboard-tab stops, so suppress the programmatic focus ring
    without weakening visible focus on links, inputs, or action buttons. */
 #app .route-wrap > h1:focus { outline:none; }
+/* Classic Helvetica-style typography, without the clumped system-font tracking. */
+body {
+  font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size:16px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+.app-identity { font-weight:700; letter-spacing:-.01em; }
+.sidebar-toolbar { font-weight:700; letter-spacing:-.01em; }
+.route-wrap > h1 { font-weight:700; letter-spacing:-.02em; line-height:1.15; }
+.panel h2,
+.record-row h2,
+.event-row h2 { font-weight:700; letter-spacing:-.01em; }
+.panel p,
+.record-row p,
+.event-row p { line-height:1.45; }
+.meta { font-size:13px; line-height:1.4; }
+.segmented button {
+  border-right:1px solid #a7b4c9;
+  border-radius:0;
+  font-size:14px;
+  font-weight:700;
+  text-shadow:0 1px #fff;
+}
+.segmented button:first-child { border-radius:7px 0 0 7px; }
+.segmented button:last-child { border-right:0; border-radius:0 7px 7px 0; }
+.segmented button[aria-pressed=true] { border-radius:7px; text-shadow:0 -1px #173960; }
+.day-block > button { font-size:16px; letter-spacing:-.01em; text-shadow:0 1px #fff; box-shadow:inset 0 1px #fff; }
+.panel.filter-panel summary { display:list-item; min-height:44px; padding:11px 0; font-size:14px; font-weight:700; color:#304660; text-shadow:0 1px #fff; }
+.record-row > a:first-child { font-size:17px; font-weight:700; line-height:1.3; letter-spacing:-.01em; }
+/* Filter fields on Records and Calendar use the same stacked iOS form style. */
+.filter-form > label {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+  font-size:12px;
+  font-weight:700;
+  color:#4c5d75;
+  text-shadow:0 1px #fff;
+}
+.filter-form input {
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  padding:8px 10px;
+  border:1px solid #8c9bb0;
+  border-radius:6px;
+  color:#263b57;
+  background:linear-gradient(#fff,#edf1f6);
+  box-shadow:inset 0 1px 2px #25395528, 0 1px #fff;
+  font-size:16px;
+}
+.filter-panel > label {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:44px;
+  margin-top:8px;
+  font-size:14px;
+  font-weight:700;
+  color:#4c5d75;
+}
 /* Keep the legacy centered page title/intro hierarchy on every width. */
 .route-wrap > h1,
 .route-wrap > .route-intro { text-align:center; }
