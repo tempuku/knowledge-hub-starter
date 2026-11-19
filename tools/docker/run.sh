@@ -1,10 +1,10 @@
 #!/bin/sh
-# Host wrapper around docker compose run. Picks the ui image automatically for
-# browser tasks so callers do not need to remember the service name.
+# Host wrapper around docker compose run. CI parity is default;
+# browser-shell starts an optional Playwright-equipped environment.
 #
 #   tools/docker/run.sh            # required-CI parity
 #   tools/docker/run.sh node       # Node/OKF/JS checks only
-#   tools/docker/run.sh ui         # Chromium + WebKit acceptance
+#   tools/docker/run.sh browser-shell  # shell with Chromium/WebKit available
 #   tools/docker/run.sh shell      # interactive bash in the test image
 set -eu
 
@@ -12,7 +12,7 @@ cd "$(dirname "$0")/../.."
 
 task="${1:-ci}"
 case "$task" in
-  ui | all) service=ui ;;
+  browser-shell) service=ui ;;
   *) service=tests ;;
 esac
 

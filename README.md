@@ -79,51 +79,25 @@ The repository includes `.github/workflows/deploy-pages.yml`, which packages the
 
 For any deployment failure check the GitHub Actions run and Pages settings. No credentials are stored in the repository: Pages deployment uses GitHub's scoped `GITHUB_TOKEN` and OIDC permissions. The shared URL becomes the acceptance proof only after a successful real deployment and device-level test.
 
-## Validation tiers: fast CI and local-only UI/iPad checks
+## Validation: fast CI and direct UI inspection
 
-GitHub Actions **required CI** validates OKF/frontmatter, native record and log integrity, deterministic projections, publication/privacy boundaries, the diary build and JavaScript syntax. These checks still run on PRs and `main`. **Chromium, WebKit, static iOS 12 compatibility tests and physical iPad acceptance do not run in required CI.**
+Required `validate-openwiki` CI checks OKF, record/history integrity, deterministic projections, publication/privacy boundaries, the diary build, and JavaScript syntax. **`knowledge-merge-gate` remains unchanged and advisory (non-blocking).**
 
-### Docker (recommended for a clean, pinned environment)
+The old scripted Chromium/WebKit acceptance suites and their synthetic report aggregator were removed. UI acceptance is now a **direct browser review** by an agent or reviewer, not a second hidden CI gate. For every UI change, inspect the running public app in a browser, exercise the affected journeys, compare mobile/tablet/desktop screenshots, and record observed problems with the tested URL/commit. A screenshot alone is not a security audit or proof of all acceptance scenarios.
 
-The Docker image matches CI's Python 3.12 and Node 22.18.0 and installs Python dependencies with `uv` from `uv.lock`. It only needs Docker with Compose v2 and a full clone that has `origin/main`:
-
-```sh
-docker compose build tests
-tools/docker/run.sh            # required-CI parity
-tools/docker/run.sh ui         # Chromium + WebKit, builds the larger ui image
-```
-
-See [Docker test environment](docs/testing/docker.md) for tasks, reports, dependency refreshes and limitations. Docker runs are local evidence; GitHub Actions remains the merge authority.
-
-### Host setup
-
-Browser tests are also available directly on a developer workstation, especially before significant UI releases. Without Docker, use [uv](https://docs.astral.sh/uv/) (or the pip fallback) with Python 3.10+:
+To serve an isolated **public-only** preview (never expose a private build):
 
 ```sh
-uv sync --group ui
-. .venv/bin/activate
-python -m playwright install chromium webkit
+python3 -m pip install -r tools/diary/requirements.txt
+python3 tools/diary/build.py --output-dir dist-public --public-only
+python3 tools/diary/publish_v1.py --output-dir dist-public
+python3 tools/diary/test_publication.py dist-public
+python3 -m http.server 8000 --bind 127.0.0.1 --directory dist-public
 ```
 
-Without uv, use `python3 -m venv .venv`, activate it, and install
-`-r tools/diary/requirements.txt -r tools/diary/requirements-ui.txt` before the
-Playwright browser step.
+Open `http://127.0.0.1:8000/` with a browser-capable agent. Check Diary, Records, Projects, Search, Today and Calendar; open a record and its history; test Back/Forward and refresh; inspect narrow and wide layouts and accessibility. See the short [UI acceptance checklist](docs/acceptance/ipad-local.md).
 
-Then run whenever UI acceptance is needed, reusing installed dependencies and browsers:
-
-```sh
-sh tools/diary/run_local_ui_checks.sh
-```
-
-The generated native-v1 browser suite is also local-only. Include its disposable Git fixture and keep browser evidence with:
-
-```sh
-KH_V1_UI=1 KH_UI_ARTIFACTS=/tmp/knowledge-hub-ui-evidence sh tools/diary/run_local_ui_checks.sh
-```
-
-This builds `dist/`, checks Safari 12 syntax/PWA metadata via `test_ios12.py`, and runs `test_ui.py` using Chromium and modern WebKit against a localhost server. These are real browser tests, but modern WebKit **cannot prove compatibility with the original iPad Air**.
-
-The original iPad Air on iOS 12 has a separate **physical on-device manual checklist** in [local iPad/browser acceptance](docs/acceptance/ipad-local.md), tracked in [issue #2](https://github.com/tempuku/knowledge-hub-starter/issues/2). Record a tested HTTPS URL, source commit, device version and actual observations; no automatic device-signoff claims. Skipping browser CI does not mean passing UI or iPad acceptance.
+For an optional pinned test container, run `tools/docker/run.sh` (CI-parity). An optional Playwright-equipped shell for an agent is available with `tools/docker/run.sh browser-shell`; **it does not run the removed browser test suites**. See [Docker setup](docs/testing/docker.md). Static iOS 12 source/PWA metadata checks remain available via `python3 tools/diary/test_ios12.py`; an original iPad Air still requires a separate physical-device check.
 
 ## Authoring and migration
 

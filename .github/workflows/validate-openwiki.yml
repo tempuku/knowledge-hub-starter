@@ -113,8 +113,6 @@ jobs:
           node --check site/v1_markdown.js
       - name: Test generated-v1 data cache and service-worker safety
         run: node --test site/sw.test.cjs site/v1_data.test.js
-      - name: Test local browser evidence validator (no browser runs in CI)
-        run: python -m unittest discover -s tools/diary -p 'test_v1_reports.py' -v
       - name: Verify public-only export excludes private notes
         run: |
           python tools/diary/build.py --output-dir dist-public --public-only

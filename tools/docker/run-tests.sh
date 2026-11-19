@@ -1,12 +1,11 @@
 #!/bin/sh
-# Task runner used by the Docker image. Mirrors the required "Validate OKF and
-# diary" CI job, plus the optional local-only browser acceptance suite.
+# Task runner for required CI parity, plus an optional browser-capable shell.
 #
 #   docker compose run --rm tests ci          # default: required-CI parity
-#   docker compose run --rm ui ui             # Chromium + WebKit acceptance
+#   docker compose run --rm ui browser-shell  # optional agent browser tools
 #   tools/docker/run.sh node                  # host wrapper for the same tasks
 #
-# Tasks: ci | node | python | diary | projection | ui | all | help
+# Tasks: ci | node | python | diary | projection | browser-shell | help
 set -eu
 
 cd "${KH_WORKSPACE:-/workspace}"
@@ -112,19 +111,15 @@ python_task() {
   suite tools/projection 'test_*.py'
   projection_smoke
   v1_validate
-  suite tools/diary test_v1_reports.py
 }
 
-ui_task() {
+browser_shell() {
   if ! python -c 'import playwright' >/dev/null 2>&1; then
-    echo "Playwright is not installed in this image." >&2
-    echo "Run the UI task on the ui image: tools/docker/run.sh ui" >&2
+    echo "Playwright missing: use the optional ui image." >&2
     exit 1
   fi
-  step "local browser acceptance (Chromium + WebKit, synthetic v1 fixture)"
-  KH_V1_UI=1 \
-    KH_UI_ARTIFACTS="${KH_UI_ARTIFACTS:-$PWD/local-ui-artifacts}" \
-    sh tools/diary/run_local_ui_checks.sh
+  echo "Browser-capable shell. No scripted UI acceptance tests are run."
+  exec /bin/sh
 }
 
 ci_task() {
@@ -145,13 +140,11 @@ Tasks:
   python      Python unit, integration, inventory and projection checks only.
   diary       Build the diary and verify the public-only export.
   projection  Immutable projection + source-bundle smoke test.
-  ui          Local browser acceptance (needs the ui image).
-  all         ci + ui.
+  browser-shell  Shell with Chromium/WebKit available for an agent (ui image).
   help        Show this message.
 
 Environment:
   KH_ACCEPTANCE_REPORT_DIR  Report output (default: <repo>/acceptance-reports).
-  KH_UI_ARTIFACTS           Browser evidence (default: <repo>/local-ui-artifacts).
   KH_OKF_REFRESH=1          Refresh tools/okf dependencies from the image.
 EOF
 }
@@ -162,8 +155,7 @@ case "$task" in
   python) python_task ;;
   diary) diary_build; public_export ;;
   projection) projection_smoke; v1_validate ;;
-  ui) ui_task ;;
-  all) ci_task; ui_task ;;
+  browser-shell) browser_shell ;;
   help | -h | --help) help ;;
   *)
     echo "Unknown task: $task" >&2

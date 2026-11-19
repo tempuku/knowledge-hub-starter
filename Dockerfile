@@ -5,7 +5,7 @@
 # uv for Python dependencies.
 #
 #   docker compose run --rm tests      # required-CI parity (default target)
-#   docker compose run --rm ui ui      # Chromium + WebKit acceptance
+#   docker compose run --rm ui browser-shell # optional browser-capable shell
 #
 # Prefer compose.yaml or tools/docker/run.sh over raw docker commands.
 
@@ -53,8 +53,8 @@ RUN git config --system user.name "Knowledge Hub Tests" \
  && git config --system --add safe.directory '*' \
  && git config --system init.defaultBranch main
 
-# Python dependencies from the lockfile. The custom `ui` group is only
-# installed in the ui stage.
+# Python dependencies from the lockfile. The optional `ui` tooling group
+# is only installed in the ui stage.
 WORKDIR /opt/uv-project
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
@@ -77,8 +77,8 @@ RUN sh setup.sh
 
 WORKDIR /workspace
 
-# Optional local browser acceptance image: Chromium and WebKit plus their OS
-# dependencies. Required CI never builds or runs this stage.
+# Optional browser-capable agent environment: Chromium and WebKit plus OS
+# dependencies. Does not execute scripted UI acceptance tests.
 FROM test AS ui
 
 WORKDIR /opt/uv-project
