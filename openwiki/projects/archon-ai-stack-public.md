@@ -28,7 +28,7 @@ snapshot, not a live status feed.
 | --- | --- |
 | Gateway container | running, private restart policy, loopback `127.0.0.1:20128` |
 | Anonymous API access | rejected with HTTP 401 |
-| Image | derived `0.9.0-t03c1` (`sha256:7b70e917…c5351e`) |
+| Image | derived `0.9.0-a05` (`sha256:88b52296…c749cc`); rollback pin `0.9.0-t03c1` |
 | Role combos | five exact ids — `archon-triage`, `archon-policy`, `archon-planner`, `archon-coder`, `archon-reviewer` — plus short compatibility names |
 | Strategy | single working lane (OpenCode Go) first, fallback second |
 | Router key | one restricted key, 48 model ids, no earlier entry removed |
@@ -44,7 +44,7 @@ snapshot, not a live status feed.
 | A02 | PASS | loopback-only, authenticated, rotated password, private state |
 | A03 | PASS | live stream, JSON object mode, enforced JSON schema, real Pi tool round-trip |
 | A04 | PARTIAL | exact ids exist and `archon-coder` ran live; cross-turn attribution unproven |
-| A05 | UNVERIFIED | offline reference harness passes 10/10 mock cases; live wiring not done |
+| A05 | PARTIAL | live pin per workflow/task/role/attempt; turn reuse, new attempt, real run ID and regression pass; live forced hop and restart persistence unverified |
 | A06 | UNVERIFIED | no controlled 429/timeout drill with a recorded event |
 | A07 | UNVERIFIED | no enforced paid-budget cap |
 | A08–A11 | UNVERIFIED | Phoenix not deployed; no trace or privacy canary |
@@ -64,12 +64,18 @@ snapshot, not a live status feed.
 - Offline A05 reference adapter and tests: resolve-once behaviour, ten-process
   race, recorded transport hop, mid-stream and mid-tool-use denial, TTL expiry,
   and silent model-change detection (10/10 cases, 47/47 assertions).
+- Task-scoped stickiness is deployed on the gateway (image `0.9.0-a05`): two
+  turns of one attempt reuse the pinned model, a new attempt re-resolves, a
+  real Archon run ID keys the store, and the compiled route proves a forced
+  429 hop, concurrency and streaming/tool-context denials.
 - A versioned routing-policy example, a stdlib validator, a four-check live
   smoke script, and a pinned Phoenix deployment plan.
 
 ## Open work
 
-1. Wire the A05 adapter into the real dispatch path and prove it live.
+1. Finish the A05 live evidence: one forced transport hop with a recorded
+   event, restart persistence, and the hop-policy decision (reassign vs strict
+   new attempt).
 2. Force a retryable failure and prove one recorded failover hop (A06).
 3. Define and enforce a paid-budget cap with retry and concurrency coverage (A07).
 4. Deploy Phoenix privately, verify auth and retention, add trace hierarchy and
@@ -96,7 +102,8 @@ snapshot, not a live status feed.
 Implementation root: `/Users/tempuku/Documents/Codex/2026-11-19/archon-stack-luna-implementation`.
 
 - `docs/AI-STACK-STATE.md`, `docs/AI-STACK-ACCEPTANCE.md`
-- `outputs/P1-A03-LIVE.md`, `outputs/A05-STICKINESS.md`
+- `outputs/P1-A03-LIVE.md`, `outputs/A05-STICKINESS.md`,
+  `work/a05/live-a05-results.json`, `work/a05/harness/sticky-route-proof-a05.json`
 - `work/live/ARCHON-ROLES.md`, `work/live/archon-roles-live-test.json`
 - `config/archon-router-policy.example.yaml`, `docs/ROUTER-POLICY.md`
 - `docs/PHOENIX-PLAN.md`, `deploy/ai-stack/compose.phoenix.yaml`
