@@ -1,5 +1,9 @@
 /dist/
 /dist-public/
+/dist-v1-ui-fixture/
+/acceptance-reports/
+/local-ui-artifacts/
+/.venv/
 __pycache__/
 *.pyc
 .DS_Store

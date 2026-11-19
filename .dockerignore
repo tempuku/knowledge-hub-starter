@@ -1,0 +1,16 @@
+# Keep the build context small. The repository itself is bind-mounted at
+# runtime, so the image only needs pyproject.toml, uv.lock, tools/docker and
+# tools/okf.
+.git
+.github
+.venv
+**/__pycache__
+**/*.pyc
+.DS_Store
+dist
+dist-public
+dist-v1-ui-fixture
+local-ui-artifacts
+acceptance-reports
+tools/okf/node_modules
+tools/okf/frontmatter.ts
