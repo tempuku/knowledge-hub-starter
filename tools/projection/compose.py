@@ -18,10 +18,13 @@ UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9
 
 
 def _validated_aliases(aliases: dict, record_ids: set[str], event_ids: set[str]) -> dict:
-    if not isinstance(aliases, dict) or set(aliases) != {"paths", "entries"}:
+    if not isinstance(aliases, dict) or not (
+            set(aliases) == {"paths", "entries"} or
+            set(aliases) == {"paths", "entries", "current_entries"}):
         raise ProjectionError("invalid alias structure")
     paths, entries = aliases["paths"], aliases["entries"]
-    if not isinstance(paths, dict) or not isinstance(entries, dict):
+    current_entries = aliases.get("current_entries", {})
+    if not isinstance(paths, dict) or not isinstance(entries, dict) or not isinstance(current_entries, dict):
         raise ProjectionError("invalid alias maps")
     clean_paths = {}
     for path, ids in paths.items():
@@ -42,7 +45,19 @@ def _validated_aliases(aliases: dict, record_ids: set[str], event_ids: set[str])
                 event_id not in event_ids):
             raise ProjectionError("invalid legacy entry alias")
         clean_entries[legacy_id] = event_id
-    return {"paths": dict(sorted(clean_paths.items())), "entries": dict(sorted(clean_entries.items()))}
+    clean_current = {}
+    for legacy_id, record_id in current_entries.items():
+        if (not isinstance(legacy_id, str) or not legacy_id or len(legacy_id) > 1024 or
+                any(ord(c) < 32 or ord(c) == 127 for c in legacy_id) or
+                not isinstance(record_id, str) or record_id not in record_ids or
+                legacy_id in clean_entries):
+            raise ProjectionError("invalid legacy current-record alias")
+        clean_current[legacy_id] = record_id
+    result = {"paths": dict(sorted(clean_paths.items())),
+              "entries": dict(sorted(clean_entries.items()))}
+    if "current_entries" in aliases:
+        result["current_entries"] = dict(sorted(clean_current.items()))
+    return result
 
 
 def build_projection(records: list[dict], histories: dict[str, list[dict]],
