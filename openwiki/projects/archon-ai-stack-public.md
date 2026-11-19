@@ -47,8 +47,12 @@ snapshot, not a live status feed.
   `x-archon-pinned-model`, `x-archon-sticky-reused` and `x-archon-sticky-hops`.
 - A transport failure may hop and records the event; streaming and mid-tool-use
   requests are denied a hop. Non-sticky roles bypass the store.
-- Deployed on image `0.9.0-a05`. Backup and rollback verified:
-  `~/.local/state/archon-ai-stack/backups/20261119T213839Z-gateway-pre-a05`.
+- Deployed on image `0.9.0-a05`. A gateway restart preserved every assignment
+  row and the pin, and service returned authenticated. Backup and rollback
+  verified: `~/.local/state/archon-ai-stack/backups/20261119T213839Z-gateway-pre-a05`.
+- Policy is Option A; the hybrid target and the staged deployment-wave plan are
+  in [ADR 0002](record:2b29dfb1-03e1-47ac-b0a9-c5b9427d3a88) and
+  [ADR 0003](record:58a76581-d05f-4883-93bb-c2dd5981729d).
 
 ## Acceptance
 
@@ -58,7 +62,7 @@ snapshot, not a live status feed.
 | A02 | PASS | loopback-only, authenticated, rotated password, private state |
 | A03 | PASS | live stream, JSON object mode, enforced JSON schema, real Pi tool round-trip |
 | A04 | PARTIAL | exact ids exist and `archon-coder` ran live; cross-turn attribution unproven |
-| A05 | PARTIAL | live pin per workflow/task/role/attempt; turn reuse, new attempt, real run ID and regression pass; live forced hop and restart persistence unverified |
+| A05 | PARTIAL | live pin per workflow/task/role/attempt; turn reuse, new attempt, real run ID, regression and store-across-restart pass; live forced hop deferred to real 429 observations |
 | A06 | UNVERIFIED | no controlled 429/timeout drill with a recorded event |
 | A07 | UNVERIFIED | no enforced paid-budget cap |
 | A08–A11 | UNVERIFIED | Phoenix not deployed; no trace or privacy canary |
@@ -87,9 +91,8 @@ snapshot, not a live status feed.
 
 ## Open work
 
-1. A05 decisions and drills: choose the hop policy (reassign the pin on a
-   recorded transport hop, or require a new attempt), then run an approved
-   live forced-hop drill and a restart-persistence check.
+1. A05: keep Option A (reassign on a recorded pre-stream hop) and watch real
+   `429` events before revisiting the hybrid. Do not force a live failure.
 2. Force a retryable failure and prove one recorded failover hop (A06).
 3. Define and enforce a paid-budget cap with retry and concurrency coverage (A07).
 4. Deploy Phoenix privately, verify auth and retention, add trace hierarchy and
