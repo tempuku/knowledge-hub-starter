@@ -1,0 +1,37 @@
+name: Strict Knowledge MCP policy and contract tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  strict-mcp:
+    name: strict-mcp
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.18.0'
+      - name: Check syntax for every MCP module
+        run: |
+          node --check tools/knowledge_mcp/policy.mjs
+          node --check tools/knowledge_mcp/github.mjs
+          node --check tools/knowledge_mcp/server.mjs
+      - name: Run synthetic DDD policy and private Git adapter tests
+        run: node --test tools/knowledge_mcp/*.test.mjs
+      - name: Require DDD use cases and acceptance documentation
+        run: |
+          test -s docs/knowledge-mcp/USE_CASES.md
+          test -s docs/knowledge-mcp/ACCEPTANCE.md
+          test -s tools/knowledge_mcp/README.md
+      - name: Assert private target and no raw arbitrary-write tool
+        run: |
+          grep -q "tempuku/knowledge-hub-data" tools/knowledge_mcp/github.mjs
+          ! grep -Eq "name:'(write_file|delete_file|publish_public)'" tools/knowledge_mcp/server.mjs
