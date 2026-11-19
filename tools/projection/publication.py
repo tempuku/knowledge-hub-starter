@@ -66,7 +66,7 @@ def load_policy(root: Path, mode: str, *, revision_bytes: bytes | None = None):
     return validate_policy(revision_bytes)
 
 
-def _visibility(snapshot: str | None) -> str | None:
+def _visibility(snapshot: str | None, *, excluded_legacy: bool = False) -> str | None:
     if snapshot is None:
         return None
     # Reuse canonical frontmatter parsing, never infer visibility from body text.
@@ -76,9 +76,15 @@ def _visibility(snapshot: str | None) -> str | None:
     try:
         metadata, _ = frontmatter(snapshot)
     except (ValueError, TypeError) as exc:
+        if excluded_legacy:
+            # An excluded unknown legacy snapshot is always private to the
+            # audit. Explicit public eligibility still requires valid YAML.
+            return "private"
         raise ProjectionError("invalid publication snapshot") from exc
     value = metadata.get("visibility")
     if value not in ("public", "private"):
+        if excluded_legacy:
+            return "private"
         raise ProjectionError("missing or invalid snapshot visibility")
     return value
 
@@ -297,12 +303,20 @@ def _snapshot_metadata(snapshot: str | None) -> dict:
         raise ProjectionError("invalid publication audit snapshot") from exc
 
 
-def _add_private_snapshot(forbidden: set[str], snapshot: str | None):
+def _add_private_snapshot(forbidden: set[str], snapshot: str | None, *,
+                          legacy_history: bool = False):
     """Add full bytes and user-facing private metadata from an excluded source."""
     if not snapshot:
         return
     forbidden.add(snapshot)
-    metadata = _snapshot_metadata(snapshot)
+    try:
+        metadata = _snapshot_metadata(snapshot)
+    except ProjectionError:
+        # Only immutable old history with no frontmatter may lack metadata.
+        # Current records, native events and malformed YAML still fail closed.
+        if not legacy_history or snapshot.startswith("---\n"):
+            raise
+        metadata = {}
     # Include user supplied metadata that can be projected into catalogs,
     # reminders, search, aliases, or source links. Ignore very short values:
     # common labels such as "note" or "draft" would make a useful audit
@@ -350,6 +364,9 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
     prose, URLs, or facts.
     """
     selected_record_ids = {record["id"] for record in selected_records}
+    selected_public_basenames = {
+        posixpath.basename(record["path"]) for record in selected_records
+        if isinstance(record.get("path"), str) and record["path"]}
     selected_event_ids = {
         event["id"] for events in selected_histories.values() for event in events
     }
@@ -377,11 +394,15 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
             private_path = record.get("path")
             add(private_path)
             if private_path:
-                add(posixpath.basename(private_path))
+                # Duplicate basenames can name separately approved public
+                # records in other areas; only a FULL excluded path uniquely
+                # identifies this private record. Never whitelist its full path.
+                if posixpath.basename(private_path) not in selected_public_basenames:
+                    add(posixpath.basename(private_path))
             for event in events:
                 for event_path in (event.get("path_before"), event.get("path_after")):
                     add(event_path)
-                    if event_path:
+                    if event_path and posixpath.basename(event_path) not in selected_public_basenames:
                         add(posixpath.basename(event_path))
             _add_private_snapshot(forbidden, record.get("content"))
 
@@ -394,8 +415,11 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
                     # Scan omitted snapshots for private material specifically;
                     # full current records and all private transitions are
                     # independently audited below.
-                    if snapshot is not None and _visibility(snapshot) == "private":
-                        _add_private_snapshot(forbidden, snapshot)
+                    if snapshot is not None and _visibility(snapshot, excluded_legacy=True) == "private":
+                        _add_private_snapshot(
+                            forbidden, snapshot,
+                            legacy_history=event.get("provenance", {}).get("kind") in
+                            {"legacy-log", "legacy-journal", "git-backfill"})
     if source_aliases is not None:
         selected_aliases = selected_aliases or {"paths": {}, "entries": {}}
         source_paths = source_aliases.get("paths", {})
@@ -403,7 +427,8 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
         for old_path, record_ids in source_paths.items():
             if old_path not in selected_paths:
                 add(old_path)
-                add(posixpath.basename(old_path))
+                if posixpath.basename(old_path) not in selected_public_basenames:
+                    add(posixpath.basename(old_path))
             for rid in record_ids:
                 if rid not in selected_record_ids:
                     add(rid)
@@ -418,6 +443,17 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
     # currently allowlisted. Its record ID is therefore part of the public
     # route/catalog even though the private revision itself stays hidden.
     forbidden.difference_update(selected_record_ids)
+    # Approved current source paths and their exact path components are
+    # independently public. Legacy private prose can mention these common
+    # strings without turning the public URL into a disclosure. Retain every
+    # different private full path and every excluded record/event ID.
+    approved_path_terms = set()
+    for record in selected_records:
+        public_path = record.get("path")
+        if isinstance(public_path, str) and public_path:
+            approved_path_terms.add(public_path)
+            approved_path_terms.update(public_path.split("/"))
+    forbidden.difference_update(approved_path_terms)
     # Dates, lifecycle labels and tags may be intentionally published by a
     # different approved record. They are not private references *when that
     # exact value is independently present in authorized public frontmatter*.
@@ -432,6 +468,19 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
         for value in public_meta.get("tags", []):
             if isinstance(value, str):
                 approved_shared_metadata.add(value)
+    # A day recorded by an explicitly approved public event is already
+    # independently public in Diary and Calendar. An excluded legacy record
+    # mentioning that same day cannot make the public event's date private.
+    # Do not approve any other date/time or excluded event identity.
+    for public_events in selected_histories.values():
+        for public_event in public_events:
+            published_time = public_event["recorded_at"]
+            approved_shared_metadata.add(published_time)
+            approved_shared_metadata.add(published_time[:10])
+            # Actor role is explicitly part of this eligible public event's
+            # redacted wire representation. A similarly worded private tag is
+            # not evidence that the public actor role is private.
+            approved_shared_metadata.add(public_event["actor"]["kind"])
     forbidden.difference_update(approved_shared_metadata)
     return forbidden
 

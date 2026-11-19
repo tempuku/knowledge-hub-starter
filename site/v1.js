@@ -81,9 +81,9 @@
   var recordLink = function (id, tab) { return "/records/"+id+queryString({tab:tab && tab!=="content"?tab:""}); };
   var resolveAliases = async function (route, serial) {
     if(!api || !api.aliases || !route.id)return route;
-    var aliases=await api.aliases(), paths=aliases.paths||{}, entries=aliases.entries||{};
+    var aliases=await api.aliases(), paths=aliases.paths||{}, entries=aliases.entries||{}, currentEntries=aliases.current_entries||{};
     if(route.name==="events" && entries[route.id]){ if(serial===token)go("/events/"+entries[route.id],{view:route.params.get("view")||"revision"},true); return {name:"events",id:entries[route.id],params:route.params}; }
-    if(route.name==="records" && !safeId(route.id)){var ids=paths[route.id]||[]; if(ids.length===1){if(serial===token)go("/records/"+ids[0],{tab:route.params.get("tab")||""},true);return {name:"records",id:ids[0],params:route.params};} if(ids.length>1){route.ambiguous=ids;return route;} }
+    if(route.name==="records" && !safeId(route.id)){var ids=paths[route.id]||(currentEntries[route.id]?[currentEntries[route.id]]:[]); if(ids.length===1){if(serial===token)go("/records/"+ids[0],{tab:route.params.get("tab")||""},true);return {name:"records",id:ids[0],params:route.params};} if(ids.length>1){route.ambiguous=ids;return route;} }
     return route;
   };
   var dateParts = function (date) { var d=new Date(date+"T00:00:00Z"),day=(d.getUTCDay()+6)%7; d.setUTCDate(d.getUTCDate()-day); var end=new Date(d);end.setUTCDate(end.getUTCDate()+6);return {start:d.toISOString().slice(0,10),end:end.toISOString().slice(0,10)}; };
