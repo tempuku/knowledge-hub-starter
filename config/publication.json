@@ -2,6 +2,8 @@
   "schema_version": 1,
   "record_ids": [
     "1e26b8e8-cc64-46dd-923b-ea0163480012",
+    "2b29dfb1-03e1-47ac-b0a9-c5b9427d3a88",
+    "58a76581-d05f-4883-93bb-c2dd5981729d",
     "5d1e098b-24fc-43c6-b2d5-d68237742559",
     "820d2f86-8f25-486d-afc0-214c5291f4bf",
     "8beb5eb5-b71a-4e42-897e-a6d8594b0013",
@@ -12,10 +14,13 @@
     "23986b54-2aea-49ed-b281-01b534eb5e1b",
     "318d22ec-d804-47ae-8d68-405c21ded759",
     "42c6055c-5a4a-4567-912d-609bad3de33d",
+    "606a4eaa-4c35-4471-8e97-04791d821fb2",
     "8beb5eb5-b71a-4e42-897e-a6d8594b1013",
     "9a2f68b9-a1a9-40c6-ae1c-6224e1631011",
     "9a32b2f9-dc80-4b09-bb5d-15d899961aa6",
-    "ca9918bc-c4a7-4d4d-befe-45d485a74ff8"
+    "c809bd06-4f9b-461a-9479-bbf15320bc13",
+    "ca9918bc-c4a7-4d4d-befe-45d485a74ff8",
+    "dfc712ee-ec47-496c-9e7e-a1b19f62f582"
   ],
   "actor_labels": [
     "OpenCode agent",
