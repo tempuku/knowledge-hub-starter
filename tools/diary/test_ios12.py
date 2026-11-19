@@ -64,8 +64,8 @@ assert 'id="global-search-form"' in v1_html
 assert 'id="build-state"' in v1_html
 assert 'href="./style.css"' in v1_html and 'href="./v1.css"' in v1_html
 assert ".app-navbar .app-identity" in v1_css, "Linked identity loses white navbar styling"
-assert re.search(r"#global-search-form\\s*\\{[^}]*display:flex", v1_css), "Unstyled navbar search form"
-assert re.search(r"@media\\(max-width:719px\\)\\s*\\{\\s*\\.app-navbar\\s*\\{\\s*display:grid", v1_css), "Mobile navbar loses compact grid"
+assert re.search(r"#global-search-form\s*\{[^}]*display:flex", v1_css), "Unstyled navbar search form"
+assert re.search(r"@media\(max-width:719px\)\s*\{\s*\.app-navbar\s*\{\s*display:grid", v1_css), "Mobile navbar loses compact grid"
 assert "#app .route-wrap > h1:focus" in v1_css, "Programmatic heading focus draws an amber border"
 assert 'intro?intro.nextSibling' in v1_js, "Mobile Sections interrupts heading and intro"
 
