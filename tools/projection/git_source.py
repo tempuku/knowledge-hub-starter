@@ -150,7 +150,8 @@ def parse_source_blobs(record_blobs: dict[str, bytes], log_blobs: dict[str, byte
         record = {"id": rid, "title": meta["title"], "description": meta.get("description", ""),
                   "type": meta["type"], "status": meta["status"],
                   "project_id": meta.get("project_id"), "tags": meta.get("tags", []),
-                  "area": path[len("openwiki/"):].rsplit("/", 1)[0],
+                  "area": (path[len("openwiki/"):].rsplit("/", 1)[0]
+                            if "/" in path[len("openwiki/"):] else "root"),
                   "updated_at": events[-1]["recorded_at"], "version": len(events),
                   "content_bytes": len(raw), "content": canonical, "body": body, "path": path,
                   "links": _record_links(body, meta, path), "reminders": meta.get("reminders", [])}
@@ -158,7 +159,15 @@ def parse_source_blobs(record_blobs: dict[str, bytes], log_blobs: dict[str, byte
         if record["project_id"] is not None:
             project_refs[rid] = record["project_id"]
         for event in events:
-            after_meta, _ = validator.frontmatter(event["after"])
+            try:
+                after_meta, _ = validator.frontmatter(event["after"])
+            except ValueError:
+                # M-02 allows an unmodified legacy summary without YAML. The
+                # bytes remain intact; only its historical display metadata
+                # falls back to the current record's reviewed metadata.
+                if event["provenance"]["kind"] == "native":
+                    raise
+                after_meta = meta
             summaries[event["id"]] = {
                 "id": event["id"], "record_id": rid, "operation_id": event["operation_id"],
                 "sequence": event["sequence"], "action": event["action"],
@@ -171,7 +180,8 @@ def parse_source_blobs(record_blobs: dict[str, bytes], log_blobs: dict[str, byte
                 "actor_label": event["actor"]["label"],
                 "provenance_kind": event["provenance"]["kind"],
                 "type": after_meta.get("type", "Unknown"),
-                "area": event["path_after"][len("openwiki/"):].rsplit("/", 1)[0]}
+                "area": (event["path_after"][len("openwiki/"):].rsplit("/", 1)[0]
+                         if "/" in event["path_after"][len("openwiki/"):] else "root")}
     record_ids = {record["id"] for record in records}
     project_ids = {record["id"] for record in records if record["type"] == "project"}
     if any(project_id not in project_ids for project_id in project_refs.values()):
