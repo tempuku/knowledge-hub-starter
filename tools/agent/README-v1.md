@@ -87,8 +87,10 @@ profile, repository path, or network identity from tool arguments.
 **Provenance, not authentication:** `actor.id`, `actor.kind`, and
 `actor.label` are supplied by the local caller. The event history labels
 them as such and makes **no claim of remote verified identity**. Actual
-third-party trusted agent-client onboarding is issue #40, not a passing
-protocol test in #30.
+trusted client SDK onboarding, disposable Git evidence, and a concrete Codex
+setup example are documented in [issue #40 acceptance](../../docs/acceptance/agent-client-40.md).
+The SDK client test does not claim a live model-driven Codex or Claude session,
+remote identity verification, or production onboarding.
 
 ## Migration / legacy boundary
 
@@ -112,6 +114,10 @@ python -m unittest discover -s tools/records -p 'test_*.py' -v
 disposable Git repositories. For each of the six tools it validates the
 domain semantics, real committed log/record/index bytes, retries across
 independent process invocations, malformed JSON-RPC, stale references,
-public-default-private denial and supplied actor provenance. The full
+public-default-private denial and supplied actor provenance. The separate [real SDK-client smoke test](../../tests/test_issue40_mcp_client.py)
+uses the official MCP Python SDK ClientSession and uploads a sanitized CI
+transcript; it verifies discovery, read/update, native Git history, stale
+version, idempotent retry, and missing write permission.
+The full
 GitHub CI also executes staged OKF/native checks, Chromium and WebKit and
 public-only export.
