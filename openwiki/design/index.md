@@ -7,3 +7,4 @@
 * [Migration and implementation sequence](migration.md)
 * [Migration inventory review](migration-inventory-review.md)
 * [Acceptance and verification contract](acceptance.md)
+* [Agent workflow for the knowledge bundle](agent-workflow.md)
