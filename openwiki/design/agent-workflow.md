@@ -29,6 +29,7 @@ normative design disagree, the design wins.
 - Every new page needs an entry in its directory `index.md`; a new directory
   needs an `index.md` and a parent index entry.
 - Never rewrite or delete history. No hard delete, no editing earlier events.
+- Keep exactly one canonical record per subject or project. Status, scope and result changes are new `UPDATED` events on that same record; do not create a new record per update. Create a new record only for a genuinely different subject. When a record must be replaced, mark it superseded and create the replacement once.
 
 ## 2. Create a record
 
