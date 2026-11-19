@@ -53,4 +53,20 @@ assert any(m.get("name") == "apple-mobile-web-app-title" and m.get("content") ==
 assert any(l.get("rel") == "manifest" and l.get("href") == "./manifest.webmanifest" for l in tags.links)
 assert any(l.get("rel") == "apple-touch-icon" for l in tags.links)
 
-print("iOS 12 source compatibility and install metadata checks passed; physical device not tested.")
+# Published v1 uses the same legacy shell vocabulary. These are static
+# guardrails only: they cannot replace local Chromium/WebKit visual acceptance.
+v1_html = (site / "v1.html").read_text(encoding="utf-8")
+v1_js = (site / "v1.js").read_text(encoding="utf-8")
+v1_css = (site / "v1.css").read_text(encoding="utf-8")
+for expression in ("?.", "??", "replaceChildren(", "replaceAll("):
+    assert expression not in v1_js, f"Safari 12-incompatible v1 syntax: {expression}"
+assert 'id="global-search-form"' in v1_html
+assert 'id="build-state"' in v1_html
+assert 'href="./style.css"' in v1_html and 'href="./v1.css"' in v1_html
+assert ".app-navbar .app-identity" in v1_css, "Linked identity loses white navbar styling"
+assert re.search(r"#global-search-form\s*\{[^}]*display:flex", v1_css), "Unstyled navbar search form"
+assert re.search(r"@media\(max-width:719px\)\s*\{\s*\.app-navbar\s*\{\s*display:grid", v1_css), "Mobile navbar loses compact grid"
+assert "#app .route-wrap > h1:focus" in v1_css, "Programmatic heading focus draws an amber border"
+assert 'intro?intro.nextSibling' in v1_js, "Mobile Sections interrupts heading and intro"
+
+print("iOS 12 and v1 mobile-shell source checks passed; physical device and browser rendering not tested.")
