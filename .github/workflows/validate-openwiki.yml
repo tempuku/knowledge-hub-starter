@@ -75,6 +75,17 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_rehearse_migration.py' -v
       - name: Test v1 storage schemas and histories in disposable Git repositories
         run: python -m unittest discover -s tools/records -p 'test_*.py' -v
+      - name: Install pinned official MCP Python SDK for real client smoke
+        run: python -m pip install 'mcp==1.30.0'
+      - name: Test #40 official SDK client against disposable Git
+        run: KH_ISSUE40_REPORT="$RUNNER_TEMP/issue40-client-smoke.json" python -m unittest discover -s tests -p 'test_issue40_mcp_client.py' -v
+      - name: Upload sanitized #40 real-client transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue40-real-mcp-client-smoke
+          path: ${{ runner.temp }}/issue40-client-smoke.json
+          if-no-files-found: warn
       - name: Test M-04 maintenance denial for legacy and v1 writers
         run: python -m unittest discover -s tests -p 'test_cutover_maintenance.py' -v
       - name: Test M-04 exact-head local CAS and failure injection
