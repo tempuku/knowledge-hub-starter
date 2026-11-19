@@ -7,7 +7,7 @@
 .group-list{list-style:none;padding:0;margin:0;border:1px solid #aebccd;border-radius:8px;overflow:hidden;background:#fff}.group-list>li{padding:12px 14px;border-bottom:1px solid #d4dce6}.group-list>li:last-child{border-bottom:0}.record-row,.event-row{padding:14px;background:linear-gradient(#fff,#fbfcfe);border-bottom:1px solid #dce1e6}.record-row:last-child,.event-row:last-child{border-bottom:0}.record-row h2,.event-row h2{font-size:17px;margin:0 0 5px}.meta{font-size:13px;color:#4c5d75}.status{display:inline-flex;align-items:center;gap:5px;border:1px solid #9ba9ba;border-radius:12px;padding:2px 8px;font-weight:700;font-size:12px;color:#30445f;background:#fff}.status[data-status=draft]{color:#484f59;background:#e8eaed}.status[data-status=stable]{color:#15466f;background:#e5f0fb}.status[data-status=completed]{color:#155b2b;background:#e6f4e9}.status[data-status=deprecated]{color:#525c68;background:#e7e8e9}.error{color:#7d1919;background:#fff1f1;border-left:4px solid #a82c2c;padding:10px}.empty{padding:20px;text-align:center;border:1px dashed #98a9bf;border-radius:8px;color:#485c77;background:#fff}.badge{display:inline-block;border-radius:4px;padding:2px 6px;font-size:12px;font-weight:700;color:#274768;background:#e7eef8;border:1px solid #bfd0e5}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.actions a,.actions button{min-height:44px;display:inline-flex;align-items:center;padding:7px 10px}.filter-panel[hidden],.section-panel[hidden]{display:none!important}.filter-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.record-tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid #9caabd;margin:10px 0 16px}.record-tabs a{min-height:44px;padding:12px 15px;background:linear-gradient(#f9fbfe,#dfe7f1);border:1px solid #a8b4c4;border-radius:8px 8px 0 0;font-weight:700}.record-tabs a[aria-current=page]{background:linear-gradient(#7199c8,#3a6fa8);color:white}
 .markdown{max-width:75ch;line-height:1.65;font-size:16px;overflow-wrap:anywhere}.markdown pre,.code-scroll{white-space:pre;overflow:auto;max-width:100%;padding:12px;background:#f0f2f5;border:1px solid #bcc6d2;border-radius:6px;font:14px/1.5 Menlo,Consolas,monospace}.markdown code{font-family:Menlo,Consolas,monospace;font-size:.9em;background:#eef1f5;padding:1px 3px;border-radius:3px}.markdown pre code{background:transparent;padding:0}.markdown blockquote{margin-left:0;padding:2px 14px;border-left:4px solid #aab9cc;color:#4c5d75}.markdown table{border-collapse:collapse;min-width:100%;width:max-content}.table-scroll{max-width:100%;overflow:auto}.markdown th,.markdown td{border:1px solid #9eacbf;padding:7px 9px;text-align:left}.markdown th{background:#e7edf5}.task-list{list-style:none;padding-left:1.3em}.markdown img{max-width:100%;height:auto}.revision-diff{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.55 Menlo,Consolas,monospace;background:#fff;border:1px solid #bcc6d2;border-radius:6px;padding:12px}.diff-added{color:#14592a;background:#e6f4e8}.diff-removed{color:#7b1d1d;background:#fbe7e7}.day-block{margin:12px 0;border:1px solid #aebccd;border-radius:9px;overflow:hidden;background:#fff}.day-block>button{width:100%;text-align:left;border:0;border-radius:0;padding:12px;background:linear-gradient(#fff,#e7edf4);min-height:50px;font-weight:700;color:#27384d}.day-items[hidden]{display:none}.day-items{border-top:1px solid #cbd4df}.date-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}.date-grid .weekday{text-align:center;font-size:12px;font-weight:700;padding:8px 1px}.date-grid button,.date-grid .blank{min-width:0;min-height:48px;padding:4px;border:1px solid #b5c0ce;border-radius:5px;background:#fff;color:#253b57}.date-grid button.has-reminder{background:#e7f0fa;font-weight:800}.date-grid button[aria-selected=true]{outline:3px solid #345f91}.date-grid button[aria-current=date]{box-shadow:inset 0 0 0 2px #ca8b14}.load-more{margin:10px 0}.source-text{max-height:70vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#fffef4;padding:12px;border:1px solid #cfc6a4;font:14px/1.5 Menlo,Consolas,monospace}
 #app:focus{outline:none}#app :focus-visible{outline:3px solid #b07506;outline-offset:2px}.app-footer{flex-wrap:wrap}#refresh{min-height:44px;padding:6px 12px;border:1px solid #456388;border-radius:7px;background:linear-gradient(#fff,#dce5f0);color:#25466e;font-weight:700}.offline-banner{position:sticky;top:0;z-index:2;background:#fff2c8;border:1px solid #9c7524;padding:8px 12px;font-weight:700;color:#563e0a}.update-banner{background:#edf5ff;padding:8px 12px;border:1px solid #8ca9ca;margin:8px 0}
-@media(max-width:719px){.app-shell{width:100%;min-height:100vh;margin:0;border:0;border-radius:0}.workspace{display:block}.library-sidebar{display:none}.diary-content{overflow:visible}.route-wrap{padding:14px 12px}.route-wrap h1{font-size:26px}.mobile-nav{display:block;padding:9px 12px;background:linear-gradient(#edf2f8,#cad5e2);border-bottom:1px solid #95a3b5}.mobile-nav button{min-height:44px;width:100%;text-align:left}.section-panel{padding:8px}.section-panel a{display:block;min-height:44px;padding:12px;border-bottom:1px solid #ccd5e1}.filter-panel{padding:10px}.filter-panel summary{min-height:44px;font-weight:700}.filter-form{grid-template-columns:1fr}.toolbar{align-items:stretch}.toolbar>*{flex:1 1 130px}.date-grid button,.date-grid .blank{min-height:44px}.app-navbar{flex-wrap:wrap;min-height:54px;padding:8px 12px}.nav-version{max-width:48%;overflow-wrap:anywhere}}
+@media(max-width:719px){.app-shell{width:100%;min-height:100vh;margin:0;border:0;border-radius:0}.workspace{display:block}.library-sidebar{display:none}.diary-content{overflow:visible}.route-wrap{padding:14px 12px}.route-wrap h1{font-size:26px}.mobile-nav{display:block;padding:9px 12px;background:linear-gradient(#edf2f8,#cad5e2);border-bottom:1px solid #95a3b5}.mobile-nav button{min-height:44px;width:100%;text-align:left}.section-panel{padding:8px}.section-panel a{display:block;min-height:44px;padding:12px;border-bottom:1px solid #ccd5e1}.filter-panel{padding:10px}.filter-panel summary{min-height:44px;font-weight:700}.filter-form{grid-template-columns:1fr}.toolbar{align-items:stretch}.date-grid button,.date-grid .blank{min-height:44px}.app-navbar{flex-wrap:wrap;min-height:54px;padding:8px 12px}.nav-version{max-width:48%;overflow-wrap:anywhere}}
 @media(min-width:720px){.mobile-nav{display:none}.library-sidebar{display:flex}.route-wrap{padding:24px 26px}}
 @media(min-width:1100px){.route-wrap{padding-left:38px;padding-right:38px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
@@ -60,6 +60,31 @@
    They are not keyboard-tab stops, so suppress the programmatic focus ring
    without weakening visible focus on links, inputs, or action buttons. */
 #app .route-wrap > h1:focus { outline:none; }
+/* Keep the legacy centered page title/intro hierarchy on every width. */
+.route-wrap > h1,
+.route-wrap > .route-intro { text-align:center; }
+.route-wrap > h1 { text-shadow:0 1px #fff; }
+
+@media(min-width:901px) {
+  /* Align action buttons with the date input rather than the taller label. */
+  .toolbar { align-items:flex-end; }
+}
+
+@media(min-width:720px) and (max-width:900px) {
+  /* The 232px tablet sidebar leaves too little width for a stacked toolbar. */
+  .toolbar {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    align-items:stretch;
+    gap:8px 10px;
+  }
+  .toolbar > .segmented { grid-column:1 / -1; width:100%; }
+  .toolbar > label { grid-column:1 / -1; }
+  .toolbar > button,
+  .toolbar > input { width:100%; min-width:0; }
+  .toolbar > button { padding-left:8px; padding-right:8px; font-size:13px; }
+  .toolbar label input { width:100%; }
+}
 
 @media(max-width:719px) {
   .app-navbar {
@@ -106,6 +131,24 @@
     text-align:center;
     color:#65738a;
   }
+  /* The legacy Diary toolbar is compact on phones. v1's toolbar is a column
+     flex container, so a flex-basis on its children would become height and
+     stretch every control to 130px. Use a two-column grid instead. */
+  .toolbar {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    align-items:stretch;
+    gap:8px 10px;
+  }
+  .toolbar > .segmented { grid-column:1 / -1; }
+  .toolbar > label { grid-column:1 / -1; }
+  .toolbar > button,
+  .toolbar > input { width:100%; min-width:0; }
+  .toolbar > button { padding-left:8px; padding-right:8px; font-size:13px; }
+  .toolbar label { min-width:0; }
+  .toolbar label input { width:100%; }
+  .panel.filter-panel { padding:4px 10px; }
+  .panel.filter-panel[open] { padding-bottom:10px; }
   .mobile-nav {
     margin:0 0 14px;
     padding:0;

@@ -66,6 +66,10 @@ assert 'href="./style.css"' in v1_html and 'href="./v1.css"' in v1_html
 assert ".app-navbar .app-identity" in v1_css, "Linked identity loses white navbar styling"
 assert re.search(r"#global-search-form\s*\{[^}]*display:flex", v1_css), "Unstyled navbar search form"
 assert re.search(r"@media\(max-width:719px\)\s*\{\s*\.app-navbar\s*\{\s*display:grid", v1_css), "Mobile navbar loses compact grid"
+assert "flex:1 1 130px" not in v1_css, "Column toolbar stretches each control to 130px on phones"
+assert re.search(r"\.toolbar\s*\{[^}]*display:grid", v1_css), "Mobile toolbar loses compact grid"
+assert "pageDesc.index.change_count" in v1_js, "Diary day headers lose their change count"
+assert "var opened=day===openDay" in v1_js, "Diary expands every day instead of the latest non-empty day"
 assert "#app .route-wrap > h1:focus" in v1_css, "Programmatic heading focus draws an amber border"
 assert 'intro?intro.nextSibling' in v1_js, "Mobile Sections interrupts heading and intro"
 
