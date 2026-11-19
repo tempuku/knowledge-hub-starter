@@ -262,6 +262,16 @@ class PrivacyAcceptanceTests(unittest.TestCase):
                  "label": "Public target", "available": True,
                  "href": f"record:{IDS['public_record']}"},
             ])
+
+            # Reverse links are generated from authorization-scoped current edges.
+            # Private targets exist only in the authenticated private graph.
+            public_target = json.loads(public_files[f"records/{IDS['public_record']}.json"])
+            private_target = json.loads(private_files[f"records/{IDS['private_record']}.json"])
+            expected_backlink = [{"source_id": IDS["linked_record"],
+                                  "title": "Linked public record"}]
+            self.assertEqual(public_target["backlinks"], expected_backlink)
+            self.assertEqual(private_target["backlinks"], expected_backlink)
+            self.assertNotIn(f"records/{IDS['private_record']}.json", public_files)
             self.assertEqual(linked["content_bytes"], len(linked["content"].encode("utf-8")))
             published_event = json.loads(public_files[f"events/{IDS['public_event']}.json"])["event"]
             self.assertEqual(published_event["actor"]["id"], "redacted")

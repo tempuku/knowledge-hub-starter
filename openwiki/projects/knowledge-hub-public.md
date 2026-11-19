@@ -35,3 +35,11 @@ tags: [demo, knowledge-hub]
 - For this public repository, the `Knowledge Hub (public demo)` and `Ivanovo Models (public demo)` records are the two `in_progress` public project views; earlier `visibility: private` legacy project records stay unchanged for the reviewed migration. A frontmatter privacy label does not protect source in public Git.
 
 **Audit outcome:** 27 current record-like Markdown files were enumerated (excluding structural indexes and sibling logs); two pairs describe the same project across public-demo and legacy-private contexts. Nine independently substantive dated notes must not be discarded as mere duplicate updates. Synthetic public/private recovery test fixtures are intentionally segregated by visibility. No historical record or log was deleted by this recap.
+
+## Linked records and evidence
+
+- [Ivanovo Models public project overview](record:1e26b8e8-cc64-46dd-923b-ea0163480012) - related project using the shared private/public access design; this link does not disclose private model data.
+- [This project's complete append-only history](https://github.com/tempuku/knowledge-hub-starter/blob/main/openwiki/projects/knowledge-hub-public.log.md) - revisions and source snapshots; individual log events remain the evidence trail.
+- [Traceable topics and evidence traversal (#46)](https://github.com/tempuku/knowledge-hub-starter/issues/46) - design and acceptance tracking.
+- [Cross-repository stand-up and record identity (#72)](https://github.com/tempuku/knowledge-hub-starter/issues/72) - persistent active-record policy.
+- [Consolidation and recap PR #87](https://github.com/tempuku/knowledge-hub-starter/pull/87) - baseline review and CI evidence.

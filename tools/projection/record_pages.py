@@ -34,6 +34,7 @@ def build_record_pages(records: list[dict]) -> dict[str, bytes]:
         detail = {"schema_version": 1, **summary,
                   "content": content, "path": record["path"],
                   "links": record.get("links", []),
+                  "backlinks": record.get("backlinks", []),
                   "history_index": f"history/{rid}/index.json"}
         raw = json_bytes(detail)
         summary["detail_bytes"] = len(raw)
