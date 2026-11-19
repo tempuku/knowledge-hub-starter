@@ -36,6 +36,20 @@ snapshot, not a live status feed.
 | Telemetry | usage metadata only; raw prompt/response logging disabled |
 | Phoenix | not deployed; pinned plan and compose draft only |
 
+## Task-scoped stickiness (A05)
+
+- Identity: Archon passes `ARCHON_NODE_EXECUTION` to the Pi subprocess; a Pi
+  extension emits `x-archon-workflow-id`, `x-archon-task-id` and
+  `x-archon-attempt`, and the role is the requested model id.
+- The gateway resolves the combo once per `(workflow_id, task_id, role,
+  attempt)`, stores assignments and hop/denial events in
+  `router-stickiness.sqlite`, reuses the pin on later turns, and exposes
+  `x-archon-pinned-model`, `x-archon-sticky-reused` and `x-archon-sticky-hops`.
+- A transport failure may hop and records the event; streaming and mid-tool-use
+  requests are denied a hop. Non-sticky roles bypass the store.
+- Deployed on image `0.9.0-a05`. Backup and rollback verified:
+  `~/.local/state/archon-ai-stack/backups/20261119T213839Z-gateway-pre-a05`.
+
 ## Acceptance
 
 | ID | Status | Note |
@@ -73,9 +87,9 @@ snapshot, not a live status feed.
 
 ## Open work
 
-1. Finish the A05 live evidence: one forced transport hop with a recorded
-   event, restart persistence, and the hop-policy decision (reassign vs strict
-   new attempt).
+1. A05 decisions and drills: choose the hop policy (reassign the pin on a
+   recorded transport hop, or require a new attempt), then run an approved
+   live forced-hop drill and a restart-persistence check.
 2. Force a retryable failure and prove one recorded failover hop (A06).
 3. Define and enforce a paid-budget cap with retry and concurrency coverage (A07).
 4. Deploy Phoenix privately, verify auth and retention, add trace hierarchy and
