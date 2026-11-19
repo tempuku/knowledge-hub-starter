@@ -73,7 +73,7 @@
     var nav=document.createElement("div"); nav.className="mobile-nav";
     var trigger=button(expandSections?"Close Sections":"Sections",function(){expandSections=!expandSections; render();},"btn secondary"); trigger.id="sections-toggle"; trigger.setAttribute("aria-expanded",String(expandSections)); trigger.setAttribute("aria-controls","sections-panel"); nav.appendChild(trigger);
     var list=document.createElement("nav"); list.className="section-panel"; list.id="sections-panel"; list.hidden=!expandSections; list.setAttribute("aria-label","Sections");
-    ["Today","Projects","Records","Diary","Calendar"].forEach(function(label){var key=label.toLowerCase();list.appendChild(link(label,"/"+key));}); nav.appendChild(list); host.insertBefore(nav,host.children[1] || null);
+    ["Today","Projects","Records","Diary","Calendar"].forEach(function(label){var key=label.toLowerCase();list.appendChild(link(label,"/"+key));}); nav.appendChild(list); var intro=host.querySelector(".route-intro"); host.insertBefore(nav,intro?intro.nextSibling:host.children[1] || null);
     trigger.addEventListener("keydown",function(e){if(e.key==="Escape"&&expandSections){expandSections=false;render();var t=document.getElementById("sections-toggle");if(t)t.focus();}});
   };
   var setNav = function (name) { Array.prototype.forEach.call(document.querySelectorAll("#primary-nav a"),function(a){if(a.getAttribute("data-route")===name)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");}); };
