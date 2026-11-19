@@ -1,0 +1,28 @@
+name: knowledge-hub
+
+services:
+  # Required-CI parity. The repository is bind-mounted so the tests exercise
+  # the working tree, its Git history and origin/main exactly like CI.
+  tests:
+    build:
+      context: .
+      target: test
+    image: knowledge-hub-tests:local
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    init: true
+    command: ["ci"]
+
+  # Optional local-only browser acceptance (Chromium + WebKit). Much larger
+  # image; never used by required CI or by the tests service.
+  ui:
+    build:
+      context: .
+      target: ui
+    image: knowledge-hub-ui:local
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    init: true
+    command: ["ui"]

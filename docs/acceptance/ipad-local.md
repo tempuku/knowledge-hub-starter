@@ -14,6 +14,13 @@ python -m playwright install chromium webkit
 KH_V1_UI=1 KH_UI_ARTIFACTS=/tmp/knowledge-hub-ui-evidence sh tools/diary/run_local_ui_checks.sh
 ```
 
+The same command can run in the pinned Docker image instead of a host virtual
+environment: `docker compose build ui && tools/docker/run.sh ui`. The container
+executes `run_local_ui_checks.sh` unchanged and writes evidence to
+`local-ui-artifacts/` (or `KH_UI_ARTIFACTS`). See
+[`docs/testing/docker.md`](../testing/docker.md). Docker does not change the
+acceptance rules below and is not a substitute for the physical iPad.
+
 The script builds `dist/`, performs static iOS 12 syntax/PWA metadata checks, then runs the responsive browser suite in both **Chromium and modern WebKit**. With `KH_V1_UI=1`, it also builds a synthetic native-v1 fixture, executes the full generated-v1 tests in each browser, and fails closed unless both report the same fixture and exact checked-out HEAD with every case passing. The `local-v1-acceptance-summary.json`, engine-specific reports and screenshots are local-only evidence; review before copying sanitized results into [#69](https://github.com/tempuku/knowledge-hub-starter/issues/69). Reports from a failed, skipped, stale or incomplete engine cannot satisfy acceptance. CI runs only fast negative/positive **report validator unit tests**, not Playwright. It uses a localhost HTTP server; do not publish private fixtures. Reuse the virtual environment and downloaded browsers for later runs. If a browser is unavailable on the local OS, record the skip and reason; do not report a pass.
 
 ## Physical original iPad Air (Safari 12) — manual, local/device only

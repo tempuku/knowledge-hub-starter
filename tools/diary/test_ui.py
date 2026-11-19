@@ -123,10 +123,15 @@ class DiaryResponsiveBrowserTests(unittest.TestCase):
         }""")
         self.assertEqual(result, {"name": "Knowledge Hub", "display": "standalone", "icon": True})
         page.wait_for_function("navigator.serviceWorker.controller !== null")
-        self.assertTrue(page.evaluate("""async () => {
+        # app.js registers the service worker, so the script itself is fetched
+        # before the worker can control the page. Reload to exercise the
+        # returning Home Screen launch that the offline cache is meant for.
+        page.reload(wait_until="networkidle")
+        page.wait_for_function("""async () => {
+          await navigator.serviceWorker.ready;
           const script = document.querySelector('script[src*="app.js"]');
           return new URL(script.src).searchParams.has('v') && !!(await caches.match(script.src));
-        }"""))
+        }""")
 
     def test_iphone_has_one_column_and_working_diary(self):
         page = self.open_page(390, 844)

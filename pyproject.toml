@@ -1,0 +1,20 @@
+[project]
+name = "knowledge-hub-starter"
+version = "0.0.0"
+description = "Git-backed OKF v0.2 knowledge base and static diary"
+requires-python = ">=3.10"
+dependencies = [
+    # Keep in sync with tools/diary/requirements.txt (used by required CI).
+    "PyYAML==6.0.3",
+]
+
+[dependency-groups]
+# Local-only browser acceptance; never installed by the fast CI job or the
+# default Docker test image. Mirrors tools/diary/requirements-ui.txt.
+ui = [
+    "playwright==1.56.0",
+]
+
+[tool.uv]
+# This repository is a collection of scripts, not an installable package.
+package = false

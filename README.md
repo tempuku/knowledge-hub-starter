@@ -83,14 +83,31 @@ For any deployment failure check the GitHub Actions run and Pages settings. No c
 
 GitHub Actions **required CI** validates OKF/frontmatter, native record and log integrity, deterministic projections, publication/privacy boundaries, the diary build and JavaScript syntax. These checks still run on PRs and `main`. **Chromium, WebKit, static iOS 12 compatibility tests and physical iPad acceptance do not run in required CI.**
 
-Browser tests are still available on demand for a developer workstation, especially before significant UI releases. One-time setup (Python 3.10+ and a supported local OS):
+### Docker (recommended for a clean, pinned environment)
+
+The Docker image matches CI's Python 3.12 and Node 22.18.0 and installs Python dependencies with `uv` from `uv.lock`. It only needs Docker with Compose v2 and a full clone that has `origin/main`:
 
 ```sh
-python3 -m venv .venv
+docker compose build tests
+tools/docker/run.sh            # required-CI parity
+tools/docker/run.sh ui         # Chromium + WebKit, builds the larger ui image
+```
+
+See [Docker test environment](docs/testing/docker.md) for tasks, reports, dependency refreshes and limitations. Docker runs are local evidence; GitHub Actions remains the merge authority.
+
+### Host setup
+
+Browser tests are also available directly on a developer workstation, especially before significant UI releases. Without Docker, use [uv](https://docs.astral.sh/uv/) (or the pip fallback) with Python 3.10+:
+
+```sh
+uv sync --group ui
 . .venv/bin/activate
-python -m pip install -r tools/diary/requirements.txt -r tools/diary/requirements-ui.txt
 python -m playwright install chromium webkit
 ```
+
+Without uv, use `python3 -m venv .venv`, activate it, and install
+`-r tools/diary/requirements.txt -r tools/diary/requirements-ui.txt` before the
+Playwright browser step.
 
 Then run whenever UI acceptance is needed, reusing installed dependencies and browsers:
 
