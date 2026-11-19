@@ -14,8 +14,8 @@ services:
     init: true
     command: ["ci"]
 
-  # Optional local-only browser acceptance (Chromium + WebKit). Much larger
-  # image; never used by required CI or by the tests service.
+  # Optional Chromium/WebKit environment for an agent's direct UI inspection.
+  # Larger image; never used by required CI or the tests service.
   ui:
     build:
       context: .
@@ -25,4 +25,4 @@ services:
     volumes:
       - .:/workspace
     init: true
-    command: ["ui"]
+    command: ["browser-shell"]

@@ -9,8 +9,8 @@ dependencies = [
 ]
 
 [dependency-groups]
-# Local-only browser acceptance; never installed by the fast CI job or the
-# default Docker test image. Mirrors tools/diary/requirements-ui.txt.
+# Optional browser tooling for agent visual inspection, not a test suite;
+# omitted from fast CI and the default Docker test image.
 ui = [
     "playwright==1.56.0",
 ]

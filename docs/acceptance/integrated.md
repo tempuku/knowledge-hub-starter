@@ -32,7 +32,7 @@ python3 -m unittest discover -s tests -p 'test_integrated_acceptance.py' -v
 
 Maintain [integrated-evidence.json](integrated-evidence.json) as the version-controlled **pending baseline**. For final exact-head verification, copy it to an **external report file** after the target PR head is frozen; populate actual scenario observations there and pass its absolute path via `--report`. Putting `tested_head` inside the very same commit whose SHA it references creates an impossible self-referential commit hash. Link the external completed report from the PR/CI evidence or issue; only include public-safe digests/counts. A passed scenario requires a matching per-row `tested_head`, real command/fixture, expected-versus-observed results, and supporting evidence links. Never put raw private records, log snapshots, cache content or secrets in the public evidence ledger. Private source candidates stay in secured local temporary storage. Reports should record digests/counts and canonical links.
 
-All regressions and acceptance gaps must remain visible as failed/pending; do not mark them passed from an earlier PR's CI or successful legacy-site tests. Every required UI browser journey must use **generated native v1 output**, not the legacy diary build, and verify there are no unauthorized public/private fetches. See [local Chromium, WebKit and iPad acceptance](ipad-local.md). Browser tests are owner-approved **local-only**, outside required GitHub Actions. Record exact local versions and results; modern desktop WebKit is not a physical iPad result.
+All regressions and acceptance gaps remain failed/pending until observed; merging code or passing fast CI does not automatically verify UI. Under the 2026-11-19 owner simplification, UI acceptance uses direct agent/reviewer browser inspection of the actual generated **public-only v1** site, following the [short review checklist](ipad-local.md). Record visited routes, URL, exact commit/generation, browser and screenshots/observations. Deterministic publication/privacy checks remain required in CI; screenshot inspection never substitutes for a private-byte leak audit. Physical iPad operation remains separately pending until tested on actual hardware.
 
 ## Concrete execution commands
 
@@ -41,8 +41,11 @@ Existing lower-level test suites and UI generator (these commands are *inputs* t
 ~~~sh
 python3 -m unittest discover -s tools/records -p 'test_*.py' -v
 python3 -m unittest discover -s tools/projection -p 'test_*.py' -v
-KH_V1_UI=1 KH_UI_ARTIFACTS=/tmp/knowledge-hub-ui-evidence \
-  sh tools/diary/run_local_ui_checks.sh
+python3 tools/diary/build.py --output-dir dist-public --public-only
+python3 tools/diary/publish_v1.py --output-dir dist-public
+python3 tools/diary/test_publication.py dist-public
+python3 -m http.server 8000 --bind 127.0.0.1 --directory dist-public
+# Open the local public-only preview with a browser-capable agent for UI review.
 ~~~
 
 #36 must supply a frozen source/manifest rehearsal report; #40 must supply an authentic agent-client transcript and disposable Git head history. Link those external reports into the integrated ledger, not copies of private source content.
