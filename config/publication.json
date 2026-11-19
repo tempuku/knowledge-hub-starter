@@ -2,15 +2,18 @@
   "schema_version": 1,
   "record_ids": [
     "1e26b8e8-cc64-46dd-923b-ea0163480012",
+    "5d1e098b-24fc-43c6-b2d5-d68237742559",
     "8beb5eb5-b71a-4e42-897e-a6d8594b0013",
     "9a2f68b9-a1a9-40c6-ae1c-6224e1630011"
   ],
   "event_ids": [
     "1e26b8e8-cc64-46dd-923b-ea0163481012",
     "8beb5eb5-b71a-4e42-897e-a6d8594b1013",
-    "9a2f68b9-a1a9-40c6-ae1c-6224e1631011"
+    "9a2f68b9-a1a9-40c6-ae1c-6224e1631011",
+    "ca9918bc-c4a7-4d4d-befe-45d485a74ff8"
   ],
   "actor_labels": [
+    "OpenCode agent",
     "Public Demo"
   ]
 }

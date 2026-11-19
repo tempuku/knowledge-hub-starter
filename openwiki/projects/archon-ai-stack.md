@@ -124,3 +124,5 @@ python3 scripts/validate-router-policy.py
 **Privacy:** this Knowledge Hub source repository is public, so
 `visibility: private` does not make this file confidential. It intentionally
 contains no credentials, prompts, upstream payloads or private project data.
+
+Superseded by the public status record [archon-ai-stack-public.md](archon-ai-stack-public.md); retained for history.
