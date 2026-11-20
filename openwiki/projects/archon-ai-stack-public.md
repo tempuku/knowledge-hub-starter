@@ -19,7 +19,8 @@ sources:
 **Snapshot: 2026-11-20.** A local orchestration stack runs workflows in Archon,
 executes model turns through Pi, and selects providers through a derived
 ExtremeRouter gateway build. Phoenix stores traces from the real Archon and Pi
-path. The
+path. A deterministic role evaluation and the Phase 5 migration-readiness
+drills are recorded below. The
 deployment is loopback-only and lives outside GitHub; this note is a manual
 snapshot, not a live status feed.
 
@@ -85,14 +86,14 @@ snapshot, not a live status feed.
 | A01 | PASS | direct baseline preserved before and after deployment |
 | A02 | PASS | loopback-only, authenticated, rotated password, private state |
 | A03 | PASS | live stream, JSON object mode, enforced JSON schema, real Pi tool round-trip |
-| A04 | PARTIAL | exact ids exist and `archon-coder` ran live; cross-turn attribution unproven |
-| A05 | PARTIAL | live pin per workflow/task/role/attempt; turn reuse, new attempt, real run ID, regression and store-across-restart pass; live forced hop deferred to real 429 observations |
-| A06 | UNVERIFIED | no controlled 429/timeout drill with a recorded event |
-| A07 | UNVERIFIED | no enforced paid-budget cap |
+| A04 | PASS | five-role live matrix through the real Archon → Pi → gateway path; each exact id returned its token and recorded the upstream model |
+| A05 | PASS | live identity extension installed with rollback; two-turn reuse reports `reused: true`, a new attempt re-resolves, and a real Archon tool round-trip keys the store by run id; live forced hop deliberately untested |
+| A06 | PASS | disposable compiled route: forced 429 records exactly one hop to the approved member; streaming, tool-context and single-member cases deny without an unauthorized fallback |
+| A07 | PASS | per-request cost cap fails closed: sequential and concurrent requests are denied with zero upstream calls; a cumulative paid ledger is still open |
 | A08–A11 | PASS | pinned/private Phoenix; anonymous API/OTLP rejected; 30-day retention; full trace hierarchy; canaries clean; PASS vs deliberate FAIL visible |
-| A12 | UNVERIFIED | no OmniRoute-compatible adapter |
-| A13 | PARTIAL | backups and rollback scripts exist; live outage drill not run |
-| A14 | UNVERIFIED | restart persistence not tested |
+| A12 | PASS | local OmniRoute-compatible dry-run adapter serves the five aliases; the same workflow passes directly and through it with unchanged hashes |
+| A13 | PASS | approved 2.19 s gateway outage: safe failure, no usage row, exact token after restore with the task id preserved |
+| A14 | PASS | combined gateway + Phoenix restart 6.27 s: providers, combos, ACL, stickiness, spans and evaluation history persist; both smokes pass |
 
 ## Recent verified work
 
@@ -116,14 +117,40 @@ snapshot, not a live status feed.
   and OTLP, SQLite retention, restart and tested backup/restore, cross-process
   trace hierarchy, privacy canaries, and non-blocking export.
 
+## Role evaluation and migration readiness (2026-11-20)
+
+- Five-role live matrix through the real Archon → Pi → gateway path: every exact
+  alias returned its expected token and recorded
+  `opencode-go/deepseek-v4.1-flash`. The live Pi identity extension
+  `archon-identity.ts` was installed with a tested rollback; two turns of one
+  attempt report `x-archon-sticky-reused: true` and a new attempt re-resolves.
+- Deterministic Phase 4 fixtures — triage JSON, planner structure, coding write
+  plus external test, reviewer defect set and rate-limit recovery — all passed
+  without an LLM judge. Measured cost was $0.00268881 for four validated tasks
+  ($0.00067220 per validated success). Stable assignment produced one row;
+  per-task rotation produced three.
+- A12: a local OmniRoute-compatible dry-run adapter served the five aliases;
+  the same workflow passed directly and through the adapter with unchanged
+  workflow and Archon config hashes.
+- A13: an approved gateway outage lasted 2.19 s; the same workflow failed
+  safely with no usage row, then returned the exact token after restore with
+  the task id preserved.
+- A14: a combined gateway + Phoenix restart lasted 6.27 s; providers, combos,
+  key ACL, stickiness rows, Phoenix spans and evaluation history persisted, and
+  both smoke scripts passed.
+- Still open: a live forced 429 hop (deliberate), a cumulative paid-budget
+  ledger, a real OmniRoute install, and a second usable provider family for
+  reviewer independence.
+
 ## Open work
 
-1. A05: keep Option A (reassign on a recorded pre-stream hop) and watch real
-   `429` events before revisiting the hybrid. Do not force a live failure.
-2. Force a retryable failure and prove one recorded failover hop (A06).
-3. Define and enforce a paid-budget cap with retry and concurrency coverage (A07).
-4. Add a mock OmniRoute-compatible adapter, run an approved outage drill, and
-   prove restart persistence (A12–A14).
+1. Keep Option A (reassign on a recorded pre-stream hop); the live forced hop
+   stays intentionally untested. Watch real `429` events.
+2. Extend the per-request cost cap to a cumulative monthly/per-task paid ledger.
+3. Install and validate a real OmniRoute backend only with owner authorization;
+   A12 currently uses a local dry-run adapter.
+4. Obtain a second usable provider family for reviewer independence and
+   multi-model comparison.
 5. Obtain provider credentials with real quota; file presence alone is not
    evidence of usable rights.
 
@@ -154,6 +181,11 @@ Implementation root: `/Users/tempuku/Documents/Codex/2026-11-19/archon-stack-lun
   `docs/evidence/phoenix-synthetic-trace.json`
 - `scripts/archon-trace.py`, `scripts/smoke-archon-traces.sh`,
   `deploy/ai-stack/pi-extension/archon-trace.ts`
+- `outputs/PHASE2-RECONCILIATION.md`, `outputs/PHASE4-EVALUATION.md`,
+  `outputs/PHASE5-MIGRATION.md`
+- `work/phase2/a04-live-matrix.json`, `work/phase2/a05-live-results.json`,
+  `work/phase2/harness/sticky-route-proof-phase2.json`
+- `work/eval/results/`, `work/phase5/results/`
 
 **Privacy:** this repository is public; the note contains no credentials,
 prompts, payloads or private project data.
