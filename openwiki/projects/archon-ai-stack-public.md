@@ -16,9 +16,10 @@ sources:
 
 # Archon routing stack — public status
 
-**Snapshot: 2026-11-19.** A local orchestration stack runs workflows in Archon,
+**Snapshot: 2026-11-20.** A local orchestration stack runs workflows in Archon,
 executes model turns through Pi, and selects providers through a derived
-ExtremeRouter gateway build. Phoenix tracing is planned but not running. The
+ExtremeRouter gateway build. Phoenix stores traces from the real Archon and Pi
+path. The
 deployment is loopback-only and lives outside GitHub; this note is a manual
 snapshot, not a live status feed.
 
@@ -34,7 +35,7 @@ snapshot, not a live status feed.
 | Router key | one restricted key, 48 model ids, no earlier entry removed |
 | Pi | provider pointed at the local gateway; catalog includes the five exact role ids |
 | Telemetry | usage metadata only; raw prompt/response logging disabled |
-| Phoenix | not deployed; pinned plan and compose draft only |
+| Phoenix | deployed `21.2.1` (`sha256:becd0809…c749e`), loopback `127.0.0.1:6006`/`:4317`, SQLite, 30-day retention, auth required |
 
 ## Task-scoped stickiness (A05)
 
@@ -54,6 +55,29 @@ snapshot, not a live status feed.
   in [ADR 0002](record:2b29dfb1-03e1-47ac-b0a9-c5b9427d3a88) and
   [ADR 0003](record:58a76581-d05f-4883-93bb-c2dd5981729d).
 
+## Phoenix tracing (A08–A11)
+
+- Pinned `arizephoenix/phoenix:21.2.1@sha256:becd0809…c749e` (the image id
+  equals the index digest), loopback `127.0.0.1:6006` and `127.0.0.1:4317`
+  only, `restart=unless-stopped`.
+- Auth required: anonymous `/v1/projects`, GraphQL and OTLP/HTTP return 401;
+  OTLP/gRPC returns `UNAUTHENTICATED`; authenticated API and ingest return
+  200. JSON OTLP is 415 by design.
+- SQLite on a private 0700 state root with a 30-day retention policy; a
+  restart and a tested backup/restore preserved all spans.
+- One real trace links `archon.workflow → archon.task (role) → archon.pi.run →
+  archon.pi.turn → llm.request + archon.tool → archon.validation` across the
+  wrapper and Pi processes via a W3C traceparent.
+- Synthetic canaries in the prompt, tool path, tool output and validation
+  error did not appear in Phoenix; one deliberate control attribute proved the
+  search. Raw content logging is off; tool arguments/results and error
+  messages are never exported.
+- Export is asynchronous and bounded; stopping or killing Phoenix mid-run left
+  inference successful and only dropped spans.
+- A PASS and a deliberately failing run share the same stable workflow and task
+  identifiers; PASS shows validation PASS, FAIL shows `ValidationError` /
+  `exec_failed`.
+
 ## Acceptance
 
 | ID | Status | Note |
@@ -65,7 +89,7 @@ snapshot, not a live status feed.
 | A05 | PARTIAL | live pin per workflow/task/role/attempt; turn reuse, new attempt, real run ID, regression and store-across-restart pass; live forced hop deferred to real 429 observations |
 | A06 | UNVERIFIED | no controlled 429/timeout drill with a recorded event |
 | A07 | UNVERIFIED | no enforced paid-budget cap |
-| A08–A11 | UNVERIFIED | Phoenix not deployed; no trace or privacy canary |
+| A08–A11 | PASS | pinned/private Phoenix; anonymous API/OTLP rejected; 30-day retention; full trace hierarchy; canaries clean; PASS vs deliberate FAIL visible |
 | A12 | UNVERIFIED | no OmniRoute-compatible adapter |
 | A13 | PARTIAL | backups and rollback scripts exist; live outage drill not run |
 | A14 | UNVERIFIED | restart persistence not tested |
@@ -87,7 +111,10 @@ snapshot, not a live status feed.
   real Archon run ID keys the store, and the compiled route proves a forced
   429 hop, concurrency and streaming/tool-context denials.
 - A versioned routing-policy example, a stdlib validator, a four-check live
-  smoke script, and a pinned Phoenix deployment plan.
+  smoke script, and a private Phoenix deployment.
+- Phoenix `21.2.1` is deployed and verified: loopback-only, authenticated API
+  and OTLP, SQLite retention, restart and tested backup/restore, cross-process
+  trace hierarchy, privacy canaries, and non-blocking export.
 
 ## Open work
 
@@ -95,11 +122,9 @@ snapshot, not a live status feed.
    `429` events before revisiting the hybrid. Do not force a live failure.
 2. Force a retryable failure and prove one recorded failover hop (A06).
 3. Define and enforce a paid-budget cap with retry and concurrency coverage (A07).
-4. Deploy Phoenix privately, verify auth and retention, add trace hierarchy and
-   privacy canaries, and keep export non-blocking (A08–A11).
-5. Add a mock OmniRoute-compatible adapter, run an approved outage drill, and
+4. Add a mock OmniRoute-compatible adapter, run an approved outage drill, and
    prove restart persistence (A12–A14).
-6. Obtain provider credentials with real quota; file presence alone is not
+5. Obtain provider credentials with real quota; file presence alone is not
    evidence of usable rights.
 
 ## Operational hazards
@@ -124,6 +149,11 @@ Implementation root: `/Users/tempuku/Documents/Codex/2026-11-19/archon-stack-lun
 - `work/live/ARCHON-ROLES.md`, `work/live/archon-roles-live-test.json`
 - `config/archon-router-policy.example.yaml`, `docs/ROUTER-POLICY.md`
 - `docs/PHOENIX-PLAN.md`, `deploy/ai-stack/compose.phoenix.yaml`
+- `outputs/A08-A11-PHOENIX.md`,
+  `docs/evidence/phoenix-a08-a11-verification.json`,
+  `docs/evidence/phoenix-synthetic-trace.json`
+- `scripts/archon-trace.py`, `scripts/smoke-archon-traces.sh`,
+  `deploy/ai-stack/pi-extension/archon-trace.ts`
 
 **Privacy:** this repository is public; the note contains no credentials,
 prompts, payloads or private project data.
