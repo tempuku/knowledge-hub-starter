@@ -24,6 +24,18 @@ from writer_v1 import WriterError
 MAX_CONFIG_BYTES = 16384
 MAX_REQUEST_BYTES = 2 * 1024 * 1024
 COMMANDS = frozenset({"read", "create", "update", "move", "archive", "reopen"})
+# Read requests are capability-gated by "read" but carry no actor, idempotency
+# key or expected head: they never commit and never claim supplied provenance.
+READ_COMMANDS = {
+    "read": frozenset({"command", "record_id"}),
+    "search": frozenset({"command", "query", "limit", "include_archived"}),
+    "history": frozenset({"command", "record_id", "limit", "before_sequence"}),
+}
+READ_REQUIRED = {
+    "read": frozenset({"record_id"}),
+    "search": frozenset({"query"}),
+    "history": frozenset({"record_id"}),
+}
 
 
 def _unique_pairs(pairs):
@@ -104,10 +116,22 @@ def execute(writer, request):
     if type(request) is not dict:
         raise WriterError("VALIDATION_ERROR", "Command must be JSON object")
     command = request.get("command")
-    if command == "read":
-        if set(request) != {"command", "record_id"}:
-            raise WriterError("VALIDATION_ERROR", "Invalid read request fields")
-        return writer.read(request["record_id"])
+    if command in READ_COMMANDS:
+        if (set(request) - READ_COMMANDS[command] or
+                READ_REQUIRED[command] - set(request)):
+            raise WriterError("VALIDATION_ERROR",
+                              "Invalid " + command + " request fields")
+        if command == "read":
+            return writer.read(request["record_id"])
+        if command == "search":
+            return writer.search(request["query"], **{
+                name: request[name]
+                for name in ("limit", "include_archived") if name in request
+            })
+        return writer.history(request["record_id"], **{
+            name: request[name]
+            for name in ("limit", "before_sequence") if name in request
+        })
     if command not in COMMANDS:
         raise WriterError("VALIDATION_ERROR", "Unsupported knowledge command")
     try:

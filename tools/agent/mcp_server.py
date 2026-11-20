@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Local stdio MCP server, six tools backed by the same v1 Knowledge Hub writer.
+"""Local stdio MCP server, eight tools backed by the same v1 Knowledge Hub writer.
 
 Standard MCP stdio framing is one UTF-8 JSON-RPC object per newline, NOT
 HTTP Content-Length headers. A server is launched by a trusted local client
 with an external authorization profile; no network listener, verified remote
 identity or unauthenticated HTTP endpoint exists.
+
+Discovery is read-only: knowledge_search ranks current record metadata and
+knowledge_history lists one record's native events. Neither returns private
+snapshots in a public repository capability.
 
 Actor metadata inside tool arguments is SUPPLIED provenance, not attested.
 """
@@ -42,8 +46,21 @@ COMMON = {
     "occurred_at": {"type": ["string", "null"]},
 }
 BASE_REQUIRED = ["expected_head", "idempotency_key", "actor", "summary"]
-TOOL_FIELDS = {
+# Read tools are capability-gated by "read" only; they take no write fields.
+READ_TOOLS = {
     "read": ({"record_id": {"type": "string"}}, ["record_id"]),
+    "search": ({
+        "query": {"type": "string"},
+        "limit": {"type": "integer"},
+        "include_archived": {"type": "boolean"},
+    }, ["query"]),
+    "history": ({
+        "record_id": {"type": "string"},
+        "limit": {"type": "integer"},
+        "before_sequence": {"type": "integer"},
+    }, ["record_id"]),
+}
+WRITE_TOOLS = {
     "create": ({
         "path": {"type": "string"}, "content": {"type": "string"},
         "publish_current": {"type": "boolean"},
@@ -70,8 +87,11 @@ TOOL_FIELDS = {
                    "enum": ["draft", "stable", "completed"]},
     }, ["record_id", "expected_version", "status"]),
 }
+TOOL_FIELDS = {**READ_TOOLS, **WRITE_TOOLS}
 DESCRIPTIONS = {
     "read": "Read current canonical record, version and head by ID (trusted local checkout)",
+    "search": "Search current records by tokens and return ranked metadata only",
+    "history": "List one record's native history events newest first without snapshots",
     "create": "Create a record through one native log and CAS transaction",
     "update": "Replace current record with a new append-only version",
     "move": "Atomically move a record and repair authorized relative links",
@@ -83,14 +103,18 @@ DESCRIPTIONS = {
 def tool_list():
     tools = []
     for command, (specific, required) in TOOL_FIELDS.items():
-        properties = ({} if command == "read" else dict(COMMON))
-        properties.update(specific)
+        readable = command in READ_TOOLS
+        properties = dict(specific)
+        expected = list(required)
+        if not readable:
+            properties.update(COMMON)
+            expected += BASE_REQUIRED
         tools.append({
             "name": "knowledge_" + command,
             "description": DESCRIPTIONS[command] + "; actor is caller-supplied provenance",
             "inputSchema": {
                 "type": "object", "properties": properties,
-                "required": required + ([] if command == "read" else BASE_REQUIRED),
+                "required": expected,
                 "additionalProperties": False,
             },
         })
@@ -127,8 +151,10 @@ def _dispatch(writer, message):
             "protocolVersion": protocol,
             "capabilities": {"tools": {}},
             "serverInfo": {"name": "knowledge-hub-local", "version": "1.0.0"},
-            "instructions": ("Trusted local Git checkout only. Actor labels "
-                             "are caller-supplied provenance, not authenticated."),
+            "instructions": ("Trusted local Git checkout only. knowledge_search "
+                             "and knowledge_history expose ranked metadata and "
+                             "event metadata; actor labels are caller-supplied "
+                             "provenance, not authenticated."),
         }
     if method == "ping":
         return {}
@@ -144,9 +170,12 @@ def _dispatch(writer, message):
             raise ValueError("Invalid tool arguments")
         command = name[10:]
         properties, required = TOOL_FIELDS[command]
-        supported = set(properties) | (set() if command == "read" else set(COMMON))
-        required = set(required) | (set() if command == "read" else set(BASE_REQUIRED))
-        if set(args) - supported or required - set(args):
+        supported = set(properties)
+        expected = set(required)
+        if command not in READ_TOOLS:
+            supported |= set(COMMON)
+            expected |= set(BASE_REQUIRED)
+        if set(args) - supported or expected - set(args):
             raise ValueError("Invalid tool argument fields")
         request = {**args, "command": command}
         try:

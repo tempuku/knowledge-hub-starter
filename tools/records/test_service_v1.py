@@ -20,7 +20,7 @@ def git(root, *args):
     return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
 
 
-class ServiceFixtures(unittest.TestCase):
+class ServiceFixtureBase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -62,6 +62,8 @@ class ServiceFixtures(unittest.TestCase):
         return GitRecordWriter(root, capability,
                                staged_checker=self.check_staged_okf, **kwargs)
 
+
+class ServiceFixtures(ServiceFixtureBase):
     def test_missing_staged_checker_is_fail_closed(self):
         # Without the callback or the repository's real pre-commit script,
         # a writer must not silently skip staged OKF validation.
@@ -368,6 +370,250 @@ class ServiceFixtures(unittest.TestCase):
             self.assertEqual(git(origin, "rev-parse", "refs/heads/main"), winner["head"])
             self.assertEqual(git(b, "rev-parse", "refs/heads/main"), base)
             self.assertEqual(writer_a.read(winner["record_id"])["head"], winner["head"])
+
+
+class DiscoveryTests(ServiceFixtureBase):
+    """knowledge_search and knowledge_history return metadata, never snapshots."""
+
+    def public_writer(self):
+        # A public view is an explicit trusted capability, never inferred from
+        # frontmatter or from caller-supplied arguments.
+        return self.make_writer(self.root, {
+            "repository_mode": "public", "operations": ["read"],
+            "publisher_scope": False,
+        })
+
+    def create_record(self, writer, path, title, *, visibility="private",
+                      body="Discovery body.\n", tags=None):
+        head = 'type: note\ntitle: "%s"\nvisibility: %s\n' % (title, visibility)
+        if tags:
+            head += "tags: [" + ", ".join(tags) + "]\n"
+        return writer.write({
+            "command": "create", "idempotency_key": str(uuid.uuid4()),
+            "actor": {"id": "discovery", "kind": "agent",
+                      "label": "Discovery test"},
+            "summary": "Create " + title,
+            "expected_head": git(self.root, "rev-parse", "refs/heads/main"),
+            "path": path, "content": "---\n" + head + "---\n\n" + body,
+        })
+
+    def update_record(self, writer, record_id, expected_version, content):
+        return writer.write({
+            "command": "update", "idempotency_key": str(uuid.uuid4()),
+            "actor": {"id": "discovery", "kind": "agent",
+                      "label": "Discovery test"},
+            "summary": "Update record", "record_id": record_id,
+            "expected_version": expected_version,
+            "expected_head": git(self.root, "rev-parse", "refs/heads/main"),
+            "content": content,
+        })
+
+    def test_search_ranks_visible_records_and_hides_private(self):
+        self.create_record(self.writer, "openwiki/notes/alpha-harbor.md",
+                           "Alpha Harbor", visibility="public")
+        self.create_record(self.writer, "openwiki/notes/beta-harbor.md",
+                           "Beta Harbor", visibility="public", tags=["beta-tag"])
+        self.create_record(self.writer, "openwiki/private/delta-harbor.md",
+                           "Delta Harbor", body="Secret roadmap.\n")
+        archived = self.create_record(self.writer,
+                                      "openwiki/notes/gamma-harbor.md",
+                                      "Gamma Harbor", visibility="public")
+        archival = self.make_writer(self.root, {
+            **self.capability,
+            "operations": ["read", "create", "update", "archive"],
+        })
+        archival.write({
+            "command": "archive", "idempotency_key": str(uuid.uuid4()),
+            "actor": {"id": "discovery", "kind": "agent",
+                      "label": "Discovery test"},
+            "summary": "Archive Gamma Harbor",
+            "expected_head": git(self.root, "rev-parse", "refs/heads/main"),
+            "record_id": archived["record_id"],
+            "expected_version": archived["version"],
+        })
+
+        private = self.writer.search("harbor")
+        self.assertEqual(set(private),
+                         {"query", "head", "total", "count", "results"})
+        self.assertEqual(private["query"], "harbor")
+        self.assertEqual(private["head"],
+                         git(self.root, "rev-parse", "refs/heads/main"))
+        self.assertEqual(private["total"], 3)
+        self.assertEqual(private["count"], 3)
+        self.assertEqual({item["title"] for item in private["results"]},
+                         {"Alpha Harbor", "Beta Harbor", "Delta Harbor"})
+        self.assertTrue(all(set(item) == {"record_id", "path", "title", "status"}
+                            for item in private["results"]))
+        # Ranking must be deterministic across repeated identical queries.
+        self.assertEqual(private["results"], self.writer.search("harbor")["results"])
+        self.assertEqual(
+            self.writer.search("harbor", include_archived=True)["total"], 4)
+        self.assertEqual(self.writer.search("harbor", limit=1)["count"], 1)
+        self.assertEqual(self.writer.search("beta-tag")["total"], 1)
+
+        public = self.public_writer().search("harbor")
+        self.assertEqual(public["total"], 2)
+        self.assertEqual(public["count"], 2)
+        self.assertEqual({item["title"] for item in public["results"]},
+                         {"Alpha Harbor", "Beta Harbor"})
+        self.assertNotIn("openwiki/private/", str(public["results"]))
+        self.assertNotIn("Secret roadmap", str(public))
+        # Private bodies are never indexed for a public view.
+        self.assertEqual(self.public_writer().search("secret")["total"], 0)
+
+    def test_search_validates_query_and_limit(self):
+        self.create_record(self.writer, "openwiki/notes/harbor.md", "Harbor")
+        for query in ("", "!!", "a", "x" * 257, 7, None,
+                      "one two three four five six seven eight nine"):
+            with self.subTest(query=query):
+                with self.assertRaises(WriterError) as error:
+                    self.writer.search(query)
+                self.assertEqual(error.exception.code, "VALIDATION_ERROR")
+        for limit in (0, 26, True, "8", 1.0):
+            with self.subTest(limit=limit):
+                with self.assertRaises(WriterError) as error:
+                    self.writer.search("harbor", limit=limit)
+                self.assertEqual(error.exception.code, "VALIDATION_ERROR")
+        with self.assertRaises(WriterError) as error:
+            self.writer.search("harbor", include_archived=1)
+        self.assertEqual(error.exception.code, "VALIDATION_ERROR")
+        self.assertEqual(self.writer.search("harbor", limit=25)["count"], 1)
+        denied = self.make_writer(self.root, {
+            "repository_mode": "private", "operations": ["update"],
+            "publisher_scope": False,
+        })
+        with self.assertRaises(WriterError) as error:
+            denied.search("harbor")
+        self.assertEqual(error.exception.code, "NOT_FOUND")
+        self.assertEqual(str(error.exception), "Record collection not available")
+
+    def test_history_lists_event_metadata_newest_first(self):
+        created = self.create_record(self.writer, "openwiki/notes/history.md",
+                                     "History")
+        source = self.writer.read(created["record_id"])["content"]
+        second = self.update_record(
+            self.writer, created["record_id"], created["version"],
+            source.replace("Discovery body.", "Second body."))
+        third = self.update_record(
+            self.writer, created["record_id"], second["version"],
+            source.replace("Discovery body.", "Third body."))
+        self.assertEqual(third["status"], "committed")
+
+        history = self.writer.history(created["record_id"])
+        self.assertEqual(set(history), {"record_id", "path", "title", "status",
+                                        "head", "total", "next", "events"})
+        self.assertEqual(history["record_id"], created["record_id"])
+        self.assertEqual(history["path"], "openwiki/notes/history.md")
+        self.assertEqual(history["title"], "History")
+        self.assertEqual(history["status"], "draft")
+        self.assertEqual(history["head"], third["head"])
+        self.assertEqual(history["total"], 3)
+        self.assertIsNone(history["next"])
+        self.assertEqual([event["sequence"] for event in history["events"]],
+                         [3, 2, 1])
+        self.assertEqual([event["action"] for event in history["events"]],
+                         ["UPDATED", "UPDATED", "CREATED"])
+        self.assertEqual(history["events"][0]["event_id"], third["event_id"])
+        for event in history["events"]:
+            self.assertEqual(set(event), {
+                "event_id", "sequence", "action", "recorded_at", "summary",
+                "occurred_on", "occurred_at", "actor_label", "path_before",
+                "path_after", "record_url", "event_url",
+            })
+            self.assertEqual(event["actor_label"], "Discovery test")
+            self.assertEqual(event["record_url"], history["path"])
+            self.assertEqual(event["event_url"], history["path"][:-3] +
+                             ".log.md#" + event["event_id"])
+            self.assertNotIn("before", event)
+            self.assertNotIn("after", event)
+            self.assertNotIn("after_sha256", event)
+        self.assertNotIn("Third body", str(history))
+
+        page = self.writer.history(created["record_id"], limit=2)
+        self.assertEqual([event["sequence"] for event in page["events"]], [3, 2])
+        self.assertEqual(page["total"], 3)
+        self.assertEqual(page["next"], 2)
+        older = self.writer.history(created["record_id"], limit=2,
+                                    before_sequence=page["next"])
+        self.assertEqual([event["sequence"] for event in older["events"]], [1])
+        self.assertEqual(older["total"], 3)
+        self.assertIsNone(older["next"])
+        self.assertEqual(older["path"], history["path"])
+
+    def test_history_public_view_hides_non_public_snapshots(self):
+        created = self.create_record(self.writer, "openwiki/notes/shared.md",
+                                     "Shared")
+        source = self.writer.read(created["record_id"])["content"]
+        updated = self.update_record(
+            self.writer, created["record_id"], created["version"],
+            source.replace('visibility: "private"', 'visibility: "public"'))
+        self.assertEqual(self.writer.history(created["record_id"])["total"], 2)
+
+        public = self.public_writer().history(created["record_id"])
+        self.assertEqual(public["total"], 1)
+        self.assertEqual([event["sequence"] for event in public["events"]], [2])
+        self.assertEqual(public["events"][0]["event_id"], updated["event_id"])
+        self.assertIsNone(public["next"])
+        self.assertEqual(public["title"], "Shared")
+
+        hidden = self.create_record(self.writer, "openwiki/private/only.md",
+                                    "Private Only")
+        with self.assertRaises(WriterError) as error:
+            self.public_writer().history(hidden["record_id"])
+        self.assertEqual(error.exception.code, "NOT_FOUND")
+        self.assertEqual(self.public_writer().search("private only")["total"], 0)
+
+    def test_read_only_capability_allows_discovery_but_not_writes(self):
+        created = self.create_record(self.writer, "openwiki/notes/read-only.md",
+                                     "Read Only")
+        reader = self.make_writer(self.root, {
+            "repository_mode": "private", "operations": ["read"],
+            "publisher_scope": False,
+        })
+        self.assertEqual(reader.search("read only")["total"], 1)
+        self.assertEqual(reader.history(created["record_id"])["total"], 1)
+        source = self.writer.read(created["record_id"])["content"]
+        with self.assertRaises(WriterError) as error:
+            reader.write({
+                "command": "update", "idempotency_key": str(uuid.uuid4()),
+                "actor": {"id": "discovery", "kind": "agent",
+                          "label": "Discovery test"},
+                "summary": "Denied update",
+                "record_id": created["record_id"],
+                "expected_version": created["version"],
+                "expected_head": git(self.root, "rev-parse", "refs/heads/main"),
+                "content": source.replace("Discovery body.", "Denied body."),
+            })
+        self.assertEqual(error.exception.code, "PUBLICATION_DENIED")
+        self.assertEqual(git(self.root, "rev-parse", "refs/heads/main"),
+                         created["head"])
+
+    def test_history_validates_identifiers_and_cursor(self):
+        created = self.create_record(self.writer, "openwiki/notes/cursor.md",
+                                     "Cursor")
+        for record_id in ("not-a-uuid", "", 7):
+            with self.subTest(record_id=record_id):
+                with self.assertRaises(WriterError) as error:
+                    self.writer.history(record_id)
+                self.assertEqual(error.exception.code, "VALIDATION_ERROR")
+        with self.assertRaises(WriterError) as error:
+            self.writer.history(str(uuid.uuid4()))
+        self.assertEqual(error.exception.code, "NOT_FOUND")
+        for limit in (0, 51, True, "20"):
+            with self.subTest(limit=limit):
+                with self.assertRaises(WriterError) as error:
+                    self.writer.history(created["record_id"], limit=limit)
+                self.assertEqual(error.exception.code, "VALIDATION_ERROR")
+        for cursor in (0, -1, True, 1.0):
+            with self.subTest(cursor=cursor):
+                with self.assertRaises(WriterError) as error:
+                    self.writer.history(created["record_id"],
+                                        before_sequence=cursor)
+                self.assertEqual(error.exception.code, "VALIDATION_ERROR")
+        with self.assertRaises(WriterError) as error:
+            self.make_writer(self.root, {}).history(created["record_id"])
+        self.assertEqual(error.exception.code, "NOT_FOUND")
+
 
 if __name__ == "__main__":
     unittest.main()

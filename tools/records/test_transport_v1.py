@@ -22,6 +22,9 @@ AGENT = REPO_SOURCE / "tools" / "agent"
 CLI = AGENT / "knowledge_cli.py"
 MCP = AGENT / "mcp_server.py"
 COMMANDS = ("read", "create", "update", "move", "archive", "reopen")
+# Discovery tools are read-only and capability-gated by "read"; they are not
+# launch operations and therefore never appear in a capability file.
+TOOLS = COMMANDS + ("search", "history")
 
 
 def git(root, *args):
@@ -107,7 +110,7 @@ class TransportGitFixtures(unittest.TestCase):
         self.assertEqual([r["id"] for r in replies], [1, 2, 3], stderr)
         self.assertEqual(replies[0]["result"]["protocolVersion"], "2025-11-25")
         self.assertEqual({tool["name"] for tool in replies[1]["result"]["tools"]},
-                         {"knowledge_" + cmd for cmd in COMMANDS})
+                         {"knowledge_" + cmd for cmd in TOOLS})
         self.assertIn("caller-supplied provenance",
                       replies[1]["result"]["tools"][0]["description"])
         result = replies[2]["result"]
@@ -279,8 +282,88 @@ class TransportGitFixtures(unittest.TestCase):
         self.assertEqual(replies[1]["result"]["protocolVersion"], "2026-07-28")
         self.assertEqual(replies[2]["error"]["code"], -32602)
         self.assertEqual(replies[3]["error"]["code"], -32601)
-        self.assertEqual(len(replies[4]["result"]["tools"]), 6)
+        self.assertEqual(len(replies[4]["result"]["tools"]), 8)
         self.assertEqual(self.head(), self.initial_head)
+
+    def test_real_stdio_search_then_history_returns_only_metadata(self):
+        path = "openwiki/notes/discovery.md"
+        create = self.command(
+            "create", path=path,
+            content='---\ntype: note\ntitle: "Discovery Harbor"\n---\n\nFirst\n')
+        status, first = self.cli(create)
+        self.assertEqual(status, 0)
+        read = self.cli({"command": "read", "record_id": first["record_id"]})
+        self.assertEqual(read[0], 0)
+        update = self.command(
+            "update", record_id=first["record_id"],
+            expected_version=first["version"],
+            content=read[1]["content"].replace("First\n", "Second\n"))
+        error, second = self.mcp("update", update)
+        self.assertFalse(error)
+        self.assertEqual(second["status"], "committed")
+
+        # Search takes no record ID: discovery must precede history.
+        error, found = self.mcp("search", {"query": "harbor"})
+        self.assertFalse(error)
+        self.assertEqual(set(found), {"query", "head", "total", "count",
+                                      "results"})
+        self.assertEqual(found["query"], "harbor")
+        self.assertEqual(found["head"], self.head())
+        self.assertEqual(found["total"], 1)
+        self.assertEqual(found["count"], len(found["results"]))
+        result = found["results"][0]
+        self.assertEqual(set(result), {"record_id", "path", "title", "status"})
+        self.assertEqual(result["record_id"], first["record_id"])
+        self.assertEqual(result["path"], path)
+        self.assertEqual(result["title"], "Discovery Harbor")
+        self.assertNotIn("First", json.dumps(found))
+        self.assertNotIn("Second", json.dumps(found))
+
+        error, history = self.mcp("history",
+                                  {"record_id": found["results"][0]["record_id"]})
+        self.assertFalse(error)
+        self.assertEqual(set(history), {"record_id", "path", "title", "status",
+                                        "head", "total", "next", "events"})
+        self.assertEqual(history["record_id"], first["record_id"])
+        self.assertEqual(history["path"], path)
+        self.assertEqual(history["title"], "Discovery Harbor")
+        self.assertEqual(history["total"], 2)
+        self.assertIsNone(history["next"])
+        self.assertEqual([event["sequence"] for event in history["events"]],
+                         [2, 1])
+        self.assertEqual([event["action"] for event in history["events"]],
+                         ["UPDATED", "CREATED"])
+        self.assertEqual(history["events"][0]["event_id"], second["event_id"])
+        for event in history["events"]:
+            self.assertEqual(set(event), {
+                "event_id", "sequence", "action", "recorded_at", "summary",
+                "occurred_on", "occurred_at", "actor_label", "path_before",
+                "path_after", "record_url", "event_url",
+            })
+            self.assertEqual(event["event_url"], path[:-3] + ".log.md#" +
+                             event["event_id"])
+            self.assertNotIn("before", event)
+            self.assertNotIn("after", event)
+        self.assertNotIn("Second", json.dumps(history))
+
+        # Read tools must reject write-only fields and stay non-mutating.
+        frames = [
+            json.dumps({"jsonrpc": "2.0", "id": 5, "method": "tools/call",
+                        "params": {"name": "knowledge_search",
+                                   "arguments": {"query": "harbor",
+                                                 "idempotency_key":
+                                                     str(uuid.uuid4())}}}) + "\n",
+            json.dumps({"jsonrpc": "2.0", "id": 6, "method": "tools/call",
+                        "params": {"name": "knowledge_history",
+                                   "arguments": {"record_id":
+                                                     found["results"][0]["record_id"],
+                                                 "expected_head": self.head()}}}) + "\n",
+        ]
+        replies, stderr = self.raw_mcp(frames)
+        self.assertEqual(len(replies), 2, stderr)
+        self.assertEqual([reply["error"]["code"] for reply in replies],
+                         [-32602, -32602])
+        self.assertEqual(self.head(), second["head"])
 
 
 if __name__ == "__main__":
