@@ -264,3 +264,71 @@ body {
     overflow-wrap:anywhere;
   }
 }
+
+/* #103: labelled filter selects, quick in-progress filter and project metadata.
+   Keep the iOS 5-6 grouped form treatment and 44px targets; decoration stays CSS-only. */
+.filter-form select {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  min-height:44px;
+  padding:8px 10px;
+  border:1px solid #8c9bb0;
+  border-radius:6px;
+  color:#263b57;
+  background:linear-gradient(#fff,#edf1f6);
+  box-shadow:inset 0 1px 2px #25395528, 0 1px #fff;
+  font-size:16px;
+}
+.quick-filters { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0; }
+.quick-filter {
+  width:auto;
+  min-height:44px;
+  padding:8px 13px;
+  white-space:nowrap;
+}
+.quick-filter[aria-pressed=true] {
+  color:#4a3000;
+  text-shadow:0 1px #ffe7a3;
+  border-color:#b57c12;
+  background:linear-gradient(#ffe08a,#f0b33a);
+}
+.project-meta,
+.project-summary {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px 10px;
+  margin:6px 0 10px;
+}
+.project-meta .meta,
+.project-summary .meta { margin:0; }
+.project-counts {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin:4px 0 10px;
+}
+.project-counts .count-chip {
+  display:inline-block;
+  border:1px solid #b3c0d0;
+  border-radius:11px;
+  padding:2px 8px;
+  font-size:12px;
+  font-weight:700;
+  color:#334b68;
+  background:#f2f6fb;
+}
+.project-records { margin:6px 0 10px; }
+.project-records h3,
+.record-row h3 { font-size:16px; margin:0 0 5px; }
+.clear-all { margin-left:4px; }
+@media(max-width:420px) {
+  .project-meta,
+  .project-summary { display:block; }
+  .project-meta > *,
+  .project-summary > * { display:inline-block; margin:0 6px 4px 0; }
+}
+/* Direct panel links and project record titles keep a 44px pointer target. */
+.panel > a[href^="#/"] { display:inline-flex; align-items:center; min-height:44px; }
+.project-records h3 a { display:inline-flex; align-items:center; min-height:44px; }

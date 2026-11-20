@@ -25,6 +25,8 @@ async function run() {
   ];
   const eventOne = {id: "123e4567-e89b-42d3-a456-426614174101", record_id: recA[0].id, sequence: 2, action: "update", recorded_at: "2026-01-02T00:00:00Z", project_id: recA[0].project_id, type: "note", status: "stable", tags: ["one"], area: "notes"};
   const eventTwo = {id: "123e4567-e89b-42d3-a456-426614174102", record_id: recA[0].id, sequence: 1, action: "create", recorded_at: "2026-01-01T00:00:00Z", project_id: recA[0].project_id, type: "note", status: "stable", tags: ["one"], area: "notes"};
+  const filterNote = {id: "123e4567-e89b-42d3-a456-426614174103", record_id: recA[1].id, sequence: 2, action: "UPDATED", recorded_at: "2026-01-03T00:00:00Z", project_id: recA[1].project_id, type: "note", status: "draft", tags: ["two"], area: "notes/sub"};
+  const filterTask = {id: "123e4567-e89b-42d3-a456-426614174104", record_id: recA[1].id, sequence: 1, action: "CREATED", recorded_at: "2026-01-03T00:00:00Z", project_id: recA[1].project_id, type: "task", status: "stable", tags: ["one"], area: "notes/sub"};
   let manifest = manifestA, inflight = 0, maxInflight = 0;
   const docs = {};
   function add(gen, path, value) { docs["/data/g/" + gen + "/" + path] = value; }
@@ -37,6 +39,8 @@ async function run() {
   add(genA, "days/2026-01-01/1.json", {schema_version: 1, items: [eventTwo], next: null});
   add(genA, "days/2026-01-02/index.json", {schema_version: 1, date: "2026-01-02", change_count: 1, record_count: 1, pages: [{number: 1, url: "days/2026-01-02/1.json", count: 1}]});
   add(genA, "days/2026-01-02/1.json", {schema_version: 1, items: [eventOne], next: null});
+  add(genA, "days/2026-01-03/index.json", {schema_version: 1, date: "2026-01-03", change_count: 2, record_count: 1, pages: [{number: 1, url: "days/2026-01-03/1.json", count: 2}]});
+  add(genA, "days/2026-01-03/1.json", {schema_version: 1, items: [filterNote, filterTask], next: null});
   add(genA, "aliases.json", {schema_version: 1, paths: {}, entries: {}});
   const client = data.create({baseUrl: "/data/", mode: "public", fetchImpl: async (url, init) => {
     assert.strictEqual(init.method, "GET");
@@ -58,6 +62,14 @@ async function run() {
   const initial = await client.diaryInitialRange({start: "2026-01-01", end: "2026-01-02"});
   assert.strictEqual(initial.items.length, 2);
   assert.strictEqual(initial.countsExact, false);
+  const typeStatus = await client.diaryInitialRange({start: "2026-01-03", end: "2026-01-03", filters: {type: "note", status: "stable"}});
+  assert.strictEqual(typeStatus.items.length, 0, "type and status filters must combine with AND");
+  const typeStatusMatch = await client.diaryInitialRange({start: "2026-01-03", end: "2026-01-03", filters: {type: "note", status: "draft"}});
+  assert.deepStrictEqual(typeStatusMatch.items.map(item => item.id), [filterNote.id]);
+  const tagAction = await client.diaryInitialRange({start: "2026-01-03", end: "2026-01-03", filters: {tag: "one", action: "UPDATED"}});
+  assert.strictEqual(tagAction.items.length, 0, "tag and action filters must combine with AND");
+  const tagActionMatch = await client.diaryInitialRange({start: "2026-01-03", end: "2026-01-03", filters: {tag: "two", action: "UPDATED"}});
+  assert.deepStrictEqual(tagActionMatch.items.map(item => item.id), [filterNote.id]);
   const exact = await client.diaryRange({start: "2026-01-01", end: "2026-01-02"});
   assert.strictEqual(exact.total_changes, 2);
   assert.strictEqual(exact.total_records, 1);

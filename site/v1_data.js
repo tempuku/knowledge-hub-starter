@@ -576,8 +576,10 @@
         if (Object.keys(filters).some(function (key) { return !!filters[key]; })) rows = rows.filter(function (item) {
           if (filters.project && item.project_id !== filters.project) return false;
           if (filters.area && item.area !== filters.area && item.area.indexOf(filters.area.replace(/\/$/, "") + "/") !== 0) return false;
-          if (filters.type && item.type !== filters.type || filters.status && item.status !== filters.status) return false;
-          if (filters.tag && (item.tags || []).indexOf(filters.tag) < 0 || filters.action && item.action !== filters.action) return false;
+          if (filters.type && item.type !== filters.type) return false;
+          if (filters.status && item.status !== filters.status) return false;
+          if (filters.tag && (item.tags || []).indexOf(filters.tag) < 0) return false;
+          if (filters.action && item.action !== filters.action) return false;
           return true;
         });
         rows.sort(function (a, b) { return (b.recorded_at || "").localeCompare(a.recorded_at || "") || (b.sequence || 0) - (a.sequence || 0) || a.id.localeCompare(b.id); });
