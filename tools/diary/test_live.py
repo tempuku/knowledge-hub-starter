@@ -77,8 +77,13 @@ def check() -> int:
         raise AssertionError("Invalid live public read-model generation")
     prefix = "data/g/" + generation + "/"
     catalog = json.loads(get(prefix + "catalog.json"))
-    if catalog.get("record_count", 0) < cal["total"] + 3:
-        raise AssertionError("Legacy entries or public demo records missing in v1 catalog")
+    # Legacy entries are grouped into one record per canonical source path, so
+    # the published event count, not the record count, must cover every
+    # approved legacy diary entry. Demo records are checked by title below.
+    if catalog.get("event_count", 0) < cal["total"]:
+        raise AssertionError("Legacy diary entries missing in v1 event catalog")
+    if catalog.get("record_count", 0) < 3:
+        raise AssertionError("Public demo records missing in v1 catalog")
     pages = json.loads(get(prefix + "records/catalog/index.json"))
     items = []
     for page in pages["pages"]:
