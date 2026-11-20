@@ -3,7 +3,7 @@
   "use strict";
   var app = document.getElementById("route-content"), live = document.getElementById("live-status");
   var api = window.KnowledgeV1Data && window.KnowledgeV1Data.create ? window.KnowledgeV1Data.create({baseUrl:"./data/",mode:"public"}) : null;
-  var token = 0, manifest = null, latestDate = null, pendingRoute = false, restoringHistory = false, expandSections = false;
+  var token = 0, manifest = null, latestDate = null, pendingRoute = false, restoringHistory = false, expandSections = false, filtersOpen = false;
   var previousFocus = Object.create(null), routeMemory = Object.create(null), pageState = Object.create(null), defaultFilters = {project:"",area:"",type:"",status:"",tag:"",action:""};
   if(api&&api.setUpdateHandler)api.setUpdateHandler(function(){var note=document.getElementById("update-available");if(!note){note=text("div","Update available. Refresh to load the new published generation.","update-banner");note.id="update-available";document.getElementById("app-footer").before(note);}});
   var nowDate = function () { return new Date().toISOString().slice(0, 10); };
@@ -37,7 +37,7 @@
   };
   var dataCall = async function (method, args, fallbackPath) { if (api && typeof api[method] === "function") return api[method](args); return apiGet(fallbackPath); };
   var initialize = async function (refresh) {
-    var loaded=null;
+    var loaded=null;if(refresh)aliasCache=null;
     if (api && api.loadManifest) { loaded=await api.loadManifest({refresh:!!refresh,activate:!!refresh});manifest=loaded.manifest||loaded; }
     else { var res=await fetch("./manifest.json",{cache:"no-cache"}); if(!res.ok)throw new Error("Published data is unavailable."); manifest=await res.json(); if(manifest.schema_version!==1)throw new Error("Update required: unsupported manifest."); }
     if (!manifest || manifest.mode !== "public" || !manifest.root) throw new Error("Public demo data is unavailable.");
@@ -61,6 +61,63 @@
   var catalog = async function () { return dataCall("catalog", {}, "catalog.json"); };
   var statusNode = function (value) { var labels={draft:"✎ Draft",stable:"✓ Stable",in_progress:"◷ In progress",completed:"✓ Completed",deprecated:"▣ Archived"}; var key=value || "unknown"; return text("span",labels[key] || "? Unknown", "status"); };
   var statusText = function (parent, value) { var node=statusNode(value); node.setAttribute("data-status",value || "unknown"); parent.appendChild(node); };
+  var aliasCache = null;
+  var getAliases = async function () {
+    if (aliasCache) return aliasCache;
+    if (!api || !api.aliases) { aliasCache = {}; return aliasCache; }
+    try { aliasCache = await api.aliases() || {}; } catch (e) { aliasCache = {}; }
+    return aliasCache;
+  };
+  var foldText = function (value) { return String(value === undefined || value === null ? "" : value).toLowerCase(); };
+  var cmpCase = function (a, b) { var x = foldText(a), y = foldText(b); if (x < y) return -1; if (x > y) return 1; return 0; };
+  var cmpId = function (a, b) { return String(a.id).localeCompare(String(b.id)); };
+  var cmpTitle = function (a, b) { return cmpCase(a.title, b.title) || cmpId(a, b); };
+  var cmpUpdated = function (a, b) { return String(b.updated_at || "").localeCompare(String(a.updated_at || "")) || cmpId(a, b); };
+  var countLabel = function (n, one, many) { return n + " " + (n === 1 ? one : many); };
+  var statusLabel = function (value) { var labels = {draft: "Draft", stable: "Stable", in_progress: "In progress", completed: "Completed", deprecated: "Archived"}; return labels[value] || "Unknown"; };
+  var projectAlias = function (id, aliases) { var current = aliases && aliases.current_entries; return id && current && current[id] ? current[id] : id; };
+  var belongsToProject = function (record, project, aliases) { return record.project_id === project.id || projectAlias(record.project_id, aliases) === project.id; };
+  var projectTitles = function (records, aliases) {
+    var map = {};
+    records.forEach(function (record) { if (record.type === "project") map[record.id] = record.title || record.id; });
+    var current = aliases && aliases.current_entries || {};
+    Object.keys(current).forEach(function (alias) { if (map[current[alias]]) map[alias] = map[current[alias]]; });
+    return map;
+  };
+  var projectTitle = function (id, map) { return id ? (map[id] || id) : "No project"; };
+  var addOption = function (select, value, label) { var option = document.createElement("option"); option.value = value; option.textContent = label; select.appendChild(option); return option; };
+  var selectField = function (form, labelText, choices, current, onChange) {
+    var label = document.createElement("label"); label.appendChild(text("span", labelText));
+    var select = document.createElement("select"); select.setAttribute("aria-label", labelText); addOption(select, "", "All");
+    choices.forEach(function (choice) { addOption(select, choice.value, choice.label); });
+    select.value = current || "";
+    if (current && select.value !== current) { addOption(select, current, current); select.value = current; }
+    select.addEventListener("change", function () { onChange(select.value); });
+    label.appendChild(select); form.appendChild(label); return select;
+  };
+  var choiceValues = function (records, key, includeDeprecated) {
+    var seen = {}, values = [];
+    records.forEach(function (record) {
+      if (!includeDeprecated && record.status === "deprecated") return;
+      var raw = key === "tag" ? (record.tags || []) : [record[key]];
+      raw.forEach(function (value) { if (value === undefined || value === null || value === "") return; value = String(value); if (!seen[value]) { seen[value] = true; values.push(value); } });
+    });
+    values.sort(cmpCase);
+    return values;
+  };
+  var valueChoices = function (records, key, includeDeprecated, labelFor) {
+    return choiceValues(records, key, includeDeprecated).map(function (value) { return {value: value, label: labelFor ? labelFor(value) : value}; });
+  };
+  var projectChoices = function (records, map, includeDeprecated) {
+    var seen = {}, choices = [];
+    records.forEach(function (record) {
+      if (!includeDeprecated && record.status === "deprecated") return;
+      var id = record.project_id; if (!id || seen[id]) return; seen[id] = true;
+      choices.push({value: id, label: map[id] || id});
+    });
+    choices.sort(function (a, b) { return cmpCase(a.label, b.label) || cmpCase(a.value, b.value); });
+    return choices;
+  };
   var setupSearch = function (route) {
     var field=document.getElementById("global-search"), form=document.getElementById("global-search-form");
     if (route.name === "records") field.value=route.params.get("q") || "";
@@ -83,7 +140,11 @@
     if(!api || !api.aliases || !route.id)return route;
     var aliases=await api.aliases(), paths=aliases.paths||{}, entries=aliases.entries||{}, currentEntries=aliases.current_entries||{};
     if(route.name==="events" && entries[route.id]){ if(serial===token)go("/events/"+entries[route.id],{view:route.params.get("view")||"revision"},true); return {name:"events",id:entries[route.id],params:route.params}; }
-    if(route.name==="records" && !safeId(route.id)){var ids=paths[route.id]||(currentEntries[route.id]?[currentEntries[route.id]]:[]); if(ids.length===1){if(serial===token)go("/records/"+ids[0],{tab:route.params.get("tab")||""},true);return {name:"records",id:ids[0],params:route.params};} if(ids.length>1){route.ambiguous=ids;return route;} }
+    if(route.name==="records"){
+      var canonical=currentEntries[route.id];
+      if(canonical&&canonical!==route.id){if(serial===token)go("/records/"+canonical,{tab:route.params.get("tab")||""},true);return {name:"records",id:canonical,params:route.params};}
+      if(!safeId(route.id)){var ids=paths[route.id]||[];if(!ids.length&&canonical&&canonical!==route.id)ids=[canonical]; if(ids.length===1){if(serial===token)go("/records/"+ids[0],{tab:route.params.get("tab")||""},true);return {name:"records",id:ids[0],params:route.params};} if(ids.length>1){route.ambiguous=ids;return route;} }
+    }
     return route;
   };
   var dateParts = function (date) { var d=new Date(date+"T00:00:00Z"),day=(d.getUTCDay()+6)%7; d.setUTCDate(d.getUTCDate()-day); var end=new Date(d);end.setUTCDate(end.getUTCDate()+6);return {start:d.toISOString().slice(0,10),end:end.toISOString().slice(0,10)}; };
@@ -118,15 +179,34 @@
     var modes=text("div",undefined,"segmented"); ["day","week","month"].forEach(function(m){var b=button(m.charAt(0).toUpperCase()+m.slice(1),function(){go("/diary",diaryParams(date,m,route));},"");b.setAttribute("aria-pressed",String(mode===m));modes.appendChild(b);});toolbar.appendChild(modes);
     var delta=mode==="day"?1:mode==="week"?7:0;var prev=button("Previous period",function(){var d=new Date(date+"T00:00:00Z");if(mode==="month")d=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()-1,Math.min(d.getUTCDate(),new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),0)).getUTCDate())));else d.setUTCDate(d.getUTCDate()-delta);go("/diary",diaryParams(d.toISOString().slice(0,10),mode,route));},"btn secondary");var next=button("Next period",function(){var d=new Date(date+"T00:00:00Z");if(mode==="month")d=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,Math.min(d.getUTCDate(),new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+2,0)).getUTCDate())));else d.setUTCDate(d.getUTCDate()+delta);go("/diary",diaryParams(d.toISOString().slice(0,10),mode,route));},"btn secondary");toolbar.append(prev,next,button("Today",function(){go("/diary",diaryParams(nowDate(),mode,route));},"btn secondary"),button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));
     var dateLabel=document.createElement("label");dateLabel.appendChild(text("span","Jump to date (UTC)"));var input=document.createElement("input");input.type="date";input.value=date;input.setAttribute("aria-label","Jump to date (UTC)");input.addEventListener("change",function(){if(input.value)go("/diary",{date:input.value,mode:mode});});dateLabel.appendChild(input);toolbar.appendChild(dateLabel);box.appendChild(text("p",start+" – "+end+" · UTC","route-intro"));box.appendChild(toolbar);
-    var filters=text("details",undefined,"panel filter-panel");filters.id="filter-panel";var summary=text("summary","Filters");summary.id="filter-toggle";summary.setAttribute("aria-controls","diary-filters");filters.appendChild(summary);
+    var quickWrap=text("div",undefined,"quick-filters");box.appendChild(quickWrap);
+    var filters=text("details",undefined,"panel filter-panel");filters.id="filter-panel";filters.open=filtersOpen;filters.addEventListener("toggle",function(){filtersOpen=filters.open;});var summary=text("summary","Filters");summary.id="filter-toggle";summary.setAttribute("aria-controls","diary-filters");filters.appendChild(summary);
+    var catalogRecords=[],catalogData=null;
+    try{var loaded=await Promise.all([allRecords(),catalog().catch(function(){return null;})]);catalogRecords=loaded[0]||[];catalogData=loaded[1];}catch(e){catalogRecords=[];}
+    if(serial!==token)return;
+    var aliases=await getAliases();if(serial!==token)return;
+    var projectMap=projectTitles(catalogRecords,aliases),areaValues=choiceValues(catalogRecords,"area",true),projectValues=projectChoices(catalogRecords,projectMap,true);
+    ((catalogData&&catalogData.areas)||[]).forEach(function(area){var path=typeof area==="string"?area:area&&area.path;if(path&&areaValues.indexOf(path)<0)areaValues.push(path);});
+    ((catalogData&&catalogData.projects)||[]).forEach(function(project){var id=typeof project==="string"?project:project&&project.id;if(!id)return;for(var known=false,i=0;i<projectValues.length;i+=1){if(projectValues[i].value===id){known=true;break;}}if(!known)projectValues.push({value:id,label:(project&&project.title)||projectMap[id]||id});});
+    areaValues.sort(cmpCase);
+    projectValues.sort(function(a,b){return cmpCase(a.label,b.label)||cmpCase(a.value,b.value);});
+    var filterChoices={
+      project:projectValues,
+      area:areaValues.map(function(value){return {value:value,label:value};}),
+      type:valueChoices(catalogRecords,"type",true),
+      status:valueChoices(catalogRecords,"status",true,statusLabel).sort(function(a,b){return cmpCase(a.label,b.label);}),
+      tag:valueChoices(catalogRecords,"tag",true),
+      action:[{value:"CREATED",label:"Created"},{value:"UPDATED",label:"Updated"},{value:"MOVED",label:"Moved"},{value:"ARCHIVED",label:"Archived"},{value:"REOPENED",label:"Reopened"},{value:"IMPORTED",label:"Imported"}]
+    };
     var form=text("div",undefined,"filter-form");form.id="diary-filters";var fields=["project","area","type","status","tag","action"];
-    fields.forEach(function(field){var label=document.createElement("label");label.appendChild(text("span",field.charAt(0).toUpperCase()+field.slice(1)));var control=document.createElement("input");control.setAttribute("aria-label",field);control.value=route.params.get(field)||"";control.addEventListener("change",function(){var p={date:date,mode:mode};fields.forEach(function(f){p[f]=f===field?control.value:(route.params.get(f)||"");});go("/diary",p);});label.appendChild(control);form.appendChild(label);});
+    fields.forEach(function(field){selectField(form,field.charAt(0).toUpperCase()+field.slice(1),filterChoices[field]||[],route.params.get(field)||"",function(value){var p={date:date,mode:mode};fields.forEach(function(f){p[f]=f===field?value:(route.params.get(f)||"");});go("/diary",p);});});
+    var quick=button("◷ In progress",function(){var currentStatus=route.params.get("status")||"",p={date:date,mode:mode};fields.forEach(function(f){p[f]=f==="status"?(currentStatus==="in_progress"?"":"in_progress"):(route.params.get(f)||"");});go("/diary",p);},"btn secondary quick-filter");quick.setAttribute("aria-pressed",String((route.params.get("status")||"")==="in_progress"));quickWrap.appendChild(quick);
     filters.appendChild(form);var clear=button("Clear filters",function(){go("/diary",{date:date,mode:mode});},"btn secondary");filters.appendChild(clear);box.appendChild(filters);
     var active=fields.filter(function(f){return !!route.params.get(f);}).length;summary.textContent=active?"Filters ("+active+")":"Filters";
     if(active){box.appendChild(text("p","Filters apply to the revision shown.","meta"));}
     app.setAttribute("aria-busy","true");
     var data=await loadDiaryEvents(start,end);if(serial!==token)return;
-    var items=(data.items||[]).slice();items=items.filter(function(e){return fields.every(function(f){var v=route.params.get(f);if(!v)return true;if(f==="project")return e.project_id===v;if(f==="area")return e.area===v||e.area.indexOf(v+"/")===0;if(f==="action")return e.action===v;return String(e[f]||"")===v;});});
+    var items=(data.items||[]).slice();items=items.filter(function(e){return fields.every(function(f){var v=route.params.get(f);if(!v)return true;if(f==="project")return e.project_id===v;if(f==="area")return e.area===v||e.area.indexOf(v+"/")===0;if(f==="type")return e.type===v;if(f==="status")return e.status===v;if(f==="tag")return (e.tags||[]).indexOf(v)>=0;if(f==="action")return e.action===v;return true;});});
     var countRecords=data.total_records !== undefined && !active ? data.total_records : Array.from(new Set(items.map(function(e){return e.record_id;}))).length;
     var countNode=text("p",data.countsExact===false?"Calculating changes · records":items.length+" changes · "+countRecords+" records","meta");box.appendChild(countNode);
     var diaryEmpty=null;if(!items.length&&data.countsExact!==false){diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","No changes in this period.","empty"));diaryEmpty.appendChild(button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));if(active)diaryEmpty.appendChild(button("Clear filters",function(){go("/diary",{date:date,mode:mode});},"btn secondary"));}else if(!items.length&&data.countsExact===false){diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","Loading filtered results…","meta"));}
@@ -139,7 +219,7 @@
     var dayHost=text("div",undefined,"diary-days");box.appendChild(dayHost);
     keys.forEach(function(day){var block=text("section",undefined,"day-block diary-day");var events=groups[day]||[];var pageDesc=(data.dayIndexes||[]).filter(function(x){return x.date===day;})[0];var dayTotal=pageDesc&&pageDesc.index?pageDesc.index.change_count:events.length;var opened=day===openDay;var header=button(day+" · "+dayTotal+" changes",function(){var body=block.querySelector(".day-items");var expanded=header.getAttribute("aria-expanded")==="true";header.setAttribute("aria-expanded",String(!expanded));body.hidden=expanded;},"");header.setAttribute("aria-expanded",String(opened));block.appendChild(header);var body=text("div",undefined,"day-items");body.hidden=!opened;
       var dayError=(data.dayErrors||[]).filter(function(e){return e.date===day||e.day===day;})[0]||(pageDesc&&pageDesc.error?{error:pageDesc.error}:null);if(dayError)fail(body,dayError.error,function(){render();});var pageNumber=events.length?1:0;events.forEach(function(ev){body.appendChild(renderEventRow(ev,items));});var descriptors=pageDesc&&pageDesc.index?pageDesc.index.pages:[];var more=null;var addMore=function(){if(!descriptors||pageNumber>=descriptors.length)return;if(!more||!more.parentNode){more=button("Load more",async function(){more.disabled=true;try{pageNumber++;var result=await api.dayPage(day,pageNumber);if(serial!==token)return;(result.items||[]).forEach(function(ev){body.insertBefore(renderEventRow(ev,items),more);});if(pageNumber>=descriptors.length){more.remove();}else more.disabled=false;}catch(e){more.disabled=false;fail(body,e,function(){more.click();});}},"btn secondary load-more");body.appendChild(more);}};if(pageNumber>0)addMore();if(!events.length&&descriptors&&descriptors.length)header.addEventListener("click",async function(){if(body.getAttribute("data-loaded")==="true")return;body.setAttribute("data-loaded","true");var loading=text("p","Loading…","meta");body.appendChild(loading);try{var firstPage=await api.dayPage(day,1);if(serial!==token)return;loading.remove();(firstPage.items||[]).forEach(function(ev){body.appendChild(renderEventRow(ev,firstPage.items));});pageNumber=1;addMore();}catch(e){loading.remove();body.removeAttribute("data-loaded");fail(body,e,function(){header.click();});}});block.appendChild(body);dayHost.appendChild(block);});
-    app.setAttribute("aria-busy","false");if(data.countsExact===false&&api&&api.diaryRange){var exactFilters={};fields.forEach(function(f){if(route.params.get(f))exactFilters[f]=route.params.get(f);});api.diaryRange({start:start,end:end,filters:exactFilters}).then(function(exact){if(serial!==token)return;if(exact.countsExact===false){countNode.textContent="Counts could not be calculated.";return;}countNode.textContent=exact.total_changes+" changes · "+exact.total_records+" records";if(active){if(diaryEmpty)diaryEmpty.remove();while(dayHost.firstChild)dayHost.removeChild(dayHost.firstChild);var exactGroups={};(exact.items||[]).forEach(function(ev){var eventDay=(ev.recorded_at||"").slice(0,10);(exactGroups[eventDay]||(exactGroups[eventDay]=[])).push(ev);});var exactDays=Object.keys(exactGroups).sort().reverse();exactDays.forEach(function(eventDay){var evs=exactGroups[eventDay],block=text("section",undefined,"day-block diary-day"),header=button(eventDay+" · "+evs.length+" changes",function(){var body=block.querySelector(".day-items"),expanded=header.getAttribute("aria-expanded")==="true";header.setAttribute("aria-expanded",String(!expanded));body.hidden=expanded;},"");header.setAttribute("aria-expanded",String(exactDays[0]===eventDay));block.appendChild(header);var body=text("div",undefined,"day-items");body.hidden=header.getAttribute("aria-expanded")!=="true";var offset=0,more=null;var appendChunk=function(){evs.slice(offset,offset+50).forEach(function(ev){body.insertBefore(renderEventRow(ev,exact.items),more||null);});offset+=50;if(more&&offset>=evs.length)more.remove();};if(evs.length>50)more=button("Load more",function(){appendChunk();},"btn secondary load-more");appendChunk();if(more)body.appendChild(more);block.appendChild(body);dayHost.appendChild(block);});if(!exact.items.length){diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","No changes in this period.","empty"));diaryEmpty.appendChild(button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));diaryEmpty.appendChild(button("Clear filters",function(){go("/diary",{date:date,mode:mode});},"btn secondary"));}}}).catch(function(){if(serial===token){countNode.textContent="Counts could not be calculated.";}});}
+    app.setAttribute("aria-busy","false");if(data.countsExact===false&&api&&api.diaryRange){var exactFilters={};fields.forEach(function(f){if(route.params.get(f))exactFilters[f]=route.params.get(f);});api.diaryRange({start:start,end:end,filters:exactFilters}).then(function(exact){if(serial!==token)return;if(exact.countsExact===false){countNode.textContent="Counts could not be calculated.";return;}countNode.textContent=exact.total_changes+" changes · "+exact.total_records+" records";if(!active&&!exact.items.length){if(diaryEmpty)diaryEmpty.remove();diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","No changes in this period.","empty"));diaryEmpty.appendChild(button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));}if(active){if(diaryEmpty)diaryEmpty.remove();while(dayHost.firstChild)dayHost.removeChild(dayHost.firstChild);var exactGroups={};(exact.items||[]).forEach(function(ev){var eventDay=(ev.recorded_at||"").slice(0,10);(exactGroups[eventDay]||(exactGroups[eventDay]=[])).push(ev);});var exactDays=Object.keys(exactGroups).sort().reverse();exactDays.forEach(function(eventDay){var evs=exactGroups[eventDay],block=text("section",undefined,"day-block diary-day"),header=button(eventDay+" · "+evs.length+" changes",function(){var body=block.querySelector(".day-items"),expanded=header.getAttribute("aria-expanded")==="true";header.setAttribute("aria-expanded",String(!expanded));body.hidden=expanded;},"");header.setAttribute("aria-expanded",String(exactDays[0]===eventDay));block.appendChild(header);var body=text("div",undefined,"day-items");body.hidden=header.getAttribute("aria-expanded")!=="true";var offset=0,more=null;var appendChunk=function(){evs.slice(offset,offset+50).forEach(function(ev){body.insertBefore(renderEventRow(ev,exact.items),more||null);});offset+=50;if(more&&offset>=evs.length)more.remove();};if(evs.length>50)more=button("Load more",function(){appendChunk();},"btn secondary load-more");appendChunk();if(more)body.appendChild(more);block.appendChild(body);dayHost.appendChild(block);});if(!exact.items.length){diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","No changes in this period.","empty"));diaryEmpty.appendChild(button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));diaryEmpty.appendChild(button("Clear filters",function(){go("/diary",{date:date,mode:mode});},"btn secondary"));}}}).catch(function(){if(serial===token){countNode.textContent="Counts could not be calculated.";}});}
   };
   var renderEventRow = function (ev, visible) {
     var row=text("article",undefined,"event-row");var title=ev.title||ev.summary||"Untitled record";var h=text("h2",title);row.appendChild(h);if(ev.summary)row.appendChild(text("p",ev.summary));row.appendChild(text("p",(ev.action||"Change")+" · "+(ev.recorded_at||"")+" UTC","meta"));if(ev.occurred_on||ev.occurred_at)row.appendChild(text("p","Occurred "+(ev.occurred_on||"")+(ev.occurred_at?" "+ev.occurred_at:""),"meta"));var meta=text("p",undefined,"meta");statusText(meta,ev.status);if(ev.project_id)meta.appendChild(text("span"," · "+(ev.project_title||ev.project_id)));if(ev.actor_label)meta.appendChild(text("span"," · "+ev.actor_label));if(ev.provenance_kind && ev.provenance_kind!=="native")meta.appendChild(text("span"," · Imported history","badge"));row.appendChild(meta);
@@ -183,25 +263,223 @@
   var loadEventDetail = async function (box,route,meta,view,serial) {try{var value=meta.detail_bytes>262144?await apiGet("events/"+route.id+".json"):await dataCall("event",route.id,"events/"+route.id+".json");if(serial!==token)return;var ev=value.event||{}, section=panel(box,{revision:"This revision",before:"Previous revision",diff:"Changes"}[view]);var content=view==="before"?ev.before:view==="revision"?ev.after:null;if(view==="before"&&ev.before===null){section.appendChild(text("p","This record did not exist before this change."));return;}if(view==="diff"){if(ev.action==="MOVED"&&!(value.diff&&value.diff.text))section.appendChild(text("p","Content unchanged; moved from "+(ev.path_before||"unknown")+" to "+(ev.path_after||"unknown")+"."));else{var pre=text("pre",undefined,"revision-diff");(value.diff&&value.diff.text||"").split("\n").forEach(function(line){var span=text("span",line+"\n");if(line.charAt(0)==="+")span.className="diff-added";if(line.charAt(0)==="-")span.className="diff-removed";pre.appendChild(span);});section.appendChild(pre);}return;}
       var rendered=window.KnowledgeV1Markdown.render(readFrontmatter(content||""),{baseUrl:window.location.href,approvedAssets:[]});section.appendChild(rendered);section.appendChild(text("p","Status in this revision: "+(meta.status||"Unknown"),"meta"));}catch(e){fail(box,e,function(){loadEventDetail(box,route,meta,view,serial);});}};
   var renderAmbiguous = function (route) {var box=routeBox("Choose a record");box.appendChild(text("p","This old path matches more than one published record. Choose the intended title."));var list=panel(box);route.ambiguous.forEach(async function(id){try{var meta=await dataCall("recordMeta",id,"records/"+id+".meta.json");list.appendChild(link(meta.title+" · "+meta.area,recordLink(id)));}catch(e){}});};
-  var recordsScreen = async function (route,serial) {
-    var box=routeBox("Records");setNav("records");var q=route.params.get("q")||"";var form=text("div",undefined,"panel filter-panel");form.id="filter-panel";var filters=text("div",undefined,"filter-form");var fields=["area","project","type","status","tag"];fields.forEach(function(f){var label=document.createElement("label");label.appendChild(text("span",f.charAt(0).toUpperCase()+f.slice(1)));var input=document.createElement("input");input.value=route.params.get(f)||"";input.setAttribute("aria-label",f);input.addEventListener("change",function(){var p={q:q,archived:route.params.get("archived")||""};fields.forEach(function(name){p[name]=name===f?input.value:(route.params.get(name)||"");});go("/records",p);});label.appendChild(input);filters.appendChild(label);});form.appendChild(filters);var archived=document.createElement("label"),check=document.createElement("input");check.type="checkbox";check.checked=route.params.get("archived")==="1"||route.params.get("status")==="deprecated";check.addEventListener("change",function(){var p={q:q,archived:check.checked?"1":""};fields.forEach(function(f){p[f]=route.params.get(f)||"";});go("/records",p);});archived.append(check,document.createTextNode(" Include archived"));form.appendChild(archived);box.appendChild(form);
-    var state=text("p",q?"Searching…":"Loading records…","meta");box.appendChild(state);var output=panel(box);var items;
-    if(api&&api.search&&q){var searchResult=await api.search(q);items=searchResult.items||[];items.forEach(function(record){record.score=(searchResult.scores||{})[record.id]||0;});}else items=await allRecords();if(serial!==token)return;
-    if(!Array.isArray(items))items=items.items||[];var params={q:q,area:route.params.get("area")||"",project:route.params.get("project")||"",type:route.params.get("type")||"",status:route.params.get("status")||"",tag:route.params.get("tag")||""};var activeArchived=check.checked;
-    items=items.filter(function(r){if(!activeArchived&&r.status==="deprecated")return false;return (!params.area||r.area===params.area||r.area.indexOf(params.area+"/")===0)&&(!params.project||r.project_id===params.project)&&(!params.type||r.type===params.type)&&(!params.status||r.status===params.status)&&(!params.tag||(r.tags||[]).indexOf(params.tag)>=0);});
-    if(!q)items.sort(function(a,b){return String(a.title||"").toLowerCase().localeCompare(String(b.title||"").toLowerCase())||String(a.id).localeCompare(String(b.id));});
-    else items.sort(function(a,b){return (b.score||0)-(a.score||0)||String(b.updated_at||"").localeCompare(String(a.updated_at||""))||String(a.id).localeCompare(String(b.id));});
-    state.textContent=items.length+" matching records";if(!items.length){output.appendChild(text("p","No matching records.","empty"));output.appendChild(button("Clear filters",function(){go("/records",{q:q});},"btn secondary"));return;}
-    var offset=pageState[window.location.hash]||0;items.slice(0,offset+50).forEach(function(r){var row=text("article",undefined,"record-row");var h=text("h2");h.appendChild(link(r.title||"Untitled",recordLink(r.id)));row.appendChild(h);if(r.description)row.appendChild(text("p",r.description));var metaBox=text("p",undefined,"meta");statusText(metaBox,r.status);metaBox.appendChild(text("span"," · "+(r.project_title||r.project_id||"No project")+" · "+(r.area||"")));if(r.updated_at)metaBox.appendChild(text("span"," · Updated "+r.updated_at));row.appendChild(metaBox);output.appendChild(row);});if(items.length>offset+50)output.appendChild(button("Load more",function(){pageState[window.location.hash]=offset+50;render();},"btn secondary load-more"));
+  var recordsScreen = async function (route, serial) {
+    var box = routeBox("Records"); setNav("records");
+    var q = route.params.get("q") || "", sort = route.params.get("sort") === "updated" ? "updated" : "";
+    var archivedParam = route.params.get("archived") === "1", statusParam = route.params.get("status") || "";
+    var includeArchived = archivedParam || statusParam === "deprecated";
+    var readParams = function (overrides) {
+      var values = {q:q, area:route.params.get("area")||"", project:route.params.get("project")||"", type:route.params.get("type")||"", status:statusParam, tag:route.params.get("tag")||"", archived:archivedParam?"1":"", sort:sort};
+      if (overrides) Object.keys(overrides).forEach(function (key) { values[key] = overrides[key] === false ? "" : overrides[key]; });
+      return values;
+    };
+    var state = text("p", q ? "Searching…" : "Loading records…", "meta"), output;
+    var records = await allRecords(); if (serial !== token) return;
+    var aliases = await getAliases(); if (serial !== token) return;
+    var titleMap = projectTitles(records, aliases), items;
+    if (api && api.search && q) {
+      var searchResult = await api.search(q); items = searchResult.items || [];
+      items.forEach(function (record) { record.score = (searchResult.scores || {})[record.id] || 0; });
+    } else items = records.slice();
+    if (serial !== token) return;
+    if (!Array.isArray(items)) items = items.items || [];
+    var filterCount = ["area", "project", "type", "status", "tag"].filter(function (key) { return !!route.params.get(key); }).length;
+    var panelDetails = text("details", undefined, "panel filter-panel"); panelDetails.id = "filter-panel"; panelDetails.open = filtersOpen;
+    panelDetails.addEventListener("toggle", function () { filtersOpen = panelDetails.open; });
+    var panelSummary = text("summary", filterCount ? "Filters (" + filterCount + ")" : "Filters");
+    panelSummary.id = "filter-toggle"; panelSummary.setAttribute("aria-controls", "records-filters"); panelDetails.appendChild(panelSummary);
+    var form = text("div", undefined, "filter-form"); form.id = "records-filters";
+    var filters = form;
+    selectField(filters, "Area", valueChoices(records, "area", includeArchived), readParams().area, function (value) { go("/records", readParams({area:value})); });
+    selectField(filters, "Project", projectChoices(records, titleMap, includeArchived), readParams().project, function (value) { go("/records", readParams({project:value})); });
+    selectField(filters, "Type", valueChoices(records, "type", includeArchived), readParams().type, function (value) { go("/records", readParams({type:value})); });
+    selectField(filters, "Status", valueChoices(records, "status", includeArchived, statusLabel).sort(function (a, b) { return cmpCase(a.label, b.label); }), readParams().status, function (value) { go("/records", readParams({status:value})); });
+    selectField(filters, "Tag", valueChoices(records, "tag", includeArchived), readParams().tag, function (value) { go("/records", readParams({tag:value})); });
+    var sortLabel = document.createElement("label"); sortLabel.appendChild(text("span", "Sort"));
+    var sortSelect = document.createElement("select"); sortSelect.setAttribute("aria-label", "Sort");
+    addOption(sortSelect, "", "Title A–Z"); addOption(sortSelect, "updated", "Updated recently"); sortSelect.value = sort;
+    sortSelect.addEventListener("change", function () { go("/records", readParams({sort:sortSelect.value})); });
+    sortLabel.appendChild(sortSelect); filters.appendChild(sortLabel);
+    var quickWrap = text("div", undefined, "quick-filters");
+    var quick = button("◷ In progress", function () { go("/records", readParams({status:statusParam === "in_progress" ? "" : "in_progress"})); }, "btn secondary quick-filter");
+    quick.setAttribute("aria-pressed", String(statusParam === "in_progress")); quickWrap.appendChild(quick);
+    var archivedLabel = document.createElement("label"), check = document.createElement("input");
+    check.type = "checkbox"; check.checked = includeArchived;
+    check.addEventListener("change", function () {
+      if (check.checked) go("/records", readParams({archived:"1"}));
+      else go("/records", readParams({archived:"", status:statusParam === "deprecated" ? "" : statusParam}));
+    });
+    archivedLabel.append(check, document.createTextNode(" Include archived")); form.appendChild(archivedLabel);
+    panelDetails.appendChild(form);
+    box.appendChild(state); box.appendChild(quickWrap); box.appendChild(panelDetails);
+    var active = readParams(), activeArchived = active.archived === "1" || active.status === "deprecated";
+    items = items.filter(function (record) {
+      if (!activeArchived && record.status === "deprecated") return false;
+      return (!active.area || record.area === active.area || record.area.indexOf(active.area + "/") === 0) &&
+        (!active.project || record.project_id === active.project) &&
+        (!active.type || record.type === active.type) &&
+        (!active.status || record.status === active.status) &&
+        (!active.tag || (record.tags || []).indexOf(active.tag) >= 0);
+    });
+    if (q && sort !== "updated") items.sort(function (a, b) { return (b.score || 0) - (a.score || 0) || String(b.updated_at || "").localeCompare(String(a.updated_at || "")) || cmpId(a, b); });
+    else if (sort === "updated") items.sort(cmpUpdated);
+    else items.sort(cmpTitle);
+    var activeLabels = [];
+    [["area", "Area"], ["project", "Project"], ["type", "Type"], ["status", "Status"], ["tag", "Tag"]].forEach(function (pair) {
+      var value = active[pair[0]]; if (!value) return;
+      var label = pair[0] === "project" ? projectTitle(value, titleMap) : pair[0] === "status" ? statusLabel(value) : value;
+      activeLabels.push(pair[1] + ": " + label);
+    });
+    if (archivedParam) activeLabels.push("Include archived");
+    state.textContent = items.length + " matching records";
+    if (activeLabels.length) {
+      var summary = text("p", "Active filters: " + activeLabels.join(" · "), "meta");
+      summary.appendChild(document.createTextNode(" "));
+      summary.appendChild(button("Clear all", function () { go("/records", {q:q, sort:sort}); }, "btn secondary clear-all"));
+      box.appendChild(summary);
+    }
+    if (!items.length) {
+      var empty = panel(box); empty.appendChild(text("p", "No matching records.", "empty"));
+      var emptyActions = text("div", undefined, "actions");
+      emptyActions.appendChild(button("Clear filters", function () { go("/records", {q:q, sort:sort}); }, "btn secondary"));
+      if (q) emptyActions.appendChild(button("Clear search", function () { go("/records", readParams({q:""})); }, "btn secondary"));
+      empty.appendChild(emptyActions); return;
+    }
+    output = panel(box);
+    var offset = pageState[window.location.hash] || 0;
+    items.slice(0, offset + 50).forEach(function (record) {
+      var row = text("article", undefined, "record-row"), heading = text("h2");
+      heading.appendChild(link(record.title || "Untitled", recordLink(record.id))); row.appendChild(heading);
+      if (record.description) row.appendChild(text("p", record.description));
+      var metaBox = text("p", undefined, "meta"); statusText(metaBox, record.status);
+      metaBox.appendChild(text("span", " · " + projectTitle(record.project_id, titleMap) + (record.area ? " · " + record.area : "")));
+      if (record.updated_at) metaBox.appendChild(text("span", " · Updated " + record.updated_at));
+      row.appendChild(metaBox); output.appendChild(row);
+    });
+    if (items.length > offset + 50) output.appendChild(button("Load more", function () { pageState[window.location.hash] = offset + 50; render(); }, "btn secondary load-more"));
   };
-  var projectsScreen = async function (route,serial) {var records=await allRecords();if(serial!==token)return;var box=routeBox("Projects");setNav("projects");var projects=records.filter(function(r){return r.type==="project"&&r.status!=="deprecated";});if(route.id){var project=projects.filter(function(p){return p.id===route.id;})[0];if(!project)throw new Error("Record unavailable in this view.");box.querySelector("h1").textContent=project.title;var detail=await dataCall("record",route.id,"records/"+route.id+".json");if(serial!==token)return;var content=panel(box,"About this project");content.appendChild(window.KnowledgeV1Markdown.render(readFrontmatter(detail.content||""),{approvedAssets:[]}));var children=records.filter(function(r){return r.project_id===route.id&&r.type!=="project"&&r.status!=="deprecated";});content.appendChild(text("p",children.length+" related records","meta"));if(!children.length)content.appendChild(text("p","No records in this project.","empty"));children.forEach(function(r){content.appendChild(link(r.title,recordLink(r.id)));});return;}if(!projects.length)box.appendChild(text("p","No published projects.","empty"));projects.forEach(function(p){var section=panel(box,p.title);if(p.description)section.appendChild(text("p",p.description));statusText(section,p.status);var children=records.filter(function(r){return r.project_id===p.id&&r.type!=="project"&&r.status!=="deprecated";});section.appendChild(text("p",children.length+" related current records","meta"));section.appendChild(link("Open project","/projects/"+p.id));});};
-  var todayScreen = async function (route,serial) {var day=nowDate(), box=routeBox("Today",day+" · UTC");setNav("today");var value=await dataCall("today",{date:day},"reminders/"+day.slice(0,7)+".json");if(serial!==token)return;var sections={"Important dates today":value.today||[],"Upcoming seven dates":value.upcoming||[],"Recently updated":value.recently_updated||[]};var names=["Important dates today","Upcoming seven dates","Recently updated"];
-    var currentRecords=await allRecords();if(serial!==token)return;
-    var ongoing=currentRecords.filter(function(r){return r.status==="in_progress";}).sort(function(a,b){return a.title.localeCompare(b.title);});
-    var activePanel=panel(box,"In progress ("+ongoing.length+")");
-    if(!ongoing.length)activePanel.appendChild(text("p","No public in-progress records.","empty"));
-    ongoing.forEach(function(r){var item=text("article",undefined,"record-row");item.appendChild(link(r.title,recordLink(r.id)));if(r.description)item.appendChild(text("p",r.description));if(r.updated_at)item.appendChild(text("p","Last recorded update: "+r.updated_at,"meta"));activePanel.appendChild(item);});
-    names.forEach(function(name,index){var section=panel(box,name),items=sections[name]||[];if(!items.length)section.appendChild(text("p",index===2?"None recently updated.":"None.","empty"));items.forEach(function(item){var row=text("p",undefined);var rid=item.record_id||item.id;row.appendChild(link(item.title||item.text||"Record",recordLink(rid)));if(item.text)row.appendChild(text("span"," · "+item.text));section.appendChild(row);});});box.appendChild(link("View calendar","/calendar"));box.appendChild(link("See all records","/records"));};
+  var projectRank = {in_progress:0, stable:1, draft:2, completed:3};
+  var cmpProject = function (a, b) { var left = projectRank[a.status], right = projectRank[b.status]; if (left === undefined) left = 4; if (right === undefined) right = 4; return left - right || cmpTitle(a, b); };
+  var projectsScreen = async function (route, serial) {
+    var records = await allRecords(); if (serial !== token) return;
+    var box = routeBox("Projects"); setNav("projects");
+    var aliases = await getAliases(); if (serial !== token) return;
+    var projects = records.filter(function (record) { return record.type === "project" && record.status !== "deprecated"; });
+    projects.sort(cmpProject);
+    if (route.id) {
+      var project = null;
+      projects.forEach(function (candidate) { if (candidate.id === route.id) project = candidate; });
+      if (!project) throw new Error("Record unavailable in this view.");
+      box.querySelector("h1").textContent = project.title || "Project";
+      var detail = await dataCall("record", route.id, "records/" + route.id + ".json"); if (serial !== token) return;
+      var children = records.filter(function (record) { return belongsToProject(record, project, aliases) && record.type !== "project" && record.status !== "deprecated"; });
+      var incoming = detail && Array.isArray(detail.backlinks) ? detail.backlinks : [];
+      var summary = text("div", undefined, "project-summary"); statusText(summary, project.status);
+      summary.appendChild(text("span", "Last updated " + (project.updated_at || "unknown") + " · " + countLabel(project.version || 0, "revision", "revisions"), "meta"));
+      summary.appendChild(text("span", countLabel(children.length, "related current record", "related current records") + " · " + countLabel(incoming.length, "backlink", "backlinks"), "meta"));
+      box.appendChild(summary);
+      var content = panel(box, "About this project");
+      content.appendChild(window.KnowledgeV1Markdown.render(readFrontmatter(detail && detail.content || ""), {approvedAssets:[]}));
+      var related = panel(box, "Related records");
+      if (!children.length) { related.appendChild(text("p", "No records in this project.", "empty")); related.appendChild(link("Browse records", "/records")); }
+      else {
+        var list = text("ul", undefined, "group-list project-records");
+        children.forEach(function (record) {
+          var item = text("li", undefined, "record-row"), heading = text("h3");
+          heading.appendChild(link(record.title || "Untitled", recordLink(record.id))); item.appendChild(heading);
+          var meta = text("p", undefined, "meta"); statusText(meta, record.status);
+          meta.appendChild(text("span", " · " + (record.area || "No area"))); item.appendChild(meta); list.appendChild(item);
+        });
+        related.appendChild(list);
+      }
+      var changes = panel(box, "Recent changes");
+      try {
+        var index = await dataCall("historyIndex", project.id, "history/" + project.id + "/index.json"); if (serial !== token) return;
+        if (!index.event_count) changes.appendChild(text("p", "No published history."));
+        else {
+          var pages = index.pages || [], show = pageState[window.location.hash] || 5, all = [];
+          for (var pageNumber = 0; pageNumber < pages.length && all.length < show; pageNumber += 1) {
+            var page = api && api.historyPage ? await api.historyPage(project.id, pages[pageNumber].number) : await apiGet(pages[pageNumber].url);
+            all = all.concat(page.items || []);
+          }
+          if (serial !== token) return;
+          all.sort(function (a, b) { return b.sequence - a.sequence; });
+          all.slice(0, show).forEach(function (event) { changes.appendChild(renderEventRow(event, all)); });
+          if (show < index.event_count) changes.appendChild(button("Load more", function () { pageState[window.location.hash] = show + 5; render(); }, "btn secondary load-more"));
+        }
+      } catch (error) { fail(changes, error, function () { render(); }); }
+      var referenceItems = incoming.filter(function (item) { return item && safeId(item.source_id) && item.title; });
+      if (referenceItems.length) {
+        var references = panel(box, "Referenced by"), referenceList = text("ul");
+        referenceItems.forEach(function (item) { var entry = text("li"); entry.appendChild(link(item.title, recordLink(item.source_id))); referenceList.appendChild(entry); });
+        references.appendChild(referenceList);
+      }
+      return;
+    }
+    if (!projects.length) box.appendChild(text("p", "No published projects.", "empty"));
+    var backlinkCounts = {};
+    await Promise.all(projects.map(async function (project) {
+      try { var detail = await dataCall("record", project.id, "records/" + project.id + ".json"); backlinkCounts[project.id] = detail && Array.isArray(detail.backlinks) ? detail.backlinks.length : 0; }
+      catch (error) { backlinkCounts[project.id] = 0; }
+    }));
+    if (serial !== token) return;
+    projects.forEach(function (project) {
+      var section = panel(box); section.classList.add("project-card");
+      var heading = text("h2"); heading.appendChild(link(project.title || "Untitled project", "/projects/" + project.id)); section.appendChild(heading);
+      if (project.description) section.appendChild(text("p", project.description));
+      var children = records.filter(function (record) { return belongsToProject(record, project, aliases) && record.type !== "project" && record.status !== "deprecated"; });
+      var counts = {draft:0, stable:0, in_progress:0, completed:0};
+      children.forEach(function (record) { if (counts[record.status] !== undefined) counts[record.status] += 1; });
+      var meta = text("div", undefined, "project-meta"); statusText(meta, project.status);
+      meta.appendChild(text("span", countLabel(children.length, "related current record", "related current records") + " · " + countLabel(backlinkCounts[project.id] || 0, "backlink", "backlinks"), "meta"));
+      meta.appendChild(text("span", "Last updated " + (project.updated_at || "unknown") + " · " + countLabel(project.version || 0, "revision", "revisions"), "meta"));
+      section.appendChild(meta);
+      var countLine = text("p", undefined, "project-counts");
+      [["draft", "Draft"], ["stable", "Stable"], ["in_progress", "In progress"], ["completed", "Completed"]].forEach(function (pair) {
+        if (counts[pair[0]]) countLine.appendChild(text("span", pair[1] + " " + counts[pair[0]], "count-chip"));
+      });
+      if (countLine.firstChild) section.appendChild(countLine);
+      section.appendChild(link("Open project", "/projects/" + project.id));
+    });
+  };
+  var todayScreen = async function (route, serial) {
+    var day = nowDate(), box = routeBox("Today", day + " · UTC"); setNav("today");
+    var value = await dataCall("today", {date:day}, "reminders/" + day.slice(0,7) + ".json"); if (serial !== token) return;
+    var currentRecords = await allRecords(); if (serial !== token) return;
+    var recent = (value.recently_updated || []).filter(function (record) { return record.status !== "deprecated"; }).sort(cmpUpdated).slice(0, 10);
+    var sections = {"Important dates today":value.today || [], "Upcoming seven dates":value.upcoming || [], "Recently updated":recent};
+    var names = ["Important dates today", "Upcoming seven dates", "Recently updated"];
+    names.forEach(function (name, index) {
+      var section = panel(box, name), items = sections[name] || [];
+      if (!items.length) { section.appendChild(text("p", index === 2 ? "None recently updated." : "None.", "empty")); return; }
+      items.forEach(function (item) {
+        var recordId = item.record_id || item.id, row = text("article", undefined, "record-row"), heading = text("h3");
+        heading.appendChild(link(item.title || item.text || "Record", recordLink(recordId))); row.appendChild(heading);
+        if (index === 2) {
+          var meta = text("p", undefined, "meta"); statusText(meta, item.status);
+          meta.appendChild(text("span", " · " + (item.type || "record")));
+          if (item.updated_at) meta.appendChild(text("span", " · Updated " + item.updated_at));
+          row.appendChild(meta);
+        } else if (item.text) row.appendChild(text("p", item.text));
+        section.appendChild(row);
+      });
+    });
+    var ongoing = currentRecords.filter(function (record) { return record.status === "in_progress" && record.type !== "project"; }).sort(cmpUpdated);
+    var activePanel = panel(box, "In progress work");
+    if (!ongoing.length) activePanel.appendChild(text("p", "No in-progress work items.", "empty"));
+    ongoing.forEach(function (record) {
+      var item = text("article", undefined, "record-row"), heading = text("h3");
+      heading.appendChild(link(record.title || "Untitled", recordLink(record.id))); item.appendChild(heading);
+      var meta = text("p", undefined, "meta"); statusText(meta, record.status);
+      meta.appendChild(text("span", " · " + (record.type || "record")));
+      meta.appendChild(text("span", " · Last recorded update: " + (record.updated_at || "unknown")));
+      item.appendChild(meta);
+      if (record.description) item.appendChild(text("p", record.description));
+      activePanel.appendChild(item);
+    });
+    activePanel.appendChild(link("View projects", "/projects"));
+    box.appendChild(link("View calendar", "/calendar")); box.appendChild(link("See all records", "/records"));
+  };
   var calendarScreen = async function (route,serial) {var month=route.params.get("month")||nowDate().slice(0,7);if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new Error("Invalid view. Reset view to continue.");if(!route.params.has("month"))go("/calendar",{month:month},true);var day=route.params.get("day")||"";if(day&&(!dateIsValid(day)||day.slice(0,7)!==month))throw new Error("Invalid view. Reset view to continue.");var box=routeBox("Calendar",month+" · UTC");setNav("calendar");var controls=text("div",undefined,"toolbar");var input=document.createElement("input");input.type="month";input.value=month;input.setAttribute("aria-label","Month (UTC)");input.addEventListener("change",function(){go("/calendar",{month:input.value,day:day});});controls.append(button("Previous month",function(){go("/calendar",{month:shiftMonth(month,-1),day:""});},"btn secondary"),button("Next month",function(){go("/calendar",{month:shiftMonth(month,1),day:""});},"btn secondary"),button("Today",function(){go("/calendar",{month:nowDate().slice(0,7)});},"btn secondary"),input);box.appendChild(controls);
     var reminders=await dataCall("reminders",month,"reminders/"+month+".json");if(serial!==token)return;var items=(reminders.items||[]).filter(function(x){return x.status!=="deprecated";});var grid=panel(box,"Important dates · Monday–Sunday");var table=text("table",undefined,"calendar-table");table.setAttribute("aria-label","Important dates calendar");var thead=document.createElement("thead"),headerRow=document.createElement("tr");["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].forEach(function(d){var th=text("th",d);th.scope="col";headerRow.appendChild(th);});thead.appendChild(headerRow);table.appendChild(thead);var tbody=document.createElement("tbody");var parts=month.split("-"),first=new Date(Date.UTC(+parts[0],+parts[1]-1,1)),offset=(first.getUTCDay()+6)%7,count=new Date(Date.UTC(+parts[0],+parts[1],0)).getUTCDate(),cells=[];for(var blank=0;blank<offset;blank++)cells.push(null);for(var n=1;n<=count;n++)cells.push(n);while(cells.length%7)cells.push(null);for(var rowIndex=0;rowIndex<cells.length;rowIndex+=7){var tr=document.createElement("tr");for(var col=0;col<7;col++){var td=document.createElement("td"),value=cells[rowIndex+col];if(value){var current=month+"-"+(value<10?"0":"")+value,hits=items.filter(function(x){return x.start_date<=current&&x.end_date>=current;});var cell=button(String(value)+(hits.length?" · "+hits.length:""),function(d){return function(){go("/calendar",{month:month,day:d});};}(current),"");cell.setAttribute("aria-label",current+(hits.length?": "+hits.length+" reminders":""));cell.setAttribute("aria-selected",String(current===day));if(current===nowDate())cell.setAttribute("aria-current","date");if(hits.length)cell.className+=" has-reminder";td.appendChild(cell);}tr.appendChild(td);}tbody.appendChild(tr);}table.appendChild(tbody);grid.appendChild(table);
     var agenda=panel(box,day?"Agenda · "+day:"Month agenda");var shown=items.filter(function(x){return day?x.start_date<=day&&x.end_date>=day:x.start_date.slice(0,7)<=month&&x.end_date.slice(0,7)>=month;});if(!shown.length)agenda.appendChild(text("p","No important dates in this period.","empty"));shown.forEach(function(item){var row=text("article",undefined,"record-row");row.appendChild(link(item.title,recordLink(item.record_id)));row.appendChild(text("p",item.text));row.appendChild(text("p",item.start_date===item.end_date?item.start_date:item.start_date+" – "+item.end_date,"meta"));statusText(row,item.status);agenda.appendChild(row);});agenda.appendChild(text("p","Important dates are not notifications.","meta"));if(day)agenda.appendChild(link("View changes on this day","/diary"+queryString({date:day,mode:"day"})));};

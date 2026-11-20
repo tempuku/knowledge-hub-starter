@@ -65,14 +65,41 @@ manifest = json.loads((OUT / "data/manifest.json").read_text())
 generation = manifest.get("generation", "")
 if (manifest.get("mode") != "public" or not re.fullmatch(r"[a-f0-9]{64}", generation)):
     raise SystemExit("Missing validated public v1 generation")
-catalog = json.loads((OUT / "data/g" / generation / "catalog.json").read_text())
-if catalog.get("record_count", 0) < calendar["total"] + 3:
-    raise SystemExit("Published v1 catalog is missing legacy or demo records")
+generation_root = OUT / "data/g" / generation
+catalog = json.loads((generation_root / "catalog.json").read_text())
+record_count = catalog.get("record_count", 0)
+event_count = catalog.get("event_count", 0)
+# Every approved legacy diary entry must survive as one append-only event, and
+# grouping by canonical source path must make records strictly fewer than events.
+if event_count < calendar["total"]:
+    raise SystemExit("Published v1 catalog has fewer events than approved diary entries")
+if record_count >= event_count:
+    raise SystemExit("Legacy diary entries were not grouped into canonical records")
+
+details = [json.loads(path.read_text(encoding="utf-8"))
+           for path in sorted((generation_root / "records").glob("*.json"))
+           if not path.name.endswith(".meta.json")]
+if len(details) != record_count:
+    raise SystemExit("Published record details do not match catalog record_count")
+paths = [detail["path"] for detail in details]
+if len(set(paths)) != len(paths):
+    raise SystemExit("Published records do not have unique canonical paths")
+titles = {}
+for detail in details:
+    titles.setdefault(detail["title"].casefold(), []).append(detail["path"])
+for title, same_title_paths in titles.items():
+    # A shared title is acceptable only because each record keeps its own path.
+    if len(same_title_paths) > 1 and len(set(same_title_paths)) != len(same_title_paths):
+        raise SystemExit(f"Duplicate-looking title without distinct paths: {title}")
+aliases = json.loads((generation_root / "aliases.json").read_text(encoding="utf-8"))
+if len(aliases.get("entries", {})) < calendar["total"]:
+    raise SystemExit("Approved diary entries lost their legacy event aliases")
 if (OUT / "index.html").read_text().find('id="primary-nav"') < 0:
     raise SystemExit("The published root is not the new Records/Projects UI")
 if "5b82fc58-cccd-4997-ad93-b74b07ce3640" in (
-        "\\n".join(path.read_text(encoding="utf-8")
-                   for path in (OUT / "data/g" / generation).rglob("*.json"))):
+        "\n".join(path.read_text(encoding="utf-8")
+                  for path in generation_root.rglob("*.json"))):
     raise SystemExit("Original private synthetic fixture leaked into public projection")
 print(f"Publication allowlist passed: {len(seen)} static/JSON files, "
-      f"{calendar['total']} explicitly public diary entries.")
+      f"{calendar['total']} explicitly public diary entries, "
+      f"{event_count} published events across {record_count} records.")
