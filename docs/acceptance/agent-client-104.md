@@ -5,7 +5,7 @@ Scope: [#104](https://github.com/tempuku/knowledge-hub-starter/issues/104) under
 **OpenCode V2 on macOS**, plus the discovery tools added beside the original six. It
 builds on [agent-client-40.md](agent-client-40.md) and the writer from
 [#30](https://github.com/tempuku/knowledge-hub-starter/issues/30). No hosted gateway,
-remote authentication, production repository or write session is involved.
+remote authentication, production repository or production write is involved.
 
 ## Verification status
 
@@ -18,12 +18,25 @@ tools present at `8464beb` are discovered; a real agent session performed
 (`openwiki/design/agent-workflow.md`, draft, version
 `318d22ec-d804-47ae-8d68-405c21ded759`, head `8464beb`); no write ran.
 
-**Pending, explicitly unverified:** live discovery of `knowledge_search` and
-`knowledge_history` on a checkout containing this change (the session above predates
-them), the model journey below, and every remote/HTTPS/OAuth/private
-([#12](https://github.com/tempuku/knowledge-hub-starter/issues/12)) or
+**Local model-driven acceptance (2026-11-20, OpenCode v2.2.7,
+`opencode-go/deepseek-v4.1-flash`):** on code head `253fa28`, a project-scoped server
+with an external public read-only profile ran the discovery journey below.
+`knowledge_search("publication decision")` returned record
+`41472c01-62c7-4b80-ad27-4aa1b4888fac`
+(`openwiki/design/migration-inventory-review.md`); `knowledge_read` returned its current
+source; `knowledge_history` named the newest event
+`5bf5741b-04a6-46a6-94d7-266cc96ab8ff` (`UPDATED`, `2026-11-15T13:24:08Z`, "Use an
+external evidence URL for the reviewed migration manifest"). No UUID was supplied and no
+shell command was used. A second session, in a disposable Git checkout with a separate
+write profile, created record `dd85107e-22c2-4121-ac78-06896d082ec7` (event
+`544e3e1f-8bf9-451c-b658-26fce0b5a228`, commit `1536de8e0138dc1c3729769bcb97456d884c6432`)
+and read it back at the same version. These are local sessions, not CI; sanitized
+transcripts are linked from PR #108.
+
+**Still unverified:** every remote/HTTPS/OAuth/multi-user/private access
+([#12](https://github.com/tempuku/knowledge-hub-starter/issues/12)) and
 production-cutover ([#38](https://github.com/tempuku/knowledge-hub-starter/issues/38))
-concern.
+concern. No write was made in any production or personal checkout.
 
 ## Trust boundary and capability profile
 
@@ -142,28 +155,51 @@ site publication, and an MCP result is not publication approval.
 
 No public-site allowlist parity or byte audit; no remote, HTTPS, OAuth, multi-user or
 private authenticated endpoint ([#12](https://github.com/tempuku/knowledge-hub-starter/issues/12));
-no write, idempotency or conflict proof from this onboarding (write is covered by
-[agent-client-40.md](agent-client-40.md) against disposable Git); no production cutover,
-source migration or deployed reader
+no write against a production or personal checkout, and no idempotent-retry, stale-version
+or read-only-denial proof from the model sessions (those remain covered by the official
+SDK test and [agent-client-40.md](agent-client-40.md)); no production cutover, source
+migration or deployed reader
 ([#38](https://github.com/tempuku/knowledge-hub-starter/issues/38)).
 
-## Manual acceptance run (unverified)
+## Local model-driven acceptance (2026-11-20)
 
-Use the disposable checkout from [agent-client-40.md](agent-client-40.md) or a trusted
-read-only checkout, start a fresh OpenCode session, and send exactly:
+Both sessions used OpenCode v2.2.7 and `opencode-go/deepseek-v4.1-flash`. The server was
+project-scoped in a temporary directory with an external capability file, and the client
+was told to use Code Mode and that one server only.
+
+**Discovery.** Prompt, sent exactly:
 
 > Find the publication decision, tell me what changed most recently, and link me to the
 > evidence.
 
-Expected behaviour: `knowledge_search` locates the publication decision from the prompt
-text alone, with no record UUID supplied; `knowledge_read` on the matched `record_id`
-returns the canonical current source, version and head; `knowledge_history` for the same
-record returns native sibling-log events and the answer names the most recent change from
-event metadata; the answer surfaces the record path and native event link returned by
-the tool (`record_url`, `event_url`), not a guessed path or commit SHA; and no write
-tool is called. Record the checkout head, tool
-arguments, returned `record_id`/`event_id` and whether each link resolved. Until then,
-this journey is **unverified**; the owner-verified read above is not a model journey.
+The session called `knowledge_search("publication decision")`, then `knowledge_read` and
+`knowledge_history` for the returned record, with no supplied UUID and no shell. Observed:
+record `41472c01-62c7-4b80-ad27-4aa1b4888fac`, path
+`openwiki/design/migration-inventory-review.md`, newest event
+`5bf5741b-04a6-46a6-94d7-266cc96ab8ff` (`UPDATED`, `2026-11-15T13:24:08Z`), and the
+record/log paths from the tool metadata. The model's answer also quoted a historical
+`path_before` log name; the returned `event_url` is the current-path link, so reviewers
+should use the tool field rather than the prose paraphrase.
+
+**Write.** A disposable Git repository was created outside the checkout, with
+`{"repository_mode":"private","operations":["read","create","update"],"publisher_scope":false}`
+stored outside it. The session called `knowledge_create` for
+`openwiki/notes/write-acceptance.md`, then `knowledge_read`. Observed: `committed`
+receipt, record `dd85107e-22c2-4121-ac78-06896d082ec7`, event/version
+`544e3e1f-8bf9-451c-b658-26fce0b5a228`, commit
+`1536de8e0138dc1c3729769bcb97456d884c6432`; the read-back version and head matched. The
+server normalized the submitted frontmatter (`id`, `schema_version`, `status: draft`,
+`visibility: private`), which is expected, so submitted bytes and stored bytes are not
+identical.
+
+**Observed client hazard.** Because the pre-existing global read-only
+`knowledge-hub-local` server was also visible, the write session first sent
+`knowledge_read` to that server (`NOT_FOUND`, it points at a different checkout) before
+retrying against the write server. Use distinct server names and state the intended
+server in the prompt when more than one profile is configured.
+
+A future session can repeat these checks; the exact local transcripts are linked from
+PR #108 and are not CI artifacts.
 
 ## Related evidence and source
 

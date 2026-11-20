@@ -140,7 +140,10 @@ setup example are documented in
 OpenCode V2 registration and the discovery-tool contract are documented in
 [issue #104 acceptance](../../docs/acceptance/agent-client-104.md).
 The SDK client test does not claim a live model-driven Codex or Claude session,
-remote identity verification, or production onboarding.
+remote identity verification, or production onboarding. A local OpenCode
+model session using the discovery and disposable write profiles is recorded in
+[the #104 acceptance](../../docs/acceptance/agent-client-104.md); it is local
+evidence, not CI.
 
 ## Migration / legacy boundary
 
