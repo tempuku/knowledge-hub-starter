@@ -12,16 +12,23 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from validate_v1 import IntegrityError, parse_log, parse_record, repository
+PROJECTION = Path(__file__).resolve().parents[1] / "projection"
+if str(PROJECTION) not in sys.path:
+    sys.path.insert(0, str(PROJECTION))
+
+from validate_v1 import (IntegrityError, frontmatter, parse_log, parse_record,
+                         repository)
 from maintenance_v1 import writes_paused
 from writer_v1 import (WriterError, append_log, create_source, make_event,
                        normalized_request, receipt_from_logs, require_capability,
                        reject)
+from deterministic import ProjectionError, query_search, search_shards, tokenize
 
 
 def git(root, *args, check=True):
@@ -30,6 +37,12 @@ def git(root, *args, check=True):
     if check and result.returncode:
         raise WriterError("WRITE_FAILED", "Git operation failed", retryable=False)
     return result.stdout.decode("utf-8").rstrip("\n") if result.returncode == 0 else None
+
+
+def _area(path):
+    """Containment area used by search filters; root-level records are 'root'."""
+    relative = path[len("openwiki/"):] if path.startswith("openwiki/") else path
+    return relative.rsplit("/", 1)[0] if "/" in relative else "root"
 
 
 def _index_content(directory, entries, previous=None):
@@ -180,14 +193,139 @@ class GitRecordWriter:
                                 "title": meta["title"], "status": meta["status"]})
             return visible
 
-    def read(self, record_id):
+    def _require_read(self, message):
         # Authorization is a trusted launch capability, never caller-supplied.
         # A missing/unknown capability must not permit reading private records.
         if (type(self.capability) is not dict or
                 self.capability.get("repository_mode") not in ("public", "private") or
                 type(self.capability.get("operations")) not in (list, tuple, set) or
                 "read" not in self.capability["operations"]):
-            reject("NOT_FOUND", "Record not found")
+            reject("NOT_FOUND", message)
+
+    def search(self, query, *, limit=8, include_archived=False):
+        """Rank current records by tokens; never return bodies or private paths."""
+        self._require_read("Record collection not available")
+        if type(query) is not str or not 1 <= len(query) <= 256:
+            reject("VALIDATION_ERROR", "Invalid search query")
+        tokens = list(dict.fromkeys(tokenize(query)))
+        if not tokens or len(tokens) > 8:
+            reject("VALIDATION_ERROR", "Invalid search query tokens")
+        if type(limit) is not int or not 1 <= limit <= 25:
+            reject("VALIDATION_ERROR", "Invalid search result limit")
+        if type(include_archived) is not bool:
+            reject("VALIDATION_ERROR", "Invalid include_archived flag")
+        from extended_v1 import _current_records
+        with self._lock():
+            head = self._head()
+            records, _ = _current_records(self, head)
+            candidates, paths = [], {}
+            for path, (meta, source) in sorted(records.items()):
+                # Filter before indexing: public ranking and totals must never
+                # count snapshots that view is not allowed to reveal.
+                if (self.capability["repository_mode"] == "public" and
+                        meta["visibility"] != "public"):
+                    continue
+                candidates.append({
+                    "id": meta["id"], "title": meta["title"],
+                    "description": meta.get("description", ""),
+                    "tags": meta.get("tags", []),
+                    "body": frontmatter(source)[1],
+                    "status": meta["status"], "type": meta["type"],
+                    "area": _area(path),
+                    "project_id": meta.get("project_id"),
+                    "updated_at": "",
+                })
+                paths[meta["id"]] = path
+            try:
+                shards = search_shards(candidates)
+                matches = query_search(query, candidates, shards,
+                                       include_archived=include_archived)
+            except ProjectionError as exc:
+                reject("VALIDATION_ERROR", str(exc))
+            page = matches[:limit]
+            by_id = {record["id"]: record for record in candidates}
+            results = [{"record_id": record_id, "path": paths[record_id],
+                        "title": by_id[record_id]["title"],
+                        "status": by_id[record_id]["status"]}
+                       for record_id in page]
+            return {"query": query, "head": head, "total": len(matches),
+                    "count": len(results), "results": results}
+
+    def history(self, record_id, *, limit=20, before_sequence=None):
+        """Return event metadata newest first; snapshots and hashes stay hidden."""
+        self._require_read("Record not found")
+        try:
+            uuid.UUID(record_id)
+        except (AttributeError, TypeError, ValueError):
+            reject("VALIDATION_ERROR", "Invalid record ID")
+        if type(limit) is not int or not 1 <= limit <= 50:
+            reject("VALIDATION_ERROR", "Invalid history limit")
+        if before_sequence is not None and (
+                type(before_sequence) is not int or before_sequence < 1):
+            reject("VALIDATION_ERROR", "Invalid history cursor")
+        with self._lock():
+            head = self._head()
+            found = self._find_record(head, record_id)
+            if not found:
+                reject("NOT_FOUND", "Record not found")
+            path, source, meta = found
+            if (self.capability["repository_mode"] == "public" and
+                    meta["visibility"] != "public"):
+                reject("NOT_FOUND", "Record not found")
+            log_path = path[:-3] + ".log.md"
+            # Read only this record's log from the trusted commit; never scan.
+            raw = git(self.root, "show", head + ":" + log_path, check=False)
+            if raw is None:
+                reject("INTEGRITY_ERROR", "Missing canonical record history")
+            try:
+                events = parse_log((raw + "\n").encode("utf-8"), log_path)
+            except (IntegrityError, UnicodeError) as exc:
+                reject("INTEGRITY_ERROR", "Canonical record history is unreadable")
+            if events[-1]["after"] != source:
+                reject("INTEGRITY_ERROR", "Record and history disagree")
+            eligible = [event for event in events
+                        if self._visible_snapshot(event)]
+            eligible.sort(key=lambda event: event["sequence"], reverse=True)
+            total = len(eligible)
+            if before_sequence is not None:
+                eligible = [event for event in eligible
+                            if event["sequence"] < before_sequence]
+            page = eligible[:limit]
+            return {"record_id": record_id, "path": path,
+                    "title": meta["title"], "status": meta["status"],
+                    "head": head, "total": total,
+                    "next": page[-1]["sequence"] if len(eligible) > limit else None,
+                    "events": [self._event_metadata(event, path)
+                               for event in page]}
+
+    def _visible_snapshot(self, event):
+        # History is filtered by the snapshot each event produced, so a public
+        # view cannot even infer the existence of private revisions. A snapshot
+        # that cannot be parsed is excluded rather than revealed.
+        if self.capability["repository_mode"] != "public":
+            return True
+        try:
+            meta, _ = frontmatter(event["after"])
+        except (IntegrityError, UnicodeError):
+            return False
+        return meta.get("visibility") == "public"
+
+    @staticmethod
+    def _event_metadata(event, path):
+        # Explicit allowlist: before/after snapshots and digests never leave.
+        return {"event_id": event["id"], "sequence": event["sequence"],
+                "action": event["action"], "recorded_at": event["recorded_at"],
+                "summary": event["summary"],
+                "occurred_on": event["occurred_on"],
+                "occurred_at": event["occurred_at"],
+                "actor_label": event["actor"]["label"],
+                "path_before": event["path_before"],
+                "path_after": event["path_after"],
+                "record_url": path,
+                "event_url": path[:-3] + ".log.md#" + event["id"]}
+
+    def read(self, record_id):
+        self._require_read("Record not found")
         try:
             uuid.UUID(record_id)
         except (ValueError, TypeError):

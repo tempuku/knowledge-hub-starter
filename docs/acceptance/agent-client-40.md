@@ -2,10 +2,13 @@
 
 Scope: [#40](https://github.com/tempuku/knowledge-hub-starter/issues/40)
 under [#24](https://github.com/tempuku/knowledge-hub-starter/issues/24).
-The v1 source writer and six tools are supplied by completed [#30](https://github.com/tempuku/knowledge-hub-starter/issues/30).
+The v1 source writer and the original six tools are supplied by completed
+[#30](https://github.com/tempuku/knowledge-hub-starter/issues/30).
 This verifies a **real official MCP Python SDK client**, not the previous
 handcrafted JSON-RPC subprocess test. No hosted gateway, language-model
 inference, external/private Git checkout or production cutover is involved.
+The current eight-tool contract and OpenCode V2 onboarding are documented in
+[agent-client-104.md](agent-client-104.md).
 
 ## Trust boundary and client onboarding
 
@@ -41,14 +44,17 @@ codex mcp add knowledge-hub-local -- \
 codex mcp list
 ```
 
-Open Codex and inspect `/mcp` for `knowledge_read`, `knowledge_create`
-and `knowledge_update` (also `knowledge_move`, `knowledge_archive`,
+Open Codex and inspect `/mcp` for the read tools `knowledge_read`,
+`knowledge_search` and `knowledge_history`, plus `knowledge_create` and
+`knowledge_update` (also `knowledge_move`, `knowledge_archive`,
 `knowledge_reopen` if granted). Use the agent in this *disposable checkout*
 only. The CLI handles tool schema discovery, but authorization comes from
 the launch capability file — not model-supplied arguments. A client cannot
 claim a trusted identity by passing `actor`: it is unauthenticated provenance.
-MCP history is not a seventh tool; read the sibling `.log.md` through the
-trusted local Git checkout when reviewing event history.
+History metadata is available through `knowledge_history`, which returns
+event metadata and relative record/log links only. It exposes no `before`
+or `after` snapshots, so this smoke still verifies committed native history
+through the trusted Git checkout.
 
 ## Reproducible, automated **real client** evidence
 
@@ -70,7 +76,7 @@ capability file, never an actual personal record.
 
 | Acceptance | Exact observation checked |
 | --- | --- |
-| Real client discovery | The official SDK initializes the process and discovers exactly six tools |
+| Real client discovery | The official SDK initializes the process and discovers all eight tools |
 | Read → write → read/history | MCP create/read/update/read; parse the two persisted `CREATED`/`UPDATED` entries from `git show` of the native sibling log |
 | Idempotent retry | Replay the exact MCP update request; receipt is `already_committed` with the original event, version and HEAD; no new commit |
 | Stale version | MCP update using the original version returns `CONFLICT`, preserving HEAD |
@@ -82,7 +88,10 @@ The public CI evidence is the `issue40-real-mcp-client-smoke` artifact of the
 successful `validate-openwiki` workflow run **on the exact merged
 implementation commit**. The artifact contains an ordered result transcript
 and disposable Git HEAD, without record body or private fields. A passing unit
-test before CI is not proof of a passing current-head required gate.
+test before CI is not proof of a passing current-head required gate. #40's
+original recorded run observed the six tools that existed before #104; the
+eight-tool row above describes the current contract and needs a run on a
+post-#104 head to be evidence for it.
 
 ## Deliberate exclusions
 
@@ -92,8 +101,10 @@ test before CI is not proof of a passing current-head required gate.
 - No remote hosted authentication, internet endpoint, private data, source
   migration, publication cutover, move/archive/reopen demonstration or
   exhaustive scenario matrix is claimed.
-- The current six-tool MCP contract has `knowledge_read` but no
-  `knowledge_history` tool. The smoke verifies **committed native history**
-  through the trusted Git checkout, rather than inventing a history MCP API.
+- The current eight-tool MCP contract exposes history **metadata** through
+  `knowledge_history`: event identity, sequence, action, times, actor label and
+  links. It returns no `before`/`after` snapshots or hashes. The smoke verifies
+  **committed native history** through the trusted Git checkout rather than
+  treating the tool as a snapshot API.
 - Caller-supplied actor labels are **not** identity attestation. Source commits
   have `publication: pending` until separately published and verified.
