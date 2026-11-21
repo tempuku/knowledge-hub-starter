@@ -4,7 +4,7 @@ schema_version: 1
 type: project
 title: Archon routing stack — public status
 description: "Public snapshot of a local Archon, Pi and ExtremeRouter deployment: exact role ids, live acceptance results and open work."
-status: draft
+status: in_progress
 visibility: public
 tags: [archon, pi, phoenix, gateway, routing]
 sources:
