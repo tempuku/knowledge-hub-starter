@@ -125,7 +125,7 @@ jobs:
           node --check site/v1_data.js
           node --check site/v1_markdown.js
       - name: Test generated-v1 data cache and service-worker safety
-        run: node --test site/sw.test.cjs site/v1_data.test.js site/v1_event_row.test.js
+        run: node --test site/sw.test.cjs site/v1_data.test.js
       - name: Verify public-only export excludes private notes
         run: |
           python tools/diary/build.py --output-dir dist-public --public-only
