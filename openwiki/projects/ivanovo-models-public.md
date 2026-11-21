@@ -4,7 +4,7 @@ schema_version: 1
 type: project
 title: "Ivanovo Models (public demo)"
 description: "Public demo project card for architectural model tracking."
-status: in_progress
+status: completed
 visibility: public
 tags: [demo, architecture, three-d-printing]
 ---
