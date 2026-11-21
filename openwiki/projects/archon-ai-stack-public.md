@@ -30,7 +30,7 @@ snapshot, not a live status feed.
 | --- | --- |
 | Gateway container | running, private restart policy, loopback `127.0.0.1:20128` |
 | Anonymous API access | rejected with HTTP 401 |
-| Image | derived `0.9.0-a05` (`sha256:88b52296…c749cc`); rollback pin `0.9.0-t03c1` |
+| Image | derived `0.9.0-a06` (`sha256:94b65ce4…f97848c`); rollback pin `0.9.0-a05` (`sha256:88b52296…c749cc`); original upstream `0.9.0-t03c1` |
 | Role combos | five exact ids — `archon-triage`, `archon-policy`, `archon-planner`, `archon-coder`, `archon-reviewer` — plus short compatibility names |
 | Strategy | single working lane (OpenCode Go) first, fallback second |
 | Router direction | ExtremeRouter is the live gateway; OmniRoute is **not installed**. A12 is a local dry-run portability test, not a swap decision. |
@@ -38,7 +38,7 @@ snapshot, not a live status feed.
 | Pi | provider pointed at the local gateway; catalog includes the five exact role ids |
 | Telemetry | usage metadata only; raw prompt/response logging disabled |
 | Phoenix | deployed `21.2.1` (`sha256:becd0809…c749e`), loopback `127.0.0.1:6006`/`:4317`, SQLite, 30-day retention, auth required |
-| Budget ledger | adapter-scope cumulative monthly/per-task cap; live gateway still enforces only the per-request cap |
+| Budget ledger | **live gateway ledger** on A06: monthly `$5.00`, per-task `$0.25`, fail-closed 402 before dispatch; conservative estimate settlement |
 
 ## Task-scoped stickiness (A05)
 
@@ -91,7 +91,7 @@ snapshot, not a live status feed.
 | A04 | PASS | five-role live matrix through the real Archon → Pi → gateway path; each exact id returned its token and recorded the upstream model |
 | A05 | PASS | live identity extension installed with rollback; two-turn reuse reports `reused: true`, a new attempt re-resolves, and a real Archon tool round-trip keys the store by run id; live forced hop deliberately untested |
 | A06 | PASS | disposable compiled route: forced 429 records exactly one hop to the approved member; streaming, tool-context and single-member cases deny without an unauthorized fallback |
-| A07 | PASS | per-request cost cap fails closed; a cumulative monthly/per-task ledger is implemented and tested behind the local adapter (13/13 tests, disposable drill PASS). Live gateway enforcement is not deployed |
+| A07 | PASS | per-request cap plus live gateway-side cumulative monthly/per-task ledger on A06: fail-closed 402 with zero upstream calls; 7/7 disposable compiled-route cases, 22/22 unit tests, live smoke 4/4 and trace smoke 25/25 |
 | A08–A11 | PASS | pinned/private Phoenix; anonymous API/OTLP rejected; 30-day retention; full trace hierarchy; canaries clean; PASS vs deliberate FAIL visible |
 | A12 | PASS | ExtremeRouter remains live; no OmniRoute installed. A local OmniRoute-compatible dry-run adapter served the five aliases, and the same workflow passed directly and through it with unchanged hashes |
 | A13 | PASS | approved 2.19 s gateway outage: safe failure, no usage row, exact token after restore with the task id preserved |
@@ -140,14 +140,18 @@ snapshot, not a live status feed.
 - A14: a combined gateway + Phoenix restart lasted 6.27 s; providers, combos,
   key ACL, stickiness rows, Phoenix spans and evaluation history persisted, and
   both smoke scripts passed.
-- A07 residual: a cumulative monthly/per-task paid ledger is implemented at
-  the adapter enforcement point; 13/13 unit tests and a disposable drill pass,
-  with zero post-denial upstream calls. The live gateway still enforces only
-  the per-request cap. Write-up: `outputs/A07-LEDGER.md`.
-- Still open: a live forced 429 hop (deliberate), live gateway ledger
-  enforcement (owner decision), an optional real OmniRoute trial (owner
-  authorization required), and a second usable provider family for reviewer
-  independence.
+- A07 residual: the cumulative monthly/per-task ledger is **live** on the A06
+  gateway. Disposable compiled-route proof 7/7 (sequential, restart, per-task
+  retries, 12-way concurrency, explicit single model, first-request denial,
+  missing-task denial); 22/22 unit tests including A05 stickiness regression.
+  Settlement keeps the estimate, so it is conservative. Write-up:
+  `outputs/A06-GATEWAY-LEDGER.md`.
+- Codex is usable again: `codex/gpt-5.6-luna` returned 200 `CODEX_QUOTA_OK`
+  (1512 ms, 2497/9 tokens) after the A06 deploy. Gemini remains 429 quota 0.
+  No role pool was changed.
+- Still open: a live forced 429 hop (deliberate), an optional real OmniRoute
+  trial (owner authorization required), and reviewer-pool configuration now
+  that a second family works.
 
 ## Router direction (A12 clarification)
 
@@ -166,7 +170,7 @@ snapshot, not a live status feed.
 
 1. Keep Option A (reassign on a recorded pre-stream hop); the live forced hop
    stays intentionally untested. Watch real `429` events.
-2. Decide whether to enforce the tested cumulative ledger live: route inference through the adapter or port the ledger into the gateway. The live gateway still enforces only the per-request cap.
+2. Refine ledger settlement to actual usage where available; the live ledger currently settles at the conservative estimate.
 3. Install and validate a real OmniRoute backend only with owner authorization;
    A12 currently uses a local dry-run adapter.
 4. Obtain a second usable provider family for reviewer independence and
@@ -207,6 +211,7 @@ Implementation root: `/Users/tempuku/Documents/Codex/2026-11-19/archon-stack-lun
   `work/phase2/harness/sticky-route-proof-phase2.json`
 - `work/eval/results/`, `work/phase5/results/`
 - `outputs/A07-LEDGER.md`, `work/phase5/budget/`
+- `outputs/A06-GATEWAY-LEDGER.md`, `work/a06/`, `deploy/ai-stack/compose.a06.yaml`
 - `outputs/NEXT-AGENT-AFTER-PHASE5.md`
 
 **Privacy:** this repository is public; the note contains no credentials,
