@@ -21,6 +21,7 @@ Keep `validate-openwiki` as a required **fast** CI check for schema/record/log v
 - Do not treat a PR with pending checks as complete or promise to resume the same chat spontaneously. After opening/updating a PR, link its checks; let the CI-completion handoff workflow record the final result on the PR and return to that PR for review.
 - `.github/workflows/ci-pr-handoff.yml` listens for completion of `Validate OKF and diary` on open same-repository PRs. It updates a single bot comment with the checked commit, result, and run link, skipping stale heads and forks. It never checks out PR code, runs untrusted artifacts, invokes an AI agent, or merges.
 - After CI completion, a reviewer/agent should inspect failures, scope, current head and evidence before merging. `knowledge-merge-gate` is advisory and is not a required status; `validate-openwiki` remains required. No GitHub approval is required under the owner amendment in issue #24. New agent auto-dispatch requires an explicitly configured agent integration; a GitHub comment alone cannot resume ChatGPT.
+- Owner decision 2026-11-21 (issue #114): pull-request publication is opt-in through trusted launch configuration (`--pr-base`, plus `--auto-merge`). Both default off; non-PR and read-only launches are unchanged. Auto-merge is squash-only for the pull request just ensured and never bypasses required checks, including `validate-openwiki`.
 
 ## Record minimization and one active project per repository (owner decision 2026-11-19)
 

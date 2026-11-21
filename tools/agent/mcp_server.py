@@ -20,6 +20,11 @@ import sys
 
 from knowledge_service import (MAX_REQUEST_BYTES, WriterError,
                                decode_json, execute, new_writer)
+from pr_publish import (PublicationError, WRITER_VALIDATORS, build_body,
+                        enable_auto_merge, ensure_pull_request,
+                        merged_publication, prepare_publication_branch,
+                        publication_branch)
+from pr_publish import run as run_command
 
 MAX_MESSAGE = MAX_REQUEST_BYTES + 8192
 SUPPORTED_PROTOCOLS = {"2024-11-05", "2025-11-25", "2026-07-28"}
@@ -137,7 +142,93 @@ def _tool_result(result, *, failed=False):
     }
 
 
-def _dispatch(writer, message):
+def _request_path(writer, request):
+    """Best available record path for a deterministic branch slug."""
+    path = request.get("path")
+    if isinstance(path, str):
+        return path
+    record_id = request.get("record_id")
+    if isinstance(record_id, str):
+        try:
+            return writer.read(record_id).get("path")
+        except Exception:
+            return None
+    return None
+
+
+def _record_details(writer, result):
+    """Read current metadata for the PR body; PR flow never echoes bodies."""
+    details = {"path": result.get("record_url", ""),
+               "record_id": result.get("record_id", ""),
+               "title": "", "status": "", "visibility": ""}
+    try:
+        current = writer.read(result["record_id"])
+    except Exception:
+        return details
+    details["path"] = current.get("path") or details["path"]
+    try:
+        from validate_v1 import frontmatter
+        meta, _ = frontmatter(current["content"])
+    except Exception:
+        return details
+    for key in ("title", "status", "visibility"):
+        if isinstance(meta.get(key), str):
+            details[key] = meta[key]
+    return details
+
+
+def _attach_publication(writer, result, request, publication, head, runner):
+    record = _record_details(writer, result)
+    title = "knowledge: " + (record["title"] or record["path"] or "record")
+    body = build_body(record, result, request.get("summary", ""),
+                      WRITER_VALIDATORS)
+    pull_request = ensure_pull_request(
+        publication["root"], publication["base"], head, title[:240], body,
+        runner=runner)
+    # A pull request is never reported as published: publication remains
+    # "pending" until a matching generation is actually visible.
+    result["pull_request"] = pull_request
+    result["auto_merge"] = False
+    if (publication.get("auto_merge") and
+            pull_request.get("state") == "open" and
+            isinstance(pull_request.get("number"), int)):
+        merge = enable_auto_merge(publication["root"],
+                                  pull_request["number"], runner=runner)
+        result["auto_merge"] = (True if merge.get("state") == "enabled"
+                                else merge)
+    return result
+
+
+def _publication_write(writer, request, publication, runner, writer_factory):
+    """Create the per-mutation branch, then run the same domain writer."""
+    if not isinstance(request.get("idempotency_key"), str):
+        raise PublicationError("VALIDATION_ERROR", "Invalid idempotency key")
+    head = publication_branch(request["idempotency_key"],
+                              _request_path(writer, request))
+    prepare_publication_branch(
+        publication["root"], publication["remote"], head,
+        request.get("expected_head"), runner=runner,
+        merged_check=lambda: merged_publication(publication["root"], head,
+                                                runner=runner))
+    branch_writer = writer_factory(head)
+    result = execute(branch_writer, request)
+    if (type(result) is dict and result.get("status") in
+            ("committed", "already_committed")):
+        _attach_publication(branch_writer, result, request, publication,
+                            head, runner)
+    return result
+
+
+def _default_writer_factory(publication):
+    def factory(branch):
+        return new_writer(root=publication["root"],
+                          capability_file=publication["capability_file"],
+                          branch=branch, remote=publication["remote"])
+    return factory
+
+
+def _dispatch(writer, message, publication=None, *, runner=None,
+              writer_factory=None):
     """Handle a valid JSON-RPC request, returning only its result or error."""
     method = message["method"]
     params = message.get("params", {})
@@ -179,7 +270,16 @@ def _dispatch(writer, message):
             raise ValueError("Invalid tool argument fields")
         request = {**args, "command": command}
         try:
-            return _tool_result(execute(writer, request))
+            if publication is None or command in READ_TOOLS:
+                # Read-only and non-PR launches keep the original behavior;
+                # no Git branch, gh command or extra response field is added.
+                return _tool_result(execute(writer, request))
+            factory = (writer_factory if writer_factory is not None
+                       else _default_writer_factory(publication))
+            return _tool_result(_publication_write(
+                writer, request, publication, runner or run_command, factory))
+        except PublicationError as exc:
+            return _tool_result(exc.response(), failed=True)
         except WriterError as exc:
             return _tool_result(exc.response(), failed=True)
         except Exception:
@@ -190,7 +290,7 @@ def _dispatch(writer, message):
     raise LookupError("Unknown MCP method")
 
 
-def answer(writer, raw):
+def answer(writer, raw, publication=None, *, runner=None, writer_factory=None):
     """One inbound newline-framed message; notifications receive no reply."""
     try:
         value = decode_json(raw, maximum=MAX_MESSAGE)
@@ -209,7 +309,8 @@ def answer(writer, raw):
         # no response. Never mistakenly commit a mutation as a notification.
         return None
     try:
-        result = _dispatch(writer, value)
+        result = _dispatch(writer, value, publication,
+                           runner=runner, writer_factory=writer_factory)
     except LookupError:
         return _jsonrpc_error(-32601, identifier=identifier)
     except (ValueError, TypeError):
@@ -219,7 +320,8 @@ def answer(writer, raw):
     return {"jsonrpc": "2.0", "id": identifier, "result": result}
 
 
-def run(writer, source=None, target=None):
+def run(writer, source=None, target=None, publication=None, *, runner=None,
+        writer_factory=None):
     source = source or sys.stdin.buffer
     target = target or sys.stdout.buffer
     while True:
@@ -229,7 +331,8 @@ def run(writer, source=None, target=None):
         if len(raw) > MAX_MESSAGE + 1:
             reply = _jsonrpc_error(-32700, "Request exceeds framing limit")
         else:
-            reply = answer(writer, raw)
+            reply = answer(writer, raw, publication, runner=runner,
+                           writer_factory=writer_factory)
         if reply is None:
             continue
         payload = json.dumps(reply, ensure_ascii=False,
@@ -238,13 +341,36 @@ def run(writer, source=None, target=None):
         target.flush()
 
 
-def main():
+def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", required=True)
     parser.add_argument("--capability-file", required=True)
     parser.add_argument("--branch", default="main")
     parser.add_argument("--remote", default=None)
-    args = parser.parse_args()
+    parser.add_argument(
+        "--pr-base", default=None,
+        help="Enable pull-request publication against this base branch")
+    parser.add_argument(
+        "--auto-merge", action="store_true",
+        help="Enable squash auto-merge for created pull requests "
+             "(requires --pr-base)")
+    return parser
+
+
+def main():
+    args = build_parser().parse_args()
+    if args.auto_merge and not args.pr_base:
+        print("--auto-merge requires --pr-base", file=sys.stderr)
+        return 2
+    publication = None
+    if args.pr_base:
+        # PR mode writes to a deterministic per-mutation head; --branch stays
+        # the startup branch for reads and for non-PR launches.
+        remote = args.remote or "origin"
+        publication = {"root": args.root, "base": args.pr_base,
+                       "remote": remote,
+                       "auto_merge": bool(args.auto_merge),
+                       "capability_file": args.capability_file}
     try:
         writer = new_writer(root=args.root, capability_file=args.capability_file,
                             branch=args.branch, remote=args.remote)
@@ -252,7 +378,7 @@ def main():
         print("Trusted Knowledge Hub MCP launch configuration unavailable",
               file=sys.stderr)
         return 2
-    run(writer)
+    run(writer, publication=publication)
     return 0
 
 
