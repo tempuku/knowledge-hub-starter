@@ -38,6 +38,7 @@ snapshot, not a live status feed.
 | Pi | provider pointed at the local gateway; catalog includes the five exact role ids |
 | Telemetry | usage metadata only; raw prompt/response logging disabled |
 | Phoenix | deployed `21.2.1` (`sha256:becd0809…c749e`), loopback `127.0.0.1:6006`/`:4317`, SQLite, 30-day retention, auth required |
+| Budget ledger | adapter-scope cumulative monthly/per-task cap; live gateway still enforces only the per-request cap |
 
 ## Task-scoped stickiness (A05)
 
@@ -90,7 +91,7 @@ snapshot, not a live status feed.
 | A04 | PASS | five-role live matrix through the real Archon → Pi → gateway path; each exact id returned its token and recorded the upstream model |
 | A05 | PASS | live identity extension installed with rollback; two-turn reuse reports `reused: true`, a new attempt re-resolves, and a real Archon tool round-trip keys the store by run id; live forced hop deliberately untested |
 | A06 | PASS | disposable compiled route: forced 429 records exactly one hop to the approved member; streaming, tool-context and single-member cases deny without an unauthorized fallback |
-| A07 | PASS | per-request cost cap fails closed: sequential and concurrent requests are denied with zero upstream calls; a cumulative paid ledger is still open |
+| A07 | PASS | per-request cost cap fails closed; a cumulative monthly/per-task ledger is implemented and tested behind the local adapter (13/13 tests, disposable drill PASS). Live gateway enforcement is not deployed |
 | A08–A11 | PASS | pinned/private Phoenix; anonymous API/OTLP rejected; 30-day retention; full trace hierarchy; canaries clean; PASS vs deliberate FAIL visible |
 | A12 | PASS | ExtremeRouter remains live; no OmniRoute installed. A local OmniRoute-compatible dry-run adapter served the five aliases, and the same workflow passed directly and through it with unchanged hashes |
 | A13 | PASS | approved 2.19 s gateway outage: safe failure, no usage row, exact token after restore with the task id preserved |
@@ -139,9 +140,14 @@ snapshot, not a live status feed.
 - A14: a combined gateway + Phoenix restart lasted 6.27 s; providers, combos,
   key ACL, stickiness rows, Phoenix spans and evaluation history persisted, and
   both smoke scripts passed.
-- Still open: a live forced 429 hop (deliberate), a cumulative paid-budget
-  ledger, an optional real OmniRoute trial (owner authorization required), and
-  a second usable provider family for reviewer independence.
+- A07 residual: a cumulative monthly/per-task paid ledger is implemented at
+  the adapter enforcement point; 13/13 unit tests and a disposable drill pass,
+  with zero post-denial upstream calls. The live gateway still enforces only
+  the per-request cap. Write-up: `outputs/A07-LEDGER.md`.
+- Still open: a live forced 429 hop (deliberate), live gateway ledger
+  enforcement (owner decision), an optional real OmniRoute trial (owner
+  authorization required), and a second usable provider family for reviewer
+  independence.
 
 ## Router direction (A12 clarification)
 
@@ -160,7 +166,7 @@ snapshot, not a live status feed.
 
 1. Keep Option A (reassign on a recorded pre-stream hop); the live forced hop
    stays intentionally untested. Watch real `429` events.
-2. Extend the per-request cost cap to a cumulative monthly/per-task paid ledger.
+2. Decide whether to enforce the tested cumulative ledger live: route inference through the adapter or port the ledger into the gateway. The live gateway still enforces only the per-request cap.
 3. Install and validate a real OmniRoute backend only with owner authorization;
    A12 currently uses a local dry-run adapter.
 4. Obtain a second usable provider family for reviewer independence and
@@ -200,6 +206,7 @@ Implementation root: `/Users/tempuku/Documents/Codex/2026-11-19/archon-stack-lun
 - `work/phase2/a04-live-matrix.json`, `work/phase2/a05-live-results.json`,
   `work/phase2/harness/sticky-route-proof-phase2.json`
 - `work/eval/results/`, `work/phase5/results/`
+- `outputs/A07-LEDGER.md`, `work/phase5/budget/`
 - `outputs/NEXT-AGENT-AFTER-PHASE5.md`
 
 **Privacy:** this repository is public; the note contains no credentials,
