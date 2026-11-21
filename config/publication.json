@@ -10,6 +10,8 @@
     "9a2f68b9-a1a9-40c6-ae1c-6224e1630011"
   ],
   "event_ids": [
+    "0aab0893-ea1b-428d-ba03-8c2e233b9c7d",
+    "14f53791-f55d-4451-b8f3-f6c3d8077fe4",
     "1e26b8e8-cc64-46dd-923b-ea0163481012",
     "23986b54-2aea-49ed-b281-01b534eb5e1b",
     "318d22ec-d804-47ae-8d68-405c21ded759",
@@ -21,9 +23,7 @@
     "c2afc991-1482-480d-b6c9-37df7953e7da",
     "c809bd06-4f9b-461a-9479-bbf15320bc13",
     "ca9918bc-c4a7-4d4d-befe-45d485a74ff8",
-    "dfc712ee-ec47-496c-9e7e-a1b19f62f582",
-    "14f53791-f55d-4451-b8f3-f6c3d8077fe4",
-    "0aab0893-ea1b-428d-ba03-8c2e233b9c7d"
+    "dfc712ee-ec47-496c-9e7e-a1b19f62f582"
   ],
   "actor_labels": [
     "OpenCode agent",
