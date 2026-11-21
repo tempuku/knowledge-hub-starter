@@ -16,7 +16,7 @@ sources:
 
 # Archon routing stack — public status
 
-**Snapshot: 2026-11-20.** A local orchestration stack runs workflows in Archon,
+**Snapshot: 2026-11-21.** A local orchestration stack runs workflows in Archon,
 executes model turns through Pi, and selects providers through a derived
 ExtremeRouter gateway build. Phoenix stores traces from the real Archon and Pi
 path. A deterministic role evaluation and the Phase 5 migration-readiness
@@ -33,6 +33,7 @@ snapshot, not a live status feed.
 | Image | derived `0.9.0-a05` (`sha256:88b52296…c749cc`); rollback pin `0.9.0-t03c1` |
 | Role combos | five exact ids — `archon-triage`, `archon-policy`, `archon-planner`, `archon-coder`, `archon-reviewer` — plus short compatibility names |
 | Strategy | single working lane (OpenCode Go) first, fallback second |
+| Router direction | ExtremeRouter is the live gateway; OmniRoute is **not installed**. A12 is a local dry-run portability test, not a swap decision. |
 | Router key | one restricted key, 48 model ids, no earlier entry removed |
 | Pi | provider pointed at the local gateway; catalog includes the five exact role ids |
 | Telemetry | usage metadata only; raw prompt/response logging disabled |
@@ -91,7 +92,7 @@ snapshot, not a live status feed.
 | A06 | PASS | disposable compiled route: forced 429 records exactly one hop to the approved member; streaming, tool-context and single-member cases deny without an unauthorized fallback |
 | A07 | PASS | per-request cost cap fails closed: sequential and concurrent requests are denied with zero upstream calls; a cumulative paid ledger is still open |
 | A08–A11 | PASS | pinned/private Phoenix; anonymous API/OTLP rejected; 30-day retention; full trace hierarchy; canaries clean; PASS vs deliberate FAIL visible |
-| A12 | PASS | local OmniRoute-compatible dry-run adapter serves the five aliases; the same workflow passes directly and through it with unchanged hashes |
+| A12 | PASS | ExtremeRouter remains live; no OmniRoute installed. A local OmniRoute-compatible dry-run adapter served the five aliases, and the same workflow passed directly and through it with unchanged hashes |
 | A13 | PASS | approved 2.19 s gateway outage: safe failure, no usage row, exact token after restore with the task id preserved |
 | A14 | PASS | combined gateway + Phoenix restart 6.27 s: providers, combos, ACL, stickiness, spans and evaluation history persist; both smokes pass |
 
@@ -139,8 +140,21 @@ snapshot, not a live status feed.
   key ACL, stickiness rows, Phoenix spans and evaluation history persisted, and
   both smoke scripts passed.
 - Still open: a live forced 429 hop (deliberate), a cumulative paid-budget
-  ledger, a real OmniRoute install, and a second usable provider family for
-  reviewer independence.
+  ledger, an optional real OmniRoute trial (owner authorization required), and
+  a second usable provider family for reviewer independence.
+
+## Router direction (A12 clarification)
+
+- ExtremeRouter is the installed, live gateway. OmniRoute appears only in the
+  A12 router-independence criterion: the five `archon-*` aliases must survive a
+  backend swap with no Archon role, DAG, acceptance or history edits.
+- A12 was proven with a local OpenAI-compatible **dry-run adapter**, not by
+  installing OmniRoute. The adapter forwards the aliases to the live gateway;
+  the workflow and Archon config stay byte-identical.
+- A real OmniRoute trial is optional future work. It requires explicit owner
+  authorization, must start in a disposable environment, and must not replace
+  the live gateway before the swap is proven.
+- Current next-step handoff: `outputs/NEXT-AGENT-AFTER-PHASE5.md`.
 
 ## Open work
 
@@ -186,6 +200,7 @@ Implementation root: `/Users/tempuku/Documents/Codex/2026-11-19/archon-stack-lun
 - `work/phase2/a04-live-matrix.json`, `work/phase2/a05-live-results.json`,
   `work/phase2/harness/sticky-route-proof-phase2.json`
 - `work/eval/results/`, `work/phase5/results/`
+- `outputs/NEXT-AGENT-AFTER-PHASE5.md`
 
 **Privacy:** this repository is public; the note contains no credentials,
 prompts, payloads or private project data.
