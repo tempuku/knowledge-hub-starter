@@ -64,7 +64,7 @@ def check() -> int:
     # The root must serve the actual v1 app, not only the legacy diary.
     if 'id="primary-nav"' not in html or 'href="#/records"' not in html:
         raise AssertionError("The live root is still the old Diary shell.")
-    for asset in ("v1.js", "v1_data.js", "v1_markdown.js", "v1.css",
+    for asset in ("v1.js", "v1_data.js", "v1_diary.js", "v1_markdown.js", "v1.css",
                   "vendor/markdown-it-13.0.2.min.js"):
         if not get(asset):
             raise AssertionError("Missing v1 browser asset: " + asset)

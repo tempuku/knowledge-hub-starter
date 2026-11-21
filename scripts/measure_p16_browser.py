@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NETWORK_BYTES_PER_SECOND = 10_000_000 // 8
 LATENCY_MS = 100
 CPU_SLOWDOWN = 4
-REQUIRED_ASSETS = ("v1.html", "v1.js", "v1.css", "v1_data.js",
+REQUIRED_ASSETS = ("v1.html", "v1.js", "v1.css", "v1_data.js", "v1_diary.js",
                    "v1_markdown.js", "style.css", "index.html", "sw.js")
 
 
