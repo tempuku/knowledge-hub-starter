@@ -1,0 +1,3 @@
+# Ideas
+
+* [Clothing](clothing.md)
