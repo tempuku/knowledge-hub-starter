@@ -1,7 +1,7 @@
 ---
 type: project
 title: Ivanovo architectural 3D models
-status: draft
+status: in_progress
 project_id: ivanovo-models
 tags: [architecture, openscad, 3d-printing, viewer]
 visibility: private
