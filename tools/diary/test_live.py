@@ -95,8 +95,8 @@ def check() -> int:
         raise AssertionError("Public Records/Projects UI is missing synthetic fixtures")
     demo = next(item for item in items if item["title"] ==
                 "Recovery timeline (synthetic public demo)")
-    if demo["status"] != "in_progress":
-        raise AssertionError("Synthetic recovery is not persistently in progress")
+    if demo["status"] != "completed":
+        raise AssertionError("Synthetic recovery is not completed")
     detail = json.loads(get(prefix + "records/" + demo["id"] + ".json"))
     if "October 27, 2026" not in detail.get("content", ""):
         raise AssertionError("Synthetic recovery record is not readable over HTTPS")
