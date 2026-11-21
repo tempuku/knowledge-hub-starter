@@ -89,14 +89,15 @@ def check() -> int:
     for page in pages["pages"]:
         items.extend(json.loads(get(prefix + page["url"]))["items"])
     titles = {item["title"] for item in items}
-    required = {"Knowledge Hub (public demo)", "Ivanovo Models (public demo)",
-                "Recovery timeline (synthetic public demo)"}
+    required = {"Archon routing stack — public status",
+                "Ivanovo Models — public project", "Personal Finance",
+                "Идеи в одежде"}
     if not required.issubset(titles):
-        raise AssertionError("Public Records/Projects UI is missing synthetic fixtures")
+        raise AssertionError("Public Records/Projects UI is missing an in-progress record")
     demo = next(item for item in items if item["title"] ==
                 "Recovery timeline (synthetic public demo)")
-    if demo["status"] != "in_progress":
-        raise AssertionError("Synthetic recovery is not persistently in progress")
+    if demo["status"] != "completed":
+        raise AssertionError("Synthetic recovery is not completed")
     detail = json.loads(get(prefix + "records/" + demo["id"] + ".json"))
     if "October 27, 2026" not in detail.get("content", ""):
         raise AssertionError("Synthetic recovery record is not readable over HTTPS")
