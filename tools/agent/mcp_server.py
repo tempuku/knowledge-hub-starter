@@ -20,10 +20,10 @@ import sys
 
 from knowledge_service import (MAX_REQUEST_BYTES, WriterError,
                                decode_json, execute, new_writer)
-from pr_publish import (PublicationError, WRITER_VALIDATORS, build_body,
-                        enable_auto_merge, ensure_pull_request,
-                        merged_publication, prepare_publication_branch,
-                        publication_branch)
+from pr_publish import (PublicationError, WRITER_VALIDATORS,
+                        allowlist_new_event, build_body, enable_auto_merge,
+                        ensure_pull_request, merged_publication,
+                        prepare_publication_branch, publication_branch)
 from pr_publish import run as run_command
 
 MAX_MESSAGE = MAX_REQUEST_BYTES + 8192
@@ -177,8 +177,24 @@ def _record_details(writer, result):
     return details
 
 
+def _allowlist_event(record, result, publication, head, runner):
+    """Only an already-allowlisted public record's new event may be added."""
+    if record.get("visibility") != "public":
+        return {"state": "not_applicable",
+                "detail": "Record visibility is not public"}
+    record_id = result.get("record_id")
+    event_id = result.get("event_id")
+    if not isinstance(record_id, str) or not isinstance(event_id, str):
+        return {"state": "failed",
+                "detail": "Committed result lacks record or event identity"}
+    return allowlist_new_event(publication["root"], publication["remote"], head,
+                               record_id, event_id, runner=runner)
+
+
 def _attach_publication(writer, result, request, publication, head, runner):
     record = _record_details(writer, result)
+    result["allowlist"] = _allowlist_event(record, result, publication, head,
+                                           runner)
     title = "knowledge: " + (record["title"] or record["path"] or "record")
     body = build_body(record, result, request.get("summary", ""),
                       WRITER_VALIDATORS)
@@ -189,7 +205,10 @@ def _attach_publication(writer, result, request, publication, head, runner):
     # "pending" until a matching generation is actually visible.
     result["pull_request"] = pull_request
     result["auto_merge"] = False
+    # A merged change whose history cannot be published is worse than a
+    # waiting pull request, so a failed allowlist disables auto-merge only.
     if (publication.get("auto_merge") and
+            result["allowlist"].get("state") != "failed" and
             pull_request.get("state") == "open" and
             isinstance(pull_request.get("number"), int)):
         merge = enable_auto_merge(publication["root"],

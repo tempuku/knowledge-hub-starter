@@ -7,7 +7,10 @@ real GitHub CLI and no real repository is touched by these unit tests.
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -19,9 +22,22 @@ HEAD = "a" * 40
 OTHER = "b" * 40
 RECORD_ID = "11111111-1111-4111-8111-111111111111"
 EVENT_ID = "22222222-2222-4222-8222-222222222222"
+NEW_EVENT = "33333333-3333-4333-8333-333333333333"
+OLD_EVENT = "44444444-4444-4444-8444-444444444444"
+BRANCH = "agent/knowledge/alpha-1a2b3c4d"
 PATH = "openwiki/notes/alpha.md"
 CONTENT = ('---\ntype: note\ntitle: "Alpha note"\nstatus: draft\n'
            'visibility: private\n---\n\nBody\n')
+PUBLIC_CONTENT = CONTENT.replace("visibility: private", "visibility: public")
+
+
+def policy_text(record_ids=(RECORD_ID,), event_ids=(OLD_EVENT,),
+                actor_labels=("OpenCode agent",)):
+    return json.dumps({"schema_version": 1,
+                       "record_ids": list(record_ids),
+                       "event_ids": list(event_ids),
+                       "actor_labels": list(actor_labels)},
+                      indent=2) + "\n"
 
 
 class Result:
@@ -148,6 +164,150 @@ class PrepareBranchTest(unittest.TestCase):
         self.assertEqual(caught.exception.code, "CONFLICT")
         self.assertFalse(any(cmd[:2] in (["git", "branch"], ["git", "push"])
                              for cmd in runner.commands()))
+
+
+class AllowlistNewEventTest(unittest.TestCase):
+    commit = "c" * 40
+
+    def handler(self, *, policy=None, push_rc=0, head=HEAD):
+        state = {"pushes": 0}
+
+        def handle(argv):
+            if argv[:2] == ["git", "rev-parse"]:
+                return Result(0, (self.commit if argv[-1] == "HEAD"
+                                  else head) + "\n")
+            if argv[:2] == ["git", "show"]:
+                return Result(0, policy if policy is not None
+                              else policy_text())
+            if argv[:2] == ["git", "worktree"]:
+                return Result(0)
+            if argv[:2] == ["git", "add"]:
+                return Result(0)
+            if argv[:2] == ["git", "commit"] or (
+                    argv[1:2] == ["-c"] and "commit" in argv):
+                return Result(0)
+            if argv[:2] == ["git", "push"]:
+                state["pushes"] += 1
+                return Result(push_rc, "", "" if push_rc == 0 else "rejected")
+            if argv[:2] == ["git", "update-ref"]:
+                state["ref"] = argv
+                return Result(0)
+            raise AssertionError("unexpected git command: " + repr(argv))
+        runner = FakeRunner(handle)
+        return runner, state
+
+    def test_new_event_of_allowlisted_public_record_is_added(self):
+        runner, state = self.handler()
+        result = pr_publish.allowlist_new_event(
+            "/repo", "origin", BRANCH, RECORD_ID, NEW_EVENT, runner=runner)
+        self.assertEqual(result, {"state": "added", "commit": self.commit})
+        commands = runner.commands()
+        self.assertEqual(commands[0], [
+            "git", "rev-parse", "--verify", "--quiet",
+            "refs/heads/" + BRANCH,
+        ])
+        self.assertEqual(commands[1], [
+            "git", "show", BRANCH + ":config/publication.json",
+        ])
+        commit = [cmd for cmd in commands
+                  if cmd[0] == "git" and "commit" in cmd][0]
+        self.assertEqual(commit[-1], "chore(publication): allowlist event " +
+                         NEW_EVENT[:8])
+        push = [cmd for cmd in commands if cmd[:2] == ["git", "push"]][0]
+        self.assertIn("--force-with-lease=refs/heads/" + BRANCH + ":" + HEAD,
+                      push)
+        self.assertEqual(push[-1], self.commit + ":refs/heads/" + BRANCH)
+        self.assertIn("refs/heads/" + BRANCH, state["ref"])
+        self.assertEqual(commands[-1][:3], ["git", "worktree", "remove"])
+
+    def test_existing_event_is_already_and_commits_nothing(self):
+        runner, _ = self.handler(policy=policy_text(
+            event_ids=(EVENT_ID, NEW_EVENT)))
+        result = pr_publish.allowlist_new_event(
+            "/repo", "origin", BRANCH, RECORD_ID, NEW_EVENT, runner=runner)
+        self.assertEqual(result["state"], "already")
+        self.assertFalse(any(cmd[:3] == ["git", "worktree", "add"]
+                             for cmd in runner.commands()))
+        self.assertFalse(any(cmd[:2] == ["git", "push"]
+                             for cmd in runner.commands()))
+
+    def test_absent_record_is_not_applicable_and_commits_nothing(self):
+        runner, _ = self.handler(policy=policy_text(
+            record_ids=("9" * 8 + "-9999-4999-8999-999999999999",)))
+        result = pr_publish.allowlist_new_event(
+            "/repo", "origin", BRANCH, RECORD_ID, NEW_EVENT, runner=runner)
+        self.assertEqual(result["state"], "not_applicable")
+        self.assertFalse(any(cmd[:3] == ["git", "worktree", "add"]
+                             for cmd in runner.commands()))
+        self.assertFalse(any(cmd[:2] == ["git", "push"]
+                             for cmd in runner.commands()))
+
+    def test_rejected_push_is_failed_and_never_overwrites(self):
+        runner, state = self.handler(push_rc=1)
+        result = pr_publish.allowlist_new_event(
+            "/repo", "origin", BRANCH, RECORD_ID, NEW_EVENT, runner=runner)
+        self.assertEqual(result["state"], "failed")
+        self.assertIn("rejected", result["detail"])
+        self.assertNotIn("ref", state)
+        self.assertEqual(state["pushes"], 1)
+
+    def test_missing_branch_head_is_failed(self):
+        runner = FakeRunner(lambda argv: Result(1, ""))
+        result = pr_publish.allowlist_new_event(
+            "/repo", "origin", BRANCH, RECORD_ID, NEW_EVENT, runner=runner)
+        self.assertEqual(result["state"], "failed")
+        self.assertEqual(len(runner.calls), 1)
+
+
+class AllowlistRealRepositoryTest(unittest.TestCase):
+    """The committed policy keeps sorted, unique IDs and two-space JSON."""
+
+    def git(self, root, *args):
+        return subprocess.run(["git", "-C", str(root), *args],
+                              capture_output=True, text=True, check=True).stdout
+
+    def test_committed_policy_is_sorted_valid_and_leaves_caller_clean(self):
+        if shutil.which("git") is None:
+            self.skipTest("git is unavailable")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            remote = Path(tmp) / "remote.git"
+            root.mkdir()
+            subprocess.run(["git", "init", "--bare", str(remote)],
+                           check=True, capture_output=True)
+            self.git(root, "init", "-b", "main")
+            self.git(root, "config", "user.name", "Test")
+            self.git(root, "config", "user.email", "test@example.invalid")
+            policy_path = root / "config" / "publication.json"
+            policy_path.parent.mkdir()
+            original = policy_text(event_ids=(EVENT_ID,))
+            policy_path.write_text(original, encoding="utf-8", newline="")
+            self.git(root, "add", "--", "config/publication.json")
+            self.git(root, "commit", "-m", "seed")
+            self.git(root, "remote", "add", "origin", str(remote))
+            self.git(root, "push", "-u", "origin", "main")
+
+            result = pr_publish.allowlist_new_event(
+                str(root), "origin", "main", RECORD_ID, NEW_EVENT)
+            self.assertEqual(result["state"], "added", result)
+            committed = subprocess.run(
+                ["git", "-C", str(root), "show",
+                 result["commit"] + ":config/publication.json"],
+                capture_output=True, check=True).stdout
+            policy, _ = pr_publish.validate_policy(committed)
+            self.assertEqual(policy["schema_version"], 1)
+            self.assertEqual(policy["record_ids"], [RECORD_ID])
+            self.assertEqual(policy["event_ids"], sorted([EVENT_ID, NEW_EVENT]))
+            self.assertEqual(policy["actor_labels"], ["OpenCode agent"])
+            text = committed.decode("utf-8")
+            self.assertTrue(text.endswith("}\n"))
+            self.assertIn('\n  "schema_version": 1,', text)
+            # The caller's working tree and the trusted branch stay in sync.
+            self.assertEqual(policy_path.read_text(encoding="utf-8"), original)
+            self.assertEqual(self.git(root, "rev-parse", "refs/heads/main").strip(),
+                             result["commit"])
+            self.assertEqual(self.git(remote, "rev-parse", "refs/heads/main").strip(),
+                             result["commit"])
 
 
 class MergedPublicationTest(unittest.TestCase):
@@ -280,9 +440,16 @@ def payload(result):
     return json.loads(result["content"][0]["text"])
 
 
+class PublicFakeWriter(FakeWriter):
+    def read(self, record_id):
+        return {"record_id": record_id, "path": PATH, "content": PUBLIC_CONTENT,
+                "version": EVENT_ID, "head": HEAD}
+
+
 class McpPrModeTest(unittest.TestCase):
     publication = {"root": "/repo", "base": "main", "remote": "origin",
                    "auto_merge": False, "capability_file": "/cap.json"}
+    commit = "c" * 40
 
     def handler(self, merge=None):
         state = {}
@@ -307,6 +474,49 @@ class McpPrModeTest(unittest.TestCase):
             raise AssertionError("unexpected command: " + repr(argv))
         runner = FakeRunner(handle)
         return runner, state
+
+    def allowlist_handler(self, *, merge=None, push_rc=0):
+        events = []
+        pushes = []
+
+        def handle(argv):
+            if argv[:2] == ["git", "rev-parse"]:
+                return Result(0, (self.commit if argv[-1] == "HEAD"
+                                  else HEAD) + "\n")
+            if argv[:2] == ["git", "ls-remote"]:
+                return Result(0, "")
+            if argv[:2] == ["git", "branch"]:
+                return Result(0)
+            if argv[:2] == ["git", "show"]:
+                events.append("allowlist-read")
+                return Result(0, policy_text())
+            if argv[:2] == ["git", "worktree"]:
+                return Result(0)
+            if argv[:2] == ["git", "add"]:
+                return Result(0)
+            if argv[:2] == ["git", "commit"] or (
+                    argv[1:2] == ["-c"] and "commit" in argv):
+                events.append("allowlist-commit")
+                return Result(0)
+            if argv[:2] == ["git", "push"]:
+                pushes.append(argv)
+                if len(pushes) == 1:
+                    return Result(0)
+                events.append("allowlist-push")
+                return Result(push_rc, "", "" if push_rc == 0 else "rejected")
+            if argv[:2] == ["git", "update-ref"]:
+                return Result(0)
+            if argv[:3] == ["gh", "pr", "list"]:
+                return Result(0, "[]")
+            if argv[:3] == ["gh", "pr", "create"]:
+                events.append("pr-create")
+                return Result(0, "https://example.invalid/pull/9\n")
+            if argv[:3] == ["gh", "pr", "merge"]:
+                events.append("pr-merge")
+                return merge or Result(0, "enabled")
+            raise AssertionError("unexpected command: " + repr(argv))
+        runner = FakeRunner(handle)
+        return runner, events, pushes
 
     def test_pr_mode_adds_fields_and_keeps_publication_pending(self):
         runner, state = self.handler()
@@ -366,6 +576,73 @@ class McpPrModeTest(unittest.TestCase):
             writer_factory=lambda head: FakeWriter())
         self.assertIs(payload(result)["auto_merge"], True)
 
+    def test_private_record_is_not_applicable_and_adds_no_commit(self):
+        runner, _ = self.handler()
+        result = mcp_server._dispatch(
+            FakeWriter(), call("create", **write_fields(path=PATH,
+                                                        content=CONTENT)),
+            self.publication, runner=runner,
+            writer_factory=lambda head: FakeWriter())
+        response = payload(result)
+        self.assertEqual(response["allowlist"]["state"], "not_applicable")
+        self.assertEqual(response["publication"], "pending")
+        self.assertFalse(any(cmd[:2] == ["git", "show"]
+                             for cmd in runner.commands()))
+
+    def test_public_record_event_is_allowlisted_before_the_pr(self):
+        runner, events, pushes = self.allowlist_handler()
+        result = mcp_server._dispatch(
+            FakeWriter(), call("create", **write_fields(path=PATH,
+                                                        content=CONTENT)),
+            self.publication, runner=runner,
+            writer_factory=lambda head: (
+                events.append("writer") or PublicFakeWriter()))
+        response = payload(result)
+        self.assertFalse(result["isError"], response)
+        self.assertEqual(response["allowlist"],
+                         {"state": "added", "commit": self.commit})
+        self.assertEqual(response["publication"], "pending")
+        self.assertEqual(response["pull_request"]["state"], "open")
+        self.assertLess(events.index("writer"), events.index("allowlist-read"))
+        self.assertLess(events.index("allowlist-read"),
+                        events.index("allowlist-push"))
+        self.assertLess(events.index("allowlist-push"),
+                        events.index("pr-create"))
+        self.assertNotIn("pr-merge", events)
+        self.assertEqual(len(pushes), 2)
+
+    def test_public_record_auto_merges_after_allowlist(self):
+        runner, events, _ = self.allowlist_handler()
+        publication = {**self.publication, "auto_merge": True}
+        result = mcp_server._dispatch(
+            FakeWriter(), call("create", **write_fields(path=PATH,
+                                                        content=CONTENT)),
+            publication, runner=runner,
+            writer_factory=lambda head: (
+                events.append("writer") or PublicFakeWriter()))
+        response = payload(result)
+        self.assertEqual(response["allowlist"]["state"], "added")
+        self.assertIs(response["auto_merge"], True)
+        self.assertLess(events.index("pr-create"), events.index("pr-merge"))
+
+    def test_failed_allowlist_keeps_pr_but_skips_auto_merge(self):
+        runner, events, _ = self.allowlist_handler(push_rc=1)
+        publication = {**self.publication, "auto_merge": True}
+        result = mcp_server._dispatch(
+            FakeWriter(), call("create", **write_fields(path=PATH,
+                                                        content=CONTENT)),
+            publication, runner=runner,
+            writer_factory=lambda head: (
+                events.append("writer") or PublicFakeWriter()))
+        response = payload(result)
+        self.assertFalse(result["isError"], response)
+        self.assertEqual(response["allowlist"]["state"], "failed")
+        self.assertIn("rejected", response["allowlist"]["detail"])
+        self.assertEqual(response["pull_request"]["state"], "open")
+        self.assertIs(response["auto_merge"], False)
+        self.assertEqual(response["publication"], "pending")
+        self.assertNotIn("pr-merge", events)
+
     def test_branch_failure_never_calls_writer(self):
         def handle(argv):
             if argv[:2] == ["git", "rev-parse"]:
@@ -409,6 +686,7 @@ class McpPrModeTest(unittest.TestCase):
         self.assertEqual(response["status"], "committed")
         self.assertNotIn("pull_request", response)
         self.assertNotIn("auto_merge", response)
+        self.assertNotIn("allowlist", response)
         self.assertEqual(len(writer.writes), 1)
 
     def test_read_tool_never_runs_publication(self):
