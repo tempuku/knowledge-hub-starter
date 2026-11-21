@@ -4,7 +4,7 @@ schema_version: 1
 type: project
 title: "Knowledge Hub (public demo)"
 description: "Published read-only project overview for the Knowledge Hub interface."
-status: in_progress
+status: completed
 visibility: public
 tags: [demo, knowledge-hub]
 ---
