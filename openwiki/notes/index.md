@@ -1,3 +1,3 @@
 # Notes
 
-* [Recovery timeline - public synthetic demo](recovery-public-demo.md)
+* [Recovery timeline (synthetic public demo)](recovery-public-demo.md)
