@@ -45,25 +45,78 @@ def _area(path):
     return relative.rsplit("/", 1)[0] if "/" in relative else "root"
 
 
+INDEX_ENTRY = re.compile(r"^[*-] \[([^\]]+)\]\(([^)]+)\)\s*$")
+
+
+def _entry_line(name, label=None):
+    if label is None:
+        label = name.rstrip("/").replace("-", " ").title()
+    return "* [" + label + "](" + name + ")\n"
+
+
+def _index_entry_targets(text):
+    return [match.group(2) for match in
+            (INDEX_ENTRY.match(line) for line in text.splitlines()) if match]
+
+
+def _previous_index(index):
+    """Read an existing index, failing closed for symlinks and duplicates."""
+    if not index.exists():
+        return None
+    if index.is_symlink():
+        reject("INTEGRITY_ERROR", "Symlink structural index")
+    previous = index.read_text(encoding="utf-8")
+    targets = _index_entry_targets(previous)
+    if len(targets) != len(set(targets)):
+        reject("INTEGRITY_ERROR", "Duplicate structural index entries")
+    return previous
+
+
+def _is_journal_index(directory):
+    return "journal" in Path(directory).parts
+
+
 def _index_content(directory, entries, previous=None):
     # Indexes are structural, not v1 records, and never generate history events.
-    # Keep the root declaration and a stable heading, regenerate exact links.
+    # With previous text, preserve every non-entry line (frontmatter, heading,
+    # prose, blank-line structure) and regenerate only the sorted entry block.
+    if previous is not None:
+        labels, kept, block_at = {}, [], None
+        for line in previous.splitlines(keepends=True):
+            match = INDEX_ENTRY.match(line.rstrip("\n"))
+            if match:
+                labels.setdefault(match.group(2), match.group(1))
+                if block_at is None:
+                    block_at = len(kept)
+                continue
+            kept.append(line)
+        block = "".join(_entry_line(name, labels.get(name))
+                        for name in sorted(entries))
+        if block_at is None:
+            head = "".join(kept)
+            if head and not head.endswith("\n"):
+                head += "\n"
+            if head and not head.endswith("\n\n"):
+                head += "\n"
+            return head + block
+        result = "".join(kept[:block_at]) + block + "".join(kept[block_at:])
+        return result if result.endswith("\n") else result + "\n"
+    # No previous index: keep the exact generated output for new directories.
     if directory == "openwiki":
         prefix = '---\nokf_version: "0.2"\n---\n\n# Knowledge Hub\n\n'
     else:
         prefix = "# " + directory.rsplit("/", 1)[-1].replace("-", " ").title() + "\n\n"
-    return prefix + "".join(
-        "* [" + name.rstrip("/").replace("-", " ").title() + "](" + name + ")\n"
-        for name in sorted(entries)
-    )
+    return prefix + "".join(_entry_line(name) for name in sorted(entries))
 
 
-def _rebuild_indexes(root):
+def _rebuild_indexes(root, skip_journal=False):
     wiki = root / "openwiki"
     if not wiki.exists():
         wiki.mkdir()
     directories = {"openwiki": set()}
     for source in wiki.rglob("*.md"):
+        if source.is_symlink():
+            reject("INTEGRITY_ERROR", "Symlink in structural index directory")
         rel = source.relative_to(root).as_posix()
         if source.name.endswith(".log.md") or source.name in ("index.md", "log.md"):
             continue
@@ -74,13 +127,16 @@ def _rebuild_indexes(root):
             directories.setdefault(ancestor, set()).add(child + "/")
             parent = ancestor
     for folder, children in directories.items():
+        # Legacy journal trees stay migration input. Ordinary writes leave them
+        # byte-identical; migration tooling rejects them instead of guessing.
+        if _is_journal_index(folder):
+            if skip_journal:
+                continue
+            reject("INTEGRITY_ERROR", "Legacy journal indexes require reviewed migration")
         index = root / folder / "index.md"
         index.parent.mkdir(parents=True, exist_ok=True)
-        # Preserve legacy indexes until the separate migration; target writer
-        # can only safely regenerate indexes in a fully migrated repository.
-        if index.exists() and "journal/" in index.read_text(encoding="utf-8"):
-            reject("INTEGRITY_ERROR", "Legacy indexes require reviewed migration")
-        index.write_text(_index_content(folder, children), encoding="utf-8")
+        previous = _previous_index(index)
+        index.write_text(_index_content(folder, children, previous), encoding="utf-8")
     return directories
 
 
@@ -439,8 +495,9 @@ class GitRecordWriter:
                     (workspace / log_path).write_text(
                         append_log(existing.decode("utf-8") if existing else None, event),
                         encoding="utf-8", newline="")
-                    # Rebuild target indexes only; legacy tree indexes are not
-                    # safe to rewrite before migration. Detect and reject.
+                    # Rebuild only the affected ancestry: the record's own
+                    # directory up to the root. Unrelated indexes must not be
+                    # touched, so concurrent writers do not conflict.
                     self._reindex_target(workspace, path)
                     git(workspace, "add", "--", path, log_path, *self._changed_indexes(workspace))
                     self._fault("staged")
@@ -508,10 +565,11 @@ class GitRecordWriter:
 
     def _reindex_target(self, workspace, record_path):
         # Rebuild exact sorted direct-child links only along the affected
-        # ancestry. Never overwrite a legacy index that still carries content
-        # requiring the separate migration.
+        # ancestry, preserving unrelated prose already present in each index.
         parent = Path(record_path).parent
         while True:
+            if _is_journal_index(parent.as_posix()):
+                reject("INTEGRITY_ERROR", "Legacy journal indexes require reviewed migration")
             folder = workspace / parent
             folder.mkdir(parents=True, exist_ok=True)
             index = folder / "index.md"
@@ -525,16 +583,11 @@ class GitRecordWriter:
                         child.name not in ("index.md", "log.md") and
                         not child.name.endswith(".log.md")):
                     entries.add(child.name)
-            if index.exists():
-                old = index.read_text(encoding="utf-8")
-                if "journal/" in old:
-                    reject("INTEGRITY_ERROR", "Legacy indexes require reviewed migration")
-                # Preserve historical indexes with unrelated prose; those are
-                # migration input and must not be silently rewritten.
-                if index.as_posix().endswith("/openwiki/index.md"):
-                    if not old.startswith('---\nokf_version: "0.2"\n---\n'):
-                        reject("INTEGRITY_ERROR", "Unexpected root index format")
-            index.write_text(_index_content(parent.as_posix(), entries),
+            previous = _previous_index(index)
+            if previous is not None and index.as_posix().endswith("/openwiki/index.md"):
+                if not previous.startswith('---\nokf_version: "0.2"\n---\n'):
+                    reject("INTEGRITY_ERROR", "Unexpected root index format")
+            index.write_text(_index_content(parent.as_posix(), entries, previous),
                              encoding="utf-8")
             if str(parent) == "openwiki":
                 break

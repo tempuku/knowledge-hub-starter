@@ -70,7 +70,7 @@ def _write_permission(writer, meta, operation):
 
 def _clean_old_parent(workspace, prior_path):
     """Remove now-empty directories; reindex retained old ancestors."""
-    from service_v1 import _index_content
+    from service_v1 import _index_content, _previous_index
     parent = (workspace / prior_path).parent
     while parent != workspace / "openwiki":
         if not parent.exists():
@@ -78,13 +78,16 @@ def _clean_old_parent(workspace, prior_path):
             continue
         remaining = [p for p in parent.iterdir() if p.name != "index.md"]
         if remaining:
-            # Recompute only this ancestor's exact direct children.
+            # Recompute only this ancestor's exact direct children, keeping
+            # any non-entry index prose.
             entries = {p.name + "/" if p.is_dir() else p.name for p in remaining
                        if p.is_dir() or (p.is_file() and p.name.endswith(".md") and
                                           not p.name.endswith(".log.md") and
                                           p.name not in {"log.md", "index.md"})}
-            (parent / "index.md").write_text(
-                _index_content(parent.relative_to(workspace).as_posix(), entries),
+            index = parent / "index.md"
+            index.write_text(
+                _index_content(parent.relative_to(workspace).as_posix(), entries,
+                               _previous_index(index)),
                 encoding="utf-8")
             return
         (parent / "index.md").unlink(missing_ok=True)

@@ -16,6 +16,18 @@ Each record has a permanent lowercase UUIDv4 `id`, allocated by the writer on cr
 
 `index.md` in each directory is structural, not a knowledge record: no record ID, log or diary row. It lists direct child records and direct child directories exactly once, sorted by relative target path; excludes `.log.md`. Writer regenerates affected indexes atomically. Only root `openwiki/index.md` declares `okf_version: "0.2"`. Old directory `log.md` is legacy input, not an active log convention. Empty directories/indexes are removed on move, except root. A path cannot be occupied by both a structural index and a record.
 
+Structural indexes may also carry hand-written prose. When updating one, the writer
+preserves every non-entry line — YAML frontmatter including the root `okf_version`
+declaration, headings, blockquote notes and blank-line structure — and rewrites only
+the entry block of `* [Label]` links, sorted by relative target path. Validation therefore
+reads only the entry lines: each direct child must appear exactly once; outside the
+untouched `journal/` migration input those entries must also be in sorted order;
+duplicate links for one target and missing entries still fail. This makes a pre-migration
+tree writable: an index is no longer refused merely because it links `journal/` or lists
+entries out of order. The writer still fails closed on symlinks, on duplicate entry links
+and on indexes inside a `journal/` directory, which remain migration input. Preserved prose
+is display text only; the writer never verifies or rewrites its claims.
+
 ## S-02: Canonical Markdown schema
 
 File bytes MUST be valid UTF-8 without BOM, use LF, and end with one newline. Writer rejects invalid encoding, CRLF and NUL rather than silently changing snapshots. Maximum current record size is 1 MiB. Frontmatter is one YAML mapping bounded by `---` lines; reject duplicate keys, aliases, arbitrary tags and non-string mapping keys. The body is Markdown and may be empty only for a `project` record. No serialized revision number or generated timestamp is placed in frontmatter; version comes from the log.
