@@ -4,8 +4,8 @@ schema_version: 1
 type: note
 title: "Recovery timeline (synthetic public demo)"
 description: "Public synthetic example to test persistent in-progress status and document placeholders."
-status: in_progress
-visibility: public
+status: draft
+visibility: private
 occurred_on: "2026-10-27"
 tags: [demo, fixture, health, recovery]
 ---
