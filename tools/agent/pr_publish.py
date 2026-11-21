@@ -16,8 +16,19 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+PROJECTION = Path(__file__).resolve().parents[1] / "projection"
+if str(PROJECTION) not in sys.path:
+    sys.path.insert(0, str(PROJECTION))
+
+from deterministic import ProjectionError, json_bytes  # noqa: E402
+from publication import validate_policy  # noqa: E402
 
 BRANCH = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]*")
+POLICY_PATH = "config/publication.json"
 COMMIT = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 GH_TIMEOUT = 120
 RUN_TIMEOUT = 60
@@ -220,6 +231,99 @@ def prepare_publication_branch(root, remote, head, expected_head,
                                    "Publication branch does not match the "
                                    "trusted remote")
     return head
+
+
+def _allowlist_failure(detail):
+    return {"state": "failed", "detail": detail[:400]}
+
+
+def allowlist_new_event(root, remote, branch, record_id, event_id, runner=run):
+    """Append one new event ID to an already-approved public record (issue #126).
+
+    The policy is read from the publication branch head, never from the
+    caller's working tree. Only ``event_ids`` changes; the edit lands as one
+    extra commit on that branch and is pushed with a compare-and-swap lease.
+    A rejected push returns ``failed`` instead of overwriting another writer.
+    """
+    if (type(branch) is not str or not BRANCH.fullmatch(branch) or ".." in branch
+            or type(remote) is not str or not remote.strip() or any(
+                c.isspace() or ord(c) < 32 for c in remote)
+            or type(record_id) is not str or type(event_id) is not str):
+        return _allowlist_failure("Invalid allowlist publication parameters")
+    head = _local_tip(root, branch, runner)
+    if head is None:
+        return _allowlist_failure("Publication branch head is unavailable")
+    shown = _git(root, runner, "show", branch + ":" + POLICY_PATH)
+    if shown.returncode:
+        return _allowlist_failure("Publication allowlist is unavailable: " +
+                                  _detail(shown))
+    try:
+        policy, _ = validate_policy(shown.stdout.encode("utf-8"))
+    except (ProjectionError, UnicodeError, AttributeError) as exc:
+        return _allowlist_failure("Invalid publication allowlist: " + str(exc))
+    if record_id not in policy["record_ids"]:
+        return {"state": "not_applicable",
+                "detail": "Record is not in the publication allowlist"}
+    if event_id in policy["event_ids"]:
+        return {"state": "already",
+                "detail": "Event is already in the publication allowlist"}
+    updated = {
+        "schema_version": policy["schema_version"],
+        "record_ids": list(policy["record_ids"]),
+        "event_ids": sorted(set(policy["event_ids"]) | {event_id}),
+        "actor_labels": list(policy["actor_labels"]),
+    }
+    try:
+        raw = json_bytes(updated)
+        validate_policy(raw)
+    except (ProjectionError, ValueError, TypeError) as exc:
+        return _allowlist_failure("Invalid updated publication allowlist: " +
+                                  str(exc))
+
+    with tempfile.TemporaryDirectory(prefix="knowledge-allowlist-") as tmp:
+        workspace = Path(tmp) / "checkout"
+        added = _git(root, runner, "worktree", "add", "--detach",
+                     str(workspace), head)
+        if added.returncode:
+            return _allowlist_failure("Could not create allowlist worktree: " +
+                                      _detail(added))
+        try:
+            target = workspace / POLICY_PATH
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+            staged = _git(workspace, runner, "add", "--", POLICY_PATH)
+            if staged.returncode:
+                return _allowlist_failure("Could not stage publication "
+                                          "allowlist: " + _detail(staged))
+            committed = _git(
+                workspace, runner, "-c", "user.name=Knowledge Writer",
+                "-c", "user.email=writer@localhost.invalid", "commit", "-m",
+                "chore(publication): allowlist event " + event_id[:8])
+            if committed.returncode:
+                return _allowlist_failure("Could not commit publication "
+                                          "allowlist: " + _detail(committed))
+            resolved = _git(workspace, runner, "rev-parse", "HEAD")
+            commit = resolved.stdout.strip()
+            if resolved.returncode or not COMMIT.fullmatch(commit):
+                return _allowlist_failure("Allowlist commit identity is "
+                                          "uncertain")
+            pushed = _git(
+                workspace, runner, "push",
+                "--force-with-lease=refs/heads/" + branch + ":" + head,
+                remote, commit + ":refs/heads/" + branch, timeout=GH_TIMEOUT)
+            if pushed.returncode:
+                return _allowlist_failure("Allowlist push was rejected: " +
+                                          _detail(pushed))
+            moved = _git(root, runner, "update-ref", "refs/heads/" + branch,
+                         commit, head)
+            if moved.returncode:
+                return _allowlist_failure(
+                    "Allowlist commit was pushed but the local branch update "
+                    "failed; retry the same idempotency key")
+            return {"state": "added", "commit": commit}
+        finally:
+            _git(root, runner, "worktree", "remove", "--force",
+                 str(workspace))
 
 
 def ensure_pull_request(root, base, head, title, body, runner=run):
