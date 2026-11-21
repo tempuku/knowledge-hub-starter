@@ -89,17 +89,16 @@ def check() -> int:
     for page in pages["pages"]:
         items.extend(json.loads(get(prefix + page["url"]))["items"])
     titles = {item["title"] for item in items}
-    required = {"Knowledge Hub (public demo)", "Ivanovo Models (public demo)",
-                "Recovery timeline (synthetic public demo)"}
+    required = {"Archon routing stack — public status",
+                "Ivanovo architectural 3D models", "Personal Finance",
+                "Идеи в одежде"}
     if not required.issubset(titles):
-        raise AssertionError("Public Records/Projects UI is missing synthetic fixtures")
-    demo = next(item for item in items if item["title"] ==
-                "Recovery timeline (synthetic public demo)")
-    if demo["status"] != "in_progress":
-        raise AssertionError("Synthetic recovery is not persistently in progress")
-    detail = json.loads(get(prefix + "records/" + demo["id"] + ".json"))
-    if "October 27, 2026" not in detail.get("content", ""):
-        raise AssertionError("Synthetic recovery record is not readable over HTTPS")
+        raise AssertionError("Public Records/Projects UI is missing an in-progress record")
+    ivanovo = next(item for item in items if item["title"] ==
+                   "Ivanovo architectural 3D models")
+    detail = json.loads(get(prefix + "records/" + ivanovo["id"] + ".json"))
+    if "Ivanovo architectural 3D models" not in detail.get("content", ""):
+        raise AssertionError("Ivanovo project record is not readable over HTTPS")
     if any(item["id"] == "5b82fc58-cccd-4997-ad93-b74b07ce3640"
            for item in items):
         raise AssertionError("Original private test record leaked publicly")

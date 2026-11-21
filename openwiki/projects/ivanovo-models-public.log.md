@@ -69,3 +69,38 @@
   }
 }
 ```
+
+## Entry 875164b2-8c64-4a38-b177-213abe8e5988
+```json
+{
+  "schema_version": 1,
+  "id": "875164b2-8c64-4a38-b177-213abe8e5988",
+  "record_id": "1e26b8e8-cc64-46dd-923b-ea0163480012",
+  "operation_id": "2fa99cce-2536-44f5-819b-77d35e006655",
+  "sequence": 3,
+  "action": "UPDATED",
+  "recorded_at": "2026-11-21T21:39:49Z",
+  "occurred_on": null,
+  "occurred_at": null,
+  "actor": {
+    "id": "opencode-agent",
+    "kind": "agent",
+    "label": "OpenCode agent"
+  },
+  "summary": "Mark the demo private and draft so it leaves the public site",
+  "path_before": "openwiki/projects/ivanovo-models-public.md",
+  "path_after": "openwiki/projects/ivanovo-models-public.md",
+  "before": "---\nid: \"1e26b8e8-cc64-46dd-923b-ea0163480012\"\nschema_version: 1\ntype: project\ntitle: \"Ivanovo Models (public demo)\"\ndescription: \"Public demo project card for architectural model tracking.\"\nstatus: in_progress\nvisibility: public\ntags: [demo, architecture, three-d-printing]\n---\n\n# Ivanovo Models - public demo\n\nTrack architectural model planning and 3D printing work here. This demo project has no private repository artifacts, printer files, or unpublished references.\n\n## Linked records and evidence\n\n- [Knowledge Hub public project overview](record:9a2f68b9-a1a9-40c6-ae1c-6224e1630011) - the parent knowledge-system project explaining shared record/log and visibility principles.\n- [This project's complete append-only history](https://github.com/tempuku/knowledge-hub-starter/blob/main/openwiki/projects/ivanovo-models-public.log.md) - this public demo's own recorded changes.\n- [Knowledge Hub traceable topics and evidence traversal (#46)](https://github.com/tempuku/knowledge-hub-starter/issues/46) - public documentation for related-record discovery.\n\nNo private model sources, files or manufacturing evidence are included in this public overview. The authoritative private project may provide additional evidence only to authorized readers.\n",
+  "after": "---\nid: \"1e26b8e8-cc64-46dd-923b-ea0163480012\"\nschema_version: 1\ntype: project\ntitle: \"Ivanovo Models (public demo)\"\ndescription: \"Public demo project card for architectural model tracking.\"\nstatus: draft\nvisibility: private\ntags: [demo, architecture, three-d-printing]\n---\n\n# Ivanovo Models - public demo\n\nTrack architectural model planning and 3D printing work here. This demo project has no private repository artifacts, printer files, or unpublished references.\n\n## Linked records and evidence\n\n- [Knowledge Hub public project overview](record:9a2f68b9-a1a9-40c6-ae1c-6224e1630011) - the parent knowledge-system project explaining shared record/log and visibility principles.\n- [This project's complete append-only history](https://github.com/tempuku/knowledge-hub-starter/blob/main/openwiki/projects/ivanovo-models-public.log.md) - this public demo's own recorded changes.\n- [Knowledge Hub traceable topics and evidence traversal (#46)](https://github.com/tempuku/knowledge-hub-starter/issues/46) - public documentation for related-record discovery.\n\nNo private model sources, files or manufacturing evidence are included in this public overview. The authoritative private project may provide additional evidence only to authorized readers.\n",
+  "before_sha256": "c28e85eb7fb174507986965ded0bbaa22b420e3bffc12d044bbcbf24f064d2a3",
+  "after_sha256": "d6936f63b09d0d30a6e887b133315b4f988585c8de28653787e64bbfe45b8a3f",
+  "previous_event_id": "16fb991b-86f3-437b-a4c5-28b3f7af6e92",
+  "idempotency_key": "4d716e53-d3b9-45e3-9a6e-ae5505399aea",
+  "request_sha256": "56c2a8c9471f5302f4dec9f6dcda1069c2013d4952171334156f332803757e45",
+  "provenance": {
+    "kind": "native",
+    "source_ref": null,
+    "original_time": null
+  }
+}
+```

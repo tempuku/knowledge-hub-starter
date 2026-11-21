@@ -1,27 +1,35 @@
 ---
+id: d08851e8-794b-4662-b829-a7d2190b8365
+schema_version: 1
 type: project
 title: Ivanovo architectural 3D models
+description: 'Canonical Ivanovo architectural 3D models project: production contract,
+  viewer status and evidence links.'
 status: in_progress
-project_id: ivanovo-models
-tags: [architecture, openscad, 3d-printing, viewer]
-visibility: private
+visibility: public
+tags:
+- architecture
+- openscad
+- 3d-printing
+- viewer
+- recovery
+- knowledge-hub
 sources:
-  - resource: https://github.com/tempuku/ivanovo_models
-    title: Source repository
-  - resource: https://github.com/tempuku/ivanovo_models/pull/17
-    title: Colored master implementation
-  - resource: https://github.com/tempuku/ivanovo_models/pull/18
-    title: Mesh and slicer evidence implementation
-  - resource: https://github.com/tempuku/ivanovo_models/pull/15
-    title: Viewer-state groundwork
-  - resource: https://github.com/tempuku/ivanovo_models/pull/7
-    title: Merged optional-public-demo CI foundation
-  - resource: https://github.com/tempuku/ivanovo_models/pull/19
-    title: Open draft shared GLB viewer integration
-  - resource: https://github.com/tempuku/ivanovo_models/pull/20
-    title: Merged read-only authenticated viewer gateway
+- resource: https://github.com/tempuku/ivanovo_models
+  title: Source repository
+- resource: https://github.com/tempuku/ivanovo_models/pull/17
+  title: Colored master implementation
+- resource: https://github.com/tempuku/ivanovo_models/pull/18
+  title: Mesh and slicer evidence implementation
+- resource: https://github.com/tempuku/ivanovo_models/pull/15
+  title: Viewer-state groundwork
+- resource: https://github.com/tempuku/ivanovo_models/pull/7
+  title: Merged optional-public-demo CI foundation
+- resource: https://github.com/tempuku/ivanovo_models/pull/19
+  title: Open draft shared GLB viewer integration
+- resource: https://github.com/tempuku/ivanovo_models/pull/20
+  title: Merged read-only authenticated viewer gateway
 ---
-
 # Ivanovo architectural 3D models
 
 Canonical development source: [tempuku/ivanovo_models](https://github.com/tempuku/ivanovo_models) (private; requires GitHub repository access). This note is a **manual snapshot from 2026-11-09**, not an automatically synchronized status feed. For current state, consult the linked issues, merged PRs, CI and repository files.
@@ -47,7 +55,7 @@ Canonical development source: [tempuku/ivanovo_models](https://github.com/tempuk
 | [#3 Unified viewer](https://github.com/tempuku/ivanovo_models/issues/3) | [PR #15 merged](https://github.com/tempuku/ivanovo_models/pull/15); [PR #19 draft](https://github.com/tempuku/ivanovo_models/pull/19) | Groundwork is on `main`. Draft #19 adds the shared catalog UI and GLB renderer; its synthetic, hash-verified WebGL browser smoke passed, **not** real-building acceptance. #19 is not merged. |
 | [#4 Delivery: private production, optional public demo](https://github.com/tempuku/ivanovo_models/issues/4) | [PR #7 merged](https://github.com/tempuku/ivanovo_models/pull/7); [PR #20 merged](https://github.com/tempuku/ivanovo_models/pull/20) | Phase A public-demo-only CI and Phase B1 read-only Cloudflare Access gateway code are on `main`. All four PR #20 rerun workflows passed. **No Cloudflare live site, credential provisioning or public Pages publishing has occurred.** |
 
-**Privacy-first delivery update:** The canonical `ivanovo_models` repository remains **private**. A shared private viewer should require verified identity on every HTML, JavaScript, catalog, Markdown and GLB request; its GitHub read credential belongs server-side only. PR #20 supplies the read-only Worker transport and tests, but configuring Access for all Worker/preview hostnames, setting a least-privilege read token, verifying anonymous denial at a live HTTPS URL and testing real building exports remain outstanding. The optional GitHub Pages path may publish **only** a separately approved synthetic/public payload; it is not a private-record gateway. See [Knowledge Hub ADR 0001](../adr/0001-private-records-authenticated-app.md) for the shared security principle; the Knowledge Hub private diary itself is a different, still-unimplemented product.
+**Privacy-first delivery update:** The canonical `ivanovo_models` repository remains **private**. A shared private viewer should require verified identity on every HTML, JavaScript, catalog, Markdown and GLB request; its GitHub read credential belongs server-side only. PR #20 supplies the read-only Worker transport and tests, but configuring Access for all Worker/preview hostnames, setting a least-privilege read token, verifying anonymous denial at a live HTTPS URL and testing real building exports remain outstanding. The optional GitHub Pages path may publish **only** a separately approved synthetic/public payload; it is not a private-record gateway. See Knowledge Hub ADR 0001 for the shared security principle; the Knowledge Hub private diary itself is a different, still-unimplemented product.
 
 Open work: [#10 four-color manufacturing](https://github.com/tempuku/ivanovo_models/issues/10), [#11 serviceable Big LED](https://github.com/tempuku/ivanovo_models/issues/11), [#13 resumable production workflow](https://github.com/tempuku/ivanovo_models/issues/13), real root viewer integration under #3, and private production deployment/verification under #4. Physical test printing, installed P2S accessories and any claims of final release remain unverified.
 
