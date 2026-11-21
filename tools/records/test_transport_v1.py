@@ -83,10 +83,10 @@ class TransportGitFixtures(unittest.TestCase):
         result = json.loads(proc.stdout)
         return proc.returncode, result
 
-    def raw_mcp(self, lines):
+    def raw_mcp(self, lines, extra=()):
         proc = subprocess.run([
             sys.executable, str(MCP), "--root", str(self.root),
-            "--capability-file", str(self.capability_file),
+            "--capability-file", str(self.capability_file), *extra,
         ], input="".join(lines), capture_output=True, text=True, timeout=60)
         self.assertEqual(proc.returncode, 0, proc.stderr)
         replies = [json.loads(line) for line in proc.stdout.splitlines()]
@@ -135,6 +135,9 @@ class TransportGitFixtures(unittest.TestCase):
                      "record_url", "event_url", "diff_url"):
             self.assertEqual(response[name], initial[name], name)
         self.assertEqual(response["publication"], "pending")
+        # Non-PR launches keep the original response shape.
+        self.assertNotIn("pull_request", response)
+        self.assertNotIn("auto_merge", response)
         self.assertEqual(self.snapshot(), before)
 
     def test_every_cli_and_real_stdio_tool_share_identical_commit_bytes(self):
@@ -364,6 +367,27 @@ class TransportGitFixtures(unittest.TestCase):
         self.assertEqual([reply["error"]["code"] for reply in replies],
                          [-32602, -32602])
         self.assertEqual(self.head(), second["head"])
+
+    def test_pr_flags_are_opt_in_and_auto_merge_requires_base(self):
+        # --auto-merge alone is a launch error, not a silent mode change.
+        proc = subprocess.run([
+            sys.executable, str(MCP), "--root", str(self.root),
+            "--capability-file", str(self.capability_file), "--auto-merge",
+        ], input="", capture_output=True, text=True, timeout=60)
+        self.assertEqual(proc.returncode, 2, proc.stderr)
+        self.assertIn("requires --pr-base", proc.stderr)
+
+        # --pr-base enables PR mode but leaves discovery and reads unchanged.
+        frames = [
+            json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize",
+                        "params": {"protocolVersion": "2025-11-25"}}) + "\n",
+            json.dumps({"jsonrpc": "2.0", "id": 2,
+                        "method": "tools/list"}) + "\n",
+        ]
+        replies, stderr = self.raw_mcp(frames, extra=("--pr-base", "main"))
+        self.assertEqual([reply["id"] for reply in replies], [1, 2], stderr)
+        self.assertEqual(len(replies[1]["result"]["tools"]), 8)
+        self.assertEqual(self.head(), self.initial_head)
 
 
 if __name__ == "__main__":
