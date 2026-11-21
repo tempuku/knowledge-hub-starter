@@ -79,6 +79,7 @@ js_syntax() {
   run node --check site/sw.js
   run node --check site/v1.js
   run node --check site/v1_data.js
+  run node --check site/v1_diary.js
   run node --check site/v1_markdown.js
 }
 
@@ -95,7 +96,7 @@ node_task() {
   run node --test tools/okf/knowledge-frontmatter.test.mjs
   run sh .githooks/pre-commit
   js_syntax
-  run node --test site/sw.test.cjs site/v1_data.test.js
+  run node --test site/sw.test.cjs site/v1_data.test.js site/v1_diary.test.js
 }
 
 python_task() {

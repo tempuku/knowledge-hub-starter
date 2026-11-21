@@ -475,7 +475,7 @@ def publish(directory: Path) -> dict:
     # legacy diary as a deliberate fallback at /legacy.html.
     shutil.copy2(directory / "index.html", directory / "legacy.html")
     shutil.copy2(ROOT / "site" / "v1.html", directory / "index.html")
-    for name in ("v1.js", "v1_data.js", "v1_markdown.js", "v1.css"):
+    for name in ("v1.js", "v1_data.js", "v1_diary.js", "v1_markdown.js", "v1.css"):
         shutil.copy2(ROOT / "site" / name, directory / name)
     vendor = directory / "vendor"
     vendor.mkdir(exist_ok=True)

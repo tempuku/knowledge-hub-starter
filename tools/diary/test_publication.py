@@ -20,7 +20,7 @@ STATIC = {
     "index.html", "app.js", "style.css", "sw.js", "manifest.webmanifest",
     "apple-touch-icon.png", "icon-192.png", "icon-512.png",
     "data/calendar.json", "data/reminders.json",
-    "legacy.html", "v1.js", "v1.css", "v1_data.js", "v1_markdown.js",
+    "legacy.html", "v1.js", "v1.css", "v1_data.js", "v1_diary.js", "v1_markdown.js",
     "vendor/markdown-it-13.0.2.min.js", "data/manifest.json",
 }
 SHARDED = (
