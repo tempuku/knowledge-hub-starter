@@ -1,7 +1,6 @@
 {
   "schema_version": 1,
   "legacy_projects": {
-    "ivanovo-models": "1e26b8e8-cc64-46dd-923b-ea0163480012",
-    "knowledge-hub": "9a2f68b9-a1a9-40c6-ae1c-6224e1630011"
+    "ivanovo-models": "1e26b8e8-cc64-46dd-923b-ea0163480012"
   }
 }

@@ -7,7 +7,7 @@ description: "Synthetic acceptance fixture for personal priorities and document 
 status: in_progress
 visibility: private
 occurred_on: "2026-10-27"
-tags: [fixture, health, recovery]
+tags: [fixture, health, health-recovery]
 ---
 
 # Recovery timeline — synthetic test
