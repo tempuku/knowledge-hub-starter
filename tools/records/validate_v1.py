@@ -504,7 +504,15 @@ def verify_indexes(root, tracked):
         require(idx in tracked, f"{idx}: missing structural index")
         text = git(root, "show", ":" + idx).decode("utf-8", "strict")
         links = re.findall(r"^[*-] \[[^\]]+\]\(([^)]+)\)\s*$", text, re.M)
-        require(links == sorted(entries), f"{idx}: indexes must list each direct child exactly once in sorted path order")
+        # Structural indexes may retain non-entry prose. Validate only the
+        # entry lines: each direct child exactly once, without duplicates.
+        require(sorted(links) == sorted(entries),
+                f"{idx}: indexes must list each direct child exactly once")
+        # Journal trees are migration input; the writer never rewrites their
+        # index order, so only their coverage (above) is checked here.
+        if "journal" not in Path(folder).parts:
+            require(links == sorted(links),
+                    f"{idx}: indexes must list entries in sorted path order")
 
 
 def main():

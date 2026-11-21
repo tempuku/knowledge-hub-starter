@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from service_v1 import GitRecordWriter
+from service_v1 import GitRecordWriter, _rebuild_indexes
 from writer_v1 import WriterError
 from validate_v1 import parse_log, repository
 
@@ -21,6 +21,11 @@ def git(root, *args):
 
 
 class ServiceFixtureBase(unittest.TestCase):
+    root_index = '---\nokf_version: "0.2"\n---\n\n# Knowledge Hub\n\n'
+
+    def populate(self, wiki):
+        """Hook for fixtures that need extra committed legacy directories."""
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -28,10 +33,10 @@ class ServiceFixtureBase(unittest.TestCase):
         git(self.root, "init", "-q", "-b", "main")
         git(self.root, "config", "user.name", "Fixture")
         git(self.root, "config", "user.email", "fixture@example.invalid")
-        (self.root / "openwiki").mkdir()
-        (self.root / "openwiki/index.md").write_text(
-            '---\nokf_version: "0.2"\n---\n\n# Knowledge Hub\n\n',
-            encoding="utf-8")
+        wiki = self.root / "openwiki"
+        wiki.mkdir()
+        (wiki / "index.md").write_text(self.root_index, encoding="utf-8")
+        self.populate(wiki)
         git(self.root, "add", "-A")
         git(self.root, "commit", "-qm", "initial")
         self.head = git(self.root, "rev-parse", "HEAD")
@@ -370,6 +375,115 @@ class ServiceFixtures(ServiceFixtureBase):
             self.assertEqual(git(origin, "rev-parse", "refs/heads/main"), winner["head"])
             self.assertEqual(git(b, "rev-parse", "refs/heads/main"), base)
             self.assertEqual(writer_a.read(winner["record_id"])["head"], winner["head"])
+
+
+class LegacyIndexFixtures(ServiceFixtureBase):
+    """A pre-migration tree stays writable without losing index prose (#115)."""
+
+    root_index = (
+        '---\nokf_version: "0.2"\n---\n\n'
+        "# Knowledge Hub — Fixture\n\n"
+        "> Hand-written note that must survive writer updates.\n\n"
+        "* [Project diary](journal/)\n"
+        "* [Notes](notes/)\n"
+        "* [Architecture decisions](adr/)\n"
+    )
+
+    def populate(self, wiki):
+        # Legacy directories committed before the v1 migration, including a
+        # journal tree and an unsorted structural index.
+        (wiki / "adr").mkdir()
+        (wiki / "adr/index.md").write_text(
+            "# Architecture decision records\n\n"
+            "> Unrelated index prose kept verbatim.\n\n"
+            "* [Example decision](example-decision.md)\n", encoding="utf-8")
+        (wiki / "adr/example-decision.md").write_text(
+            '---\ntype: decision\ntitle: "Example decision"\n'
+            "status: draft\nvisibility: private\n---\n\nLegacy prose.\n",
+            encoding="utf-8")
+        (wiki / "journal/2026").mkdir(parents=True)
+        (wiki / "journal/index.md").write_text(
+            "# Journal\n\n* [2026](2026/)\n", encoding="utf-8")
+        (wiki / "journal/2026/index.md").write_text(
+            "# 2026\n\n* [Entry](entry.md)\n", encoding="utf-8")
+        (wiki / "journal/2026/entry.md").write_text(
+            '---\ntype: diary-entry\ntitle: "Legacy entry"\n'
+            "status: draft\nvisibility: private\n---\n\nLegacy journal input.\n",
+            encoding="utf-8")
+
+    def committed(self, head, path):
+        return subprocess.check_output(
+            ["git", "show", head + ":" + path], cwd=self.root, text=True)
+
+    def test_create_preserves_prose_and_sorts_legacy_entries(self):
+        created = self.writer.write(self.request)
+        self.assertEqual(created["status"], "committed")
+
+        root = self.committed(created["head"], "openwiki/index.md")
+        self.assertTrue(root.startswith('---\nokf_version: "0.2"\n---\n\n'))
+        self.assertIn("# Knowledge Hub — Fixture\n", root)
+        self.assertIn("> Hand-written note that must survive writer updates.\n",
+                      root)
+        self.assertEqual(
+            [line for line in root.splitlines() if line.startswith("* [")],
+            ["* [Architecture decisions](adr/)", "* [Project diary](journal/)",
+             "* [Notes](notes/)"])
+        self.assertEqual(self.committed(created["head"], "openwiki/notes/index.md"),
+                         "# Notes\n\n* [Sample.Md](sample.md)\n")
+
+        # The writer's own strict-index validation must accept the real legacy
+        # root index after regeneration.
+        with tempfile.TemporaryDirectory() as checkout:
+            git(self.root, "worktree", "add", "--detach", checkout, created["head"])
+            try:
+                self.assertEqual(
+                    repository(Path(checkout), base=self.head, strict_indexes=True),
+                    {"records": 1, "events": 1})
+            finally:
+                git(self.root, "worktree", "remove", "--force", checkout)
+
+    def test_create_touches_only_affected_ancestry(self):
+        created = self.writer.write(self.request)
+        changed = set(git(self.root, "diff-tree", "--no-commit-id",
+                          "--name-only", "-r", created["head"]).splitlines())
+        self.assertEqual(changed, {
+            self.path, self.path[:-3] + ".log.md",
+            "openwiki/index.md", "openwiki/notes/index.md"})
+        # Unrelated structural indexes and the journal tree stay byte-identical.
+        for path in ("openwiki/adr/index.md", "openwiki/journal/index.md",
+                     "openwiki/journal/2026/index.md"):
+            with self.subTest(path=path):
+                self.assertEqual(self.committed(created["head"], path),
+                                 self.committed(self.head, path))
+
+    def test_duplicate_entry_links_fail_closed(self):
+        index = self.root / "openwiki" / "index.md"
+        index.write_text(index.read_text(encoding="utf-8") +
+                         "* [Notes again](notes/)\n", encoding="utf-8")
+        git(self.root, "add", "-A")
+        git(self.root, "commit", "-qm", "duplicate legacy entry")
+        head = git(self.root, "rev-parse", "HEAD")
+        with self.assertRaises(WriterError) as failure:
+            self.writer.write({**self.request, "expected_head": head})
+        self.assertEqual(failure.exception.code, "INTEGRITY_ERROR")
+        self.assertEqual(git(self.root, "rev-parse", "main"), head)
+
+    def test_legacy_journal_indexes_stay_refused(self):
+        journal_index = self.root / "openwiki" / "journal/2026/index.md"
+        before = journal_index.read_text(encoding="utf-8")
+        with self.assertRaises(WriterError) as failure:
+            self.writer._reindex_target(self.root,
+                                        "openwiki/journal/2026/entry.md")
+        self.assertEqual(failure.exception.code, "INTEGRITY_ERROR")
+        self.assertEqual(journal_index.read_text(encoding="utf-8"), before)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "openwiki/journal/2026").mkdir(parents=True)
+            (root / "openwiki/journal/2026/entry.md").write_text(
+                "# Entry\n", encoding="utf-8")
+            with self.assertRaises(WriterError) as failure:
+                _rebuild_indexes(root)
+            self.assertEqual(failure.exception.code, "INTEGRITY_ERROR")
 
 
 class DiscoveryTests(ServiceFixtureBase):

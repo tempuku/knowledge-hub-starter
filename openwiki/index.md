@@ -4,12 +4,12 @@ okf_version: "0.2"
 
 # Knowledge Hub — Open Knowledge Format v0.2
 
-* [Knowledge hub guide](GUIDE.md)
 * [CI validation and troubleshooting](CI.md)
+* [Knowledge hub guide](GUIDE.md)
 * [Architecture decision records](adr/)
-* [Projects](projects/)
-* [Private test fixtures](private/)
-* [Journal](journal/)
-* [Public demo notes](notes/)
 * [Concepts](concepts/)
 * [Implementation design](design/)
+* [Journal](journal/)
+* [Public demo notes](notes/)
+* [Private test fixtures](private/)
+* [Projects](projects/)
