@@ -16,6 +16,8 @@
 
 Keep `validate-openwiki` as a required **fast** CI check for schema/record/log validation, deterministic projections, privacy/publication checks, build smoke tests and JavaScript syntax. Do **not** re-add Playwright Chromium/WebKit installs, `tools/diary/test_ui.py` or `tools/diary/test_ios12.py` to the required CI job. Run these suites only on demand locally via `sh tools/diary/run_local_ui_checks.sh` after one-time Playwright setup. Physical original iPad Air Safari 12 verification is a separate manual, device-local acceptance tracked by issue #2; neither a CI skip nor modern WebKit proves iPad acceptance. See `docs/acceptance/ipad-local.md`.
 
+`tools/records/check_publication_events.py` is part of that required fast job (#126) and compares `base..HEAD` so historical un-allowlisted events keep passing. It is deliberately **not** part of `.githooks/pre-commit`, because the writer commits the record and its event before the trusted adapter adds the matching allowlist entry in a separate commit, so a staged-file hook would fail the record commit that must come first.
+
 ## Pull request CI handoff
 
 - Do not treat a PR with pending checks as complete or promise to resume the same chat spontaneously. After opening/updating a PR, link its checks; let the CI-completion handoff workflow record the final result on the PR and return to that PR for review.
