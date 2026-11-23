@@ -12,6 +12,8 @@ sources:
     title: Container image tags
   - resource: https://github.com/tempuku
     title: Fork owner on GitHub
+  - resource: record:023e7ae2-4677-4738-b8f2-be812cca6cf3
+    title: Agentic management hierarchy and task ownership
 ---
 
 # Archon routing stack — public status
@@ -165,6 +167,10 @@ snapshot, not a live status feed.
   authorization, must start in a disposable environment, and must not replace
   the live gateway before the swap is proven.
 - Current next-step handoff: `outputs/NEXT-AGENT-AFTER-PHASE5.md`.
+
+## Related management architecture
+
+The proposed [Manager → Lead → Archon operating model](record:023e7ae2-4677-4738-b8f2-be812cca6cf3) covers manual and automated entry, task-wide chain ownership, Lead validation loops, and Knowledge Hub as a concise Manager diary. It is a **draft architecture**, separate from the verified routing-stack acceptance above.
 
 ## Open work
 
