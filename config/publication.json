@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "record_ids": [
+    "023e7ae2-4677-4738-b8f2-be812cca6cf3",
     "2b29dfb1-03e1-47ac-b0a9-c5b9427d3a88",
     "58a76581-d05f-4883-93bb-c2dd5981729d",
     "5d1e098b-24fc-43c6-b2d5-d68237742559",
@@ -10,6 +11,7 @@
     "f3f297e5-394b-46b0-b16d-b8ac09bf6ee4"
   ],
   "event_ids": [
+    "09f074ae-aa16-4250-87bb-f15b4c45376e",
     "0aab0893-ea1b-428d-ba03-8c2e233b9c7d",
     "14f53791-f55d-4451-b8f3-f6c3d8077fe4",
     "18053552-f083-4912-8aa6-bbeaaf758a6b",
@@ -17,6 +19,7 @@
     "318d22ec-d804-47ae-8d68-405c21ded759",
     "42c6055c-5a4a-4567-912d-609bad3de33d",
     "4cc32de0-bc70-45ab-b936-a25a9860f187",
+    "55fc1ec7-6f3e-4722-82da-19ee5af5bb2d",
     "606a4eaa-4c35-4471-8e97-04791d821fb2",
     "934a140e-e2e6-4e59-8f4a-cca2a972ab5c",
     "9a32b2f9-dc80-4b09-bb5d-15d899961aa6",
@@ -32,6 +35,7 @@
     "fff6bd95-bfd0-4d27-b9d4-0ce4d1569940"
   ],
   "actor_labels": [
+    "ChatGPT agent",
     "OpenCode agent",
     "Public Demo"
   ]
