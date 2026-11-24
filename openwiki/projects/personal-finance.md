@@ -24,11 +24,12 @@ sources:
 
 Build a local-first finance application covering manually authorized statement acquisition, a verifiable transaction ledger, spending analysis, and credit-card grace-period information.
 
-## Last checked: 2026-11-21
+## Last checked: 2026-11-24
 
 - [MVP 00: contract-first foundation (#2)](https://github.com/tempuku/personal-finance/issues/2) is open. Define domain value types, state transitions, bank-independent ports, errors, versioned interfaces, offline tests, and clear compatibility rules before separate agents implement bank adapters, import, core, and UI.
 - The repository README describes the project as design-stage work. There is no verified live bank integration or end-to-end workflow.
 - The 2026-11-21 GitHub check found one open implementation issue and no open PRs. Recheck the source for live changes; this snapshot is not an automatically refreshed CI claim.
+- On 2026-11-24 the generic Archon issue flow completed [issue #8](https://github.com/tempuku/personal-finance/issues/8) in [PR #9](https://github.com/tempuku/personal-finance/pull/9), merged at `88ef564185b7d9e8fb882b0c77235b7afdb28da9`. The repository gained a deterministic OpenWiki validator, 13 tests and a passing `OpenWiki and repository validation` check. This is repository-preparation evidence, not bank or application verification.
 
 ## Decisions and completion boundaries
 
