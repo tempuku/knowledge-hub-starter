@@ -73,6 +73,17 @@ The persistent validation context must include the original goal/version, outsta
 
 All workflows must keep their configured validation and merge gates; an LLM cannot override a deterministic denial or silently change acceptance criteria.
 
+## Provider 429: fixed-interval recovery (owner direction, 2026-11-24)
+
+**Decision to implement; not yet verified or deployed.** A temporary provider HTTP 429 must pause model execution without failing the engineering task, consuming its implementation/validation retries, or involving the Manager in routine recovery. Prefer a configurable **fixed 10-second retry interval, with no exponential increase**, even across many consecutive rate limits; small bounded jitter may be applied without increasing the interval over time. If the provider sends a longer `Retry-After`, respect it. Do not treat permanent quota exhaustion or authorization/budget denial as an indefinitely retryable 429.
+
+- **Pi/provider boundary:** preserve the current conversation and classify transient 429 plus `Retry-After` in a machine-readable result. The exact Pi retry settings and classification behavior must be verified against the installed version before choosing config versus a code change.
+- **Archon boundary:** maintain a durable `waiting_provider` state with next retry time, provider/model, attempt count and task/run identity; retry after restarts without spawning a competing Lead or counting these waits as workflow implementation failures. Idle waits should not invoke LLMs. Cancellation and explicit intervention must remain available.
+- **Gateway boundary:** preserve the established approved-routing, sticky-attempt, budget and safety rules; do not produce duplicate tool side effects or silently switch models mid-stream. A transport-level failover and a wait/retry are different decisions; no unlimited retries for 401, 402, non-retryable 403 or confirmed hard quota limits.
+- **Manager reporting:** only report prolonged inability to proceed as a blocker; keep attempt telemetry and operational detail in Archon/Phoenix or the repository. This policy is about *provider availability*, not extending task scope or suppressing failed acceptance.
+
+**Required proof:** force repeated 429s and verify constant retry spacing, respect for `Retry-After`, eventual success with the same Pi session and canonical task, restart recovery, cancellation, no duplicate side effects or silent budget bypass, and correct handling of permanent errors. Link the run/evidence in the [Archon harness design issue #139](https://github.com/tempuku/knowledge-hub-starter/issues/139). A proposed JSON setting alone is not proof.
+
 ## Verification before adoption
 
 - Confirm installed local Archon version supports required work-item, dispatch, chat and trigger APIs (upstream documentation is not deployment evidence).
