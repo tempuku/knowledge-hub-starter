@@ -18,7 +18,7 @@ sources:
 
 # Archon routing stack — public status
 
-**Snapshot: 2026-11-21.** A local orchestration stack runs workflows in Archon,
+**Snapshot: 2026-11-24.** A local orchestration stack runs workflows in Archon,
 executes model turns through Pi, and selects providers through a derived
 ExtremeRouter gateway build. Phoenix stores traces from the real Archon and Pi
 path. A deterministic role evaluation and the Phase 5 migration-readiness
@@ -171,6 +171,32 @@ snapshot, not a live status feed.
 ## Related management architecture
 
 The proposed [Manager → Lead → Archon operating model](record:023e7ae2-4677-4738-b8f2-be812cca6cf3) covers manual and automated entry, task-wide chain ownership, Lead validation loops, and Knowledge Hub as a concise Manager diary. It is a **draft architecture**, separate from the verified routing-stack acceptance above.
+
+## Phoenix experience improvements (2026-11-24)
+
+Management decision: move Phoenix from acceptance evidence to a daily operating
+view. The first slice is delivered and verified; it is local repository work, not
+a production routing change.
+
+Verified on 2026-11-24:
+
+- real Archon runs now trace automatically, without the fixture wrapper;
+- Phoenix shows native token, model and provider data, one session per Archon
+  run, and tool names without tool content;
+- three live synthetic Archon runs produced 5, 5 and 8 spans; the store now has
+  20 traces and 156 spans;
+- the existing trace smoke passed 26/26 and the new traces contain no privacy
+  canaries;
+- loopback binding, authentication, provider routing and non-blocking tracing
+  are unchanged.
+
+Remaining: real-run validation PASS/FAIL spans, project separation, dashboards
+and alerts, evaluation datasets, and cost reconciliation with the gateway
+ledger. Technical design and limitations are in the repository OpenWiki note
+`openwiki/phoenix-trace-experience.md` (not published). Evidence:
+`docs/evidence/phoenix-experience-20261124.json`.
+
+Status: **in progress** — first slice verified; remaining items stay open.
 
 ## Open work
 
