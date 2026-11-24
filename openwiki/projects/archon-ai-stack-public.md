@@ -16,7 +16,7 @@ sources:
 
 # Archon routing stack — public status
 
-**Snapshot: 2026-11-21.** A local orchestration stack runs workflows in Archon,
+**Snapshot: 2026-11-24.** A local orchestration stack runs workflows in Archon,
 executes model turns through Pi, and selects providers through a derived
 ExtremeRouter gateway build. Phoenix stores traces from the real Archon and Pi
 path. A deterministic role evaluation and the Phase 5 migration-readiness
@@ -165,6 +165,35 @@ snapshot, not a live status feed.
   authorization, must start in a disposable environment, and must not replace
   the live gateway before the swap is proven.
 - Current next-step handoff: `outputs/NEXT-AGENT-AFTER-PHASE5.md`.
+
+## Phoenix experience improvements (started 2026-11-24)
+
+Management decision: move Phoenix from acceptance evidence to a daily operating
+view. The current store holds the verified A08–A11 history, but real Archon use
+since 2026-11-21 produced no new traces, so the stack lacks an everyday
+observability surface.
+
+Scope, started and not yet verified:
+
+- trace every real Archon run automatically, without a fixture wrapper;
+- make Phoenix's native token, model, provider and cost views populate;
+- separate real runs from smoke fixtures and group a run as one session;
+- score and compare runs (validation, latency, cost, role/pool) instead of only
+  storing them;
+- add dashboards and alerts for errors, fallback hops, latency and spend;
+- reconcile Phoenix cost with the gateway ledger;
+- keep tracing non-blocking and keep prompts, tool content and credentials out
+  of spans by default.
+
+Guardrails: loopback-only binding and authentication are unchanged; no provider
+or routing change is part of this work; no privacy relaxation without an
+explicit, reviewed local-only debug mode; acceptance claims will be added only
+after live verification.
+
+Technical design, trade-offs and open questions live in the repository
+OpenWiki note `openwiki/phoenix-trace-experience.md` (not published).
+
+Status: **in progress**, owner-authorized local work only.
 
 ## Open work
 
