@@ -4,7 +4,7 @@ schema_version: 1
 type: concept
 title: "Agentic development management — Manager, Lead, Archon"
 description: "Proposed on-demand Manager and repository Lead roles, single task-chain ownership, iterative validation and knowledge boundaries."
-status: draft
+status: in_progress
 visibility: public
 project_id: 5d1e098b-24fc-43c6-b2d5-d68237742559
 tags: [archon, agentic-development, management, workflow, validation]
