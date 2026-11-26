@@ -84,7 +84,11 @@
       return words ? words.charAt(0).toUpperCase() + words.slice(1) : part;
     }).join(" / ");
   };
-  var areaNode = function (value) { return text("span", areaLabel(value), "badge area-label"); };
+  var areaNode = function (value) {
+    var label = areaLabel(value);
+    if (!value) return text("span", label, "badge area-label");
+    return link(label, "/records?area=" + encodeURIComponent(value), "badge area-label");
+  };
   var projectAlias = function (id, aliases) { var current = aliases && aliases.current_entries; return id && current && current[id] ? current[id] : id; };
   var belongsToProject = function (record, project, aliases) { return record.project_id === project.id || projectAlias(record.project_id, aliases) === project.id; };
   var projectTitles = function (records, aliases) {
