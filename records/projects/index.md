@@ -2,3 +2,4 @@
 
 * [Archon Ai Stack Public.Md](archon-ai-stack-public.md)
 * [Archon Ai Stack.Md](archon-ai-stack.md)
+* [Ivanovo Models Public.Md](ivanovo-models-public.md)
