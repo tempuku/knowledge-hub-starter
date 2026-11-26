@@ -4,7 +4,11 @@ import { posix as path } from "node:path";
 import { validateKnowledgeFrontmatter } from "./knowledge-frontmatter.mjs";
 
 const files = new Set(git("ls-files", "--cached", "-z").split("\0").filter(Boolean));
-const markdown = [...files].filter(file => file.startsWith("openwiki/") && file.endsWith(".md") && !file.endsWith(".log.md"));
+// openwiki/ is ordinary documentation after the records-root split. Files
+// without OKF frontmatter are plain docs and are not part of the indexed bundle.
+const markdown = [...files]
+  .filter(file => file.startsWith("openwiki/") && file.endsWith(".md") && !file.endsWith(".log.md"))
+  .filter(file => git("show", ":" + file).startsWith("---\n"));
 const directories = new Map([["openwiki", new Set()]]);
 const rootHeader = '---\nokf_version: "0.2"\n---\n\n';
 

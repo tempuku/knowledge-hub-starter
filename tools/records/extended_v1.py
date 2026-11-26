@@ -41,8 +41,10 @@ def _status_source(source, status):
 def _current_records(writer, head):
     """Return strict v1 tracked records, not legacy v0.2 migration inputs."""
     from service_v1 import git
-    paths = git(writer.root, "ls-tree", "-r", "--name-only",
-                head, "--", "openwiki").splitlines()
+    paths = []
+    for root_name in ("records", "openwiki"):
+        paths.extend(git(writer.root, "ls-tree", "-r", "--name-only",
+                         head, "--", root_name).splitlines())
     result = {}
     for path in paths:
         if (not path.endswith(".md") or path.endswith(".log.md") or
@@ -72,7 +74,8 @@ def _clean_old_parent(workspace, prior_path):
     """Remove now-empty directories; reindex retained old ancestors."""
     from service_v1 import _index_content, _previous_index
     parent = (workspace / prior_path).parent
-    while parent != workspace / "openwiki":
+    stop = workspace / prior_path.split("/", 1)[0]
+    while parent != stop:
         if not parent.exists():
             parent = parent.parent
             continue
@@ -93,6 +96,19 @@ def _clean_old_parent(workspace, prior_path):
         (parent / "index.md").unlink(missing_ok=True)
         parent.rmdir()
         parent = parent.parent
+    # Removing the last old child can empty a directory under the root; the
+    # root index must drop that directory entry as well.
+    root_index = stop / "index.md"
+    if root_index.exists():
+        entries = {p.name + "/" if p.is_dir() else p.name for p in stop.iterdir()
+                   if p.name != "index.md" and
+                   (p.is_dir() or (p.is_file() and p.name.endswith(".md") and
+                                   not p.name.endswith(".log.md") and
+                                   p.name not in {"log.md", "index.md"}))}
+        root_index.write_text(
+            _index_content(stop.relative_to(workspace).as_posix(), entries,
+                           _previous_index(root_index)),
+            encoding="utf-8")
 
 
 def _event(writer, normalized, meta, old_path, new_path, before, after,
@@ -154,7 +170,7 @@ def _stage_validate_commit(writer, normalized, head, edits, old_path=None, new_p
                 if parent.exists():
                     writer._reindex_target(workspace, str(
                         Path(old_path).parent / "placeholder.md"))
-            git(workspace, "add", "-A", "--", "openwiki")
+            git(workspace, "add", "-A", "--", *[name for name in ("openwiki", "records") if (workspace / name).exists()])
             writer._fault("staged")
             repository(workspace, base=head, strict_indexes=True)
             if writer.staged_checker is not None:

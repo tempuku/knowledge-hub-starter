@@ -1,8 +1,6 @@
 # Knowledge Hub implementation design
 
 * [Acceptance and verification contract](acceptance.md)
-* [Agent workflow for the knowledge bundle](agent-workflow.md)
-* [Migration inventory review](migration-inventory-review.md)
 * [Migration and implementation sequence](migration.md)
 * [Design baseline and scope](overview.md)
 * [Generated data, publication and performance](projections.md)

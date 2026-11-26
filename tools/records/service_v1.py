@@ -41,7 +41,12 @@ def git(root, *args, check=True):
 
 def _area(path):
     """Containment area used by search filters; root-level records are 'root'."""
-    relative = path[len("openwiki/"):] if path.startswith("openwiki/") else path
+    relative = path
+    for root in ("records", "openwiki"):
+        prefix = root + "/"
+        if path.startswith(prefix):
+            relative = path[len(prefix):]
+            break
     return relative.rsplit("/", 1)[0] if "/" in relative else "root"
 
 
@@ -102,7 +107,7 @@ def _index_content(directory, entries, previous=None):
         result = "".join(kept[:block_at]) + block + "".join(kept[block_at:])
         return result if result.endswith("\n") else result + "\n"
     # No previous index: keep the exact generated output for new directories.
-    if directory == "openwiki":
+    if directory in ("openwiki", "records"):
         prefix = '---\nokf_version: "0.2"\n---\n\n# Knowledge Hub\n\n'
     else:
         prefix = "# " + directory.rsplit("/", 1)[-1].replace("-", " ").title() + "\n\n"
@@ -110,22 +115,24 @@ def _index_content(directory, entries, previous=None):
 
 
 def _rebuild_indexes(root, skip_journal=False):
-    wiki = root / "openwiki"
-    if not wiki.exists():
-        wiki.mkdir()
-    directories = {"openwiki": set()}
-    for source in wiki.rglob("*.md"):
-        if source.is_symlink():
-            reject("INTEGRITY_ERROR", "Symlink in structural index directory")
-        rel = source.relative_to(root).as_posix()
-        if source.name.endswith(".log.md") or source.name in ("index.md", "log.md"):
+    directories = {}
+    for root_name in ("records", "openwiki"):
+        base = root / root_name
+        if not base.exists():
             continue
-        parent = source.parent.relative_to(root).as_posix()
-        directories.setdefault(parent, set()).add(source.name)
-        while parent != "openwiki":
-            ancestor, child = parent.rsplit("/", 1)
-            directories.setdefault(ancestor, set()).add(child + "/")
-            parent = ancestor
+        directories.setdefault(root_name, set())
+        for source in base.rglob("*.md"):
+            if source.is_symlink():
+                reject("INTEGRITY_ERROR", "Symlink in structural index directory")
+            rel = source.relative_to(root).as_posix()
+            if source.name.endswith(".log.md") or source.name in ("index.md", "log.md"):
+                continue
+            parent = source.parent.relative_to(root).as_posix()
+            directories.setdefault(parent, set()).add(source.name)
+            while parent != root_name:
+                ancestor, child = parent.rsplit("/", 1)
+                directories.setdefault(ancestor, set()).add(child + "/")
+                parent = ancestor
     for folder, children in directories.items():
         # Legacy journal trees stay migration input. Ordinary writes leave them
         # byte-identical; migration tooling rejects them instead of guessing.
@@ -204,7 +211,10 @@ class GitRecordWriter:
         return remote_sha
 
     def _logs(self, commit):
-        paths = git(self.root, "ls-tree", "-r", "--name-only", commit, "--", "openwiki").splitlines()
+        paths = []
+        for root_name in ("records", "openwiki"):
+            paths.extend(git(self.root, "ls-tree", "-r", "--name-only", commit,
+                             "--", root_name).splitlines())
         return {
             p: subprocess.check_output(["git", "show", commit + ":" + p], cwd=self.root)
             for p in paths if p.endswith(".log.md") and
@@ -213,7 +223,10 @@ class GitRecordWriter:
         }
 
     def _find_record(self, commit, record_id):
-        paths = git(self.root, "ls-tree", "-r", "--name-only", commit, "--", "openwiki").splitlines()
+        paths = []
+        for root_name in ("records", "openwiki"):
+            paths.extend(git(self.root, "ls-tree", "-r", "--name-only", commit,
+                             "--", root_name).splitlines())
         found = []
         for path in paths:
             if not path.endswith(".md") or path.endswith(".log.md") or path.endswith("/index.md"):
@@ -436,8 +449,11 @@ class GitRecordWriter:
                 path = normalized["path"]
                 if git(self.root, "cat-file", "-e", head + ":" + path, check=False) is not None:
                     reject("VALIDATION_ERROR", "Record path already exists")
-                existing_paths = git(self.root, "ls-tree", "-r", "--name-only",
-                                     head, "--", "openwiki").splitlines()
+                existing_paths = []
+                for root_name in ("records", "openwiki"):
+                    existing_paths.extend(git(self.root, "ls-tree", "-r",
+                                              "--name-only", head, "--",
+                                              root_name).splitlines())
                 if any(p.casefold() == path.casefold() for p in existing_paths):
                     reject("VALIDATION_ERROR", "Case-insensitive record path collision")
                 record_id = str(uuid.uuid4())
@@ -584,12 +600,13 @@ class GitRecordWriter:
                         not child.name.endswith(".log.md")):
                     entries.add(child.name)
             previous = _previous_index(index)
-            if previous is not None and index.as_posix().endswith("/openwiki/index.md"):
+            if previous is not None and (index.as_posix().endswith("/openwiki/index.md") or
+                                          index.as_posix().endswith("/records/index.md")):
                 if not previous.startswith('---\nokf_version: "0.2"\n---\n'):
                     reject("INTEGRITY_ERROR", "Unexpected root index format")
             index.write_text(_index_content(parent.as_posix(), entries, previous),
                              encoding="utf-8")
-            if str(parent) == "openwiki":
+            if parent.as_posix() in ("openwiki", "records"):
                 break
             parent = parent.parent
 

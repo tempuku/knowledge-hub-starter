@@ -6,6 +6,8 @@ status: draft
 
 # Record, event and writer contracts
 
+> **Root split (2026-11-26).** Canonical records now live under `records/`; `openwiki/` is documentation only. Read `records/<area>/...` wherever S-01 says `openwiki/<area>/...`. The writer accepts both roots during migration and writes new records to `records/`.
+
 Normative target under [the design baseline](overview.md). Implementation is pending. All byte limits use UTF-8 bytes; character limits use Unicode code points.
 
 ## S-01: Files and identity

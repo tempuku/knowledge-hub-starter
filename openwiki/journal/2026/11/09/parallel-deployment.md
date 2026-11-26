@@ -33,4 +33,4 @@ Phase A — GitHub Actions validation, portable packaging, public-artifact allow
 3. From authorized `ivanovo_models` `main`, run `node --test tools/private_viewer/worker.test.mjs` and `python3 -m unittest discover -s tests -p 'test_deploy_preview.py' -v`. These are unit/fixture tests, not live authentication.
 4. Only after the owner configures Cloudflare Access, all protected hostnames and a read-only GitHub secret, verify anonymous requests are denied and authorized clients can load the actual private site. Do not present a hypothetical URL as a working deployment.
 
-The [project record](../../../../projects/ivanovo-models.md) contains the shared verification commands and links.
+The [project record](../../../../../records/projects/ivanovo-models.md) contains the shared verification commands and links.
