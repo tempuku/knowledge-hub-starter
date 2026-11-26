@@ -269,7 +269,7 @@ class ValidatorFixtures(unittest.TestCase):
     def test_new_non_v1_record_rejected_against_base(self):
         self.git("commit", "-qm", "baseline")
         base = self.git("rev-parse", "HEAD")
-        self.write("openwiki/notes/invalid-new.md", "---\ntitle: Old\n---\n")
+        self.write("records/notes/invalid-new.md", "---\ntitle: Old\n---\n")
         self.git("add", "-A")
         self.assert_invalid("new record must use v1", base)
 
