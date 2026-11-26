@@ -5,7 +5,7 @@ type: "note"
 title: "Trip checklist — 27 November 2026"
 description: "Packing checklist for tomorrow's trip: charged batteries, power bank,\
   \ cables and documents; car documents stay home."
-status: "draft"
+status: "stable"
 visibility: "public"
 tags:
   - "travel"
