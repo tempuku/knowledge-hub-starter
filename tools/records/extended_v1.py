@@ -41,8 +41,10 @@ def _status_source(source, status):
 def _current_records(writer, head):
     """Return strict v1 tracked records, not legacy v0.2 migration inputs."""
     from service_v1 import git
-    paths = git(writer.root, "ls-tree", "-r", "--name-only",
-                head, "--", "openwiki").splitlines()
+    paths = []
+    for root_name in ("records", "openwiki"):
+        paths.extend(git(writer.root, "ls-tree", "-r", "--name-only",
+                         head, "--", root_name).splitlines())
     result = {}
     for path in paths:
         if (not path.endswith(".md") or path.endswith(".log.md") or
@@ -72,7 +74,8 @@ def _clean_old_parent(workspace, prior_path):
     """Remove now-empty directories; reindex retained old ancestors."""
     from service_v1 import _index_content, _previous_index
     parent = (workspace / prior_path).parent
-    while parent != workspace / "openwiki":
+    stop = workspace / prior_path.split("/", 1)[0]
+    while parent != stop:
         if not parent.exists():
             parent = parent.parent
             continue
