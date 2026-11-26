@@ -36,4 +36,4 @@ node --test viewer/tests/state.test.mjs
 python3 -m tools.building.catalog --check
 ```
 
-Confirm `viewer/state.mjs` and `viewer/catalog.json` exist, and inspect the catalog's explicit missing/legacy-only states. Do **not** interpret this as a successful 3D browser test. Viewer completion requires a working HTTP-served root page with real colored assets, four-building navigation, camera/model controls, actual multipart explosion, absent-asset handling, and browser smoke tests. See the [full verification checklist](../../../../projects/ivanovo-models.md).
+Confirm `viewer/state.mjs` and `viewer/catalog.json` exist, and inspect the catalog's explicit missing/legacy-only states. Do **not** interpret this as a successful 3D browser test. Viewer completion requires a working HTTP-served root page with real colored assets, four-building navigation, camera/model controls, actual multipart explosion, absent-asset handling, and browser smoke tests. See the [full verification checklist](../../../../../records/projects/ivanovo-models.md).

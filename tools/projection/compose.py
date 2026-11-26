@@ -28,7 +28,7 @@ def _validated_aliases(aliases: dict, record_ids: set[str], event_ids: set[str])
         raise ProjectionError("invalid alias maps")
     clean_paths = {}
     for path, ids in paths.items():
-        if (not isinstance(path, str) or not path.startswith("openwiki/") or
+        if (not isinstance(path, str) or not (path.startswith("records/") or path.startswith("openwiki/")) or
                 len(path.encode("utf-8")) > 240 or not path.endswith(".md") or
                 "\\" in path or "\0" in path or
                 any(ord(char) < 32 or ord(char) == 127 for char in path) or

@@ -69,3 +69,38 @@
   }
 }
 ```
+
+## Entry 7fc2bf4c-b3c7-432f-a34c-9a67520df86c
+```json
+{
+  "schema_version": 1,
+  "id": "7fc2bf4c-b3c7-432f-a34c-9a67520df86c",
+  "record_id": "8beb5eb5-b71a-4e42-897e-a6d8594b0013",
+  "operation_id": "286ecb55-d816-4a08-ad66-5be421c688a4",
+  "sequence": 3,
+  "action": "MOVED",
+  "recorded_at": "2026-11-26T18:59:33Z",
+  "occurred_on": null,
+  "occurred_at": null,
+  "actor": {
+    "id": "opencode-agent",
+    "kind": "agent",
+    "label": "OpenCode agent"
+  },
+  "summary": "Move Recovery timeline (synthetic public demo) under the records bundle root",
+  "path_before": "openwiki/notes/recovery-public-demo.md",
+  "path_after": "records/notes/recovery-public-demo.md",
+  "before": "---\nid: \"8beb5eb5-b71a-4e42-897e-a6d8594b0013\"\nschema_version: 1\ntype: note\ntitle: \"Recovery timeline (synthetic public demo)\"\ndescription: \"Public synthetic example to test persistent in-progress status and document placeholders.\"\nstatus: draft\nvisibility: private\noccurred_on: \"2026-10-27\"\ntags: [demo, fixture, health, recovery]\n---\n\n# Recovery timeline - synthetic public demo\n\n**TEST DATA ONLY.** This is not a medical claim about any person.\n\n- Timeline begins October 27, 2026.\n- Status remains In progress even after long inactivity.\n- MRI: placeholder (no file attached).\n- X-ray: placeholder (no file attached).\n\nNo real diagnosis, scan, results, or person-specific information is included.\n",
+  "after": "---\nid: \"8beb5eb5-b71a-4e42-897e-a6d8594b0013\"\nschema_version: 1\ntype: note\ntitle: \"Recovery timeline (synthetic public demo)\"\ndescription: \"Public synthetic example to test persistent in-progress status and document placeholders.\"\nstatus: draft\nvisibility: private\noccurred_on: \"2026-10-27\"\ntags: [demo, fixture, health, recovery]\n---\n\n# Recovery timeline - synthetic public demo\n\n**TEST DATA ONLY.** This is not a medical claim about any person.\n\n- Timeline begins October 27, 2026.\n- Status remains In progress even after long inactivity.\n- MRI: placeholder (no file attached).\n- X-ray: placeholder (no file attached).\n\nNo real diagnosis, scan, results, or person-specific information is included.\n",
+  "before_sha256": "7676bf9b54e54091f7b004d4ac030e8b08a21ef073352d93a1606e281346e374",
+  "after_sha256": "7676bf9b54e54091f7b004d4ac030e8b08a21ef073352d93a1606e281346e374",
+  "previous_event_id": "8d66fa43-aea0-4db5-9b7c-cab9b4e4d217",
+  "idempotency_key": "018bcea0-3f92-48be-935a-4b024b01f8e7",
+  "request_sha256": "3a9696fc26bce688d302e4093f0c6c58628e986f302f5a8f428c7a55e3b2479b",
+  "provenance": {
+    "kind": "native",
+    "source_ref": null,
+    "original_time": null
+  }
+}
+```

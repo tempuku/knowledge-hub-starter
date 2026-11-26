@@ -7,6 +7,8 @@ description: Normative storage, history, UI, migration and acceptance contracts;
 
 # Hierarchical Knowledge Hub — implementation design baseline
 
+> **Root split (2026-11-26).** The writable OKF v0.2 bundle is `records/`. Where this design says `openwiki/<area>/...` for a canonical record, read `records/<area>/...`. `openwiki/` now holds ordinary documentation and legacy migration input; it is not a record root. Historical paths stay in event history.
+
 Design owner: repository owner. Tracking: [issue #24](https://github.com/tempuku/knowledge-hub-starter/issues/24).
 Source audit baseline: `e68270c2d1dc4c3195eaab4590a74677108f999d`.
 The owner requested this design, including UI/UX, and authorized merging the documentation after checks. Merge establishes the implementation baseline; it is not evidence of implementation, migration, deployment or device validation. Frontmatter remains `draft` until the documentation review is recorded. Requirement words MUST, MUST NOT and SHOULD below are normative; SHOULD requires an explicit recorded exception in issue #24.
