@@ -69,38 +69,3 @@
   }
 }
 ```
-
-## Entry 1390baca-8726-4fc9-a430-a10fc200f6e9
-```json
-{
-  "schema_version": 1,
-  "id": "1390baca-8726-4fc9-a430-a10fc200f6e9",
-  "record_id": "764ed996-d96d-46f1-9113-2602aac9ee16",
-  "operation_id": "2f8d95f0-876e-401b-a14d-4be238f409d6",
-  "sequence": 3,
-  "action": "MOVED",
-  "recorded_at": "2026-11-26T19:00:10Z",
-  "occurred_on": null,
-  "occurred_at": null,
-  "actor": {
-    "id": "opencode-agent",
-    "kind": "agent",
-    "label": "OpenCode agent"
-  },
-  "summary": "Move Trip checklist — 27 November 2026 under the records bundle root",
-  "path_before": "openwiki/notes/trip-checklist-2026-11-27.md",
-  "path_after": "records/notes/trip-checklist-2026-11-27.md",
-  "before": "---\nid: \"764ed996-d96d-46f1-9113-2602aac9ee16\"\nschema_version: 1\ntype: \"note\"\ntitle: \"Trip checklist — 27 November 2026\"\ndescription: \"Packing checklist for tomorrow's trip: charged batteries, power bank,\\\n  \\ cables and documents; car documents stay home.\"\nstatus: \"stable\"\nvisibility: \"public\"\ntags:\n  - \"travel\"\n  - \"checklist\"\noccurred_on: \"2026-11-27\"\nreminders:\n  - - \"2026-11-27\"\n    - \"Trip: pack batteries, power bank, cables and documents\"\n---\n\n# Trip checklist — 27 November 2026\n\n## Take\n- Batteries — take them off the charger before leaving\n- Power bank, charged\n- Charging cables\n- Documents\n\n## Leave at home\n- Car documents — keep them here, don't pack them\n",
-  "after": "---\nid: \"764ed996-d96d-46f1-9113-2602aac9ee16\"\nschema_version: 1\ntype: \"note\"\ntitle: \"Trip checklist — 27 November 2026\"\ndescription: \"Packing checklist for tomorrow's trip: charged batteries, power bank,\\\n  \\ cables and documents; car documents stay home.\"\nstatus: \"stable\"\nvisibility: \"public\"\ntags:\n  - \"travel\"\n  - \"checklist\"\noccurred_on: \"2026-11-27\"\nreminders:\n  - - \"2026-11-27\"\n    - \"Trip: pack batteries, power bank, cables and documents\"\n---\n\n# Trip checklist — 27 November 2026\n\n## Take\n- Batteries — take them off the charger before leaving\n- Power bank, charged\n- Charging cables\n- Documents\n\n## Leave at home\n- Car documents — keep them here, don't pack them\n",
-  "before_sha256": "3db5b11046751b8132d9b098d7dbd752628ac607b48c7966ea48bac836c14f98",
-  "after_sha256": "3db5b11046751b8132d9b098d7dbd752628ac607b48c7966ea48bac836c14f98",
-  "previous_event_id": "f3fb919a-69fb-4208-ab79-70cc784e4fef",
-  "idempotency_key": "f7b27302-0428-45de-9535-d67cd07bb42e",
-  "request_sha256": "3b6e0d784feed5dc91e5973a14374cfcd66d3bd5f53909fab2a6409cf1df34e4",
-  "provenance": {
-    "kind": "native",
-    "source_ref": null,
-    "original_time": null
-  }
-}
-```

@@ -36,18 +36,6 @@ def _v1_log_candidate(raw: bytes) -> bool:
     return raw.startswith(b"# Record history")
 
 
-def _bundle_root(path: str) -> str | None:
-    for root in ("records", "openwiki"):
-        if path == root or path.startswith(root + "/"):
-            return root
-    return None
-
-
-def _bundle_relative(path: str) -> str:
-    root = _bundle_root(path)
-    return path[len(root) + 1:] if root else path
-
-
 def _record_links(body: str, metadata: dict, source_path: str) -> list[dict]:
     """Extract canonical and relative current-record references from Markdown."""
     links = []
@@ -88,9 +76,9 @@ def _record_links(body: str, metadata: dict, source_path: str) -> list[dict]:
                     if target_path.startswith("/") or "\\" in target_path or "%" in target_path or "?" in target_path:
                         raise ProjectionError("unsafe relative Markdown link")
                     target_path = posixpath.normpath(posixpath.join(posixpath.dirname(source_path), target_path))
-                if _bundle_root(target_path) is None:
-                    raise ProjectionError("relative Markdown link escapes the records roots")
-                if target_path.endswith("/index.md") or target_path in ("openwiki/index.md", "records/index.md"):
+                if target_path != "openwiki" and not target_path.startswith("openwiki/"):
+                    raise ProjectionError("relative Markdown link escapes openwiki")
+                if target_path.endswith("/index.md") or target_path == "openwiki/index.md":
                     continue
                 if not target_path.endswith(".md") or ("#" in target and not fragment):
                     raise ProjectionError("invalid relative record link")
@@ -145,7 +133,7 @@ def parse_source_blobs(record_blobs: dict[str, bytes], log_blobs: dict[str, byte
     project_refs = {}
     for path in sorted(record_blobs):
         raw = record_blobs[path]
-        if _bundle_root(path) is None or not path.endswith(".md"):
+        if not path.startswith("openwiki/") or not path.endswith(".md"):
             raise ProjectionError("unsafe canonical record path")
         log_path = path[:-3] + ".log.md"
         try:
@@ -162,8 +150,8 @@ def parse_source_blobs(record_blobs: dict[str, bytes], log_blobs: dict[str, byte
         record = {"id": rid, "title": meta["title"], "description": meta.get("description", ""),
                   "type": meta["type"], "status": meta["status"],
                   "project_id": meta.get("project_id"), "tags": meta.get("tags", []),
-                  "area": (_bundle_relative(path).rsplit("/", 1)[0]
-                            if "/" in _bundle_relative(path) else "root"),
+                  "area": (path[len("openwiki/"):].rsplit("/", 1)[0]
+                            if "/" in path[len("openwiki/"):] else "root"),
                   "updated_at": events[-1]["recorded_at"], "version": len(events),
                   "content_bytes": len(raw), "content": canonical, "body": body, "path": path,
                   "links": _record_links(body, meta, path), "reminders": meta.get("reminders", [])}
@@ -192,8 +180,8 @@ def parse_source_blobs(record_blobs: dict[str, bytes], log_blobs: dict[str, byte
                 "actor_label": event["actor"]["label"],
                 "provenance_kind": event["provenance"]["kind"],
                 "type": after_meta.get("type", "Unknown"),
-                "area": (_bundle_relative(event["path_after"]).rsplit("/", 1)[0]
-                         if "/" in _bundle_relative(event["path_after"]) else "root")}
+                "area": (event["path_after"][len("openwiki/"):].rsplit("/", 1)[0]
+                         if "/" in event["path_after"][len("openwiki/"):] else "root")}
     record_ids = {record["id"] for record in records}
     project_ids = {record["id"] for record in records if record["type"] == "project"}
     if any(project_id not in project_ids for project_id in project_refs.values()):
@@ -258,11 +246,9 @@ def _require_migrated_tree(paths, read_blob):
     Root GUIDE and CI are explicitly allowed legacy guides in S-01.
     """
     for path in sorted(paths):
-        if not path.startswith("records/"):
-            # openwiki/ is ordinary documentation after the root split; it is
-            # never a v1 record source and is not subject to the native gate.
+        if not path.startswith("openwiki/"):
             continue
-        if path.startswith("records/journal/") or path.endswith("/log.md"):
+        if path.startswith("openwiki/journal/") or path.endswith("/log.md"):
             raise ProjectionError("native-only build contains active legacy journal or directory log")
         if path.endswith(".log.md"):
             if not _v1_log_candidate(read_blob(path)):
@@ -270,7 +256,7 @@ def _require_migrated_tree(paths, read_blob):
             continue
         if (not path.endswith(".md") or
                 path.rsplit("/", 1)[-1] == "index.md" or
-                path in ("records/GUIDE.md", "records/CI.md")):
+                path in ("openwiki/GUIDE.md", "openwiki/CI.md")):
             continue
         if not _v1_record_candidate(read_blob(path)):
             raise ProjectionError("native-only build contains an unmigrated record: " + path)
@@ -282,7 +268,7 @@ def load_revision(root: Path, revision: str, *, strict_native=False):
     commit = git(source_root, "rev-parse", "--verify", revision + "^{commit}").decode().strip()
     tree = git(source_root, "rev-parse", commit + "^{tree}").decode().strip()
     tree_entries = _git_tree_entries(source_root, commit)
-    paths = sorted(path for path in tree_entries if _bundle_root(path) is not None)
+    paths = sorted(path for path in tree_entries if path.startswith("openwiki/"))
     if strict_native:
         _require_migrated_tree(paths, lambda p: git(source_root, "show", f"{commit}:{p}"))
     record_blobs, log_blobs = {}, {}
@@ -290,9 +276,9 @@ def load_revision(root: Path, revision: str, *, strict_native=False):
     for path in paths:
         mode, kind, _ = tree_entries[path]
         if path.endswith(".md") and (kind != "blob" or mode != "100644"):
-            raise ProjectionError("bundle Markdown sources must be regular non-executable blobs")
+            raise ProjectionError("openwiki Markdown sources must be regular non-executable blobs")
         if path.endswith(".log.md") and (kind != "blob" or mode != "100644"):
-            raise ProjectionError("bundle history logs must be regular non-executable blobs")
+            raise ProjectionError("openwiki history logs must be regular non-executable blobs")
         if path.endswith(".log.md") and kind == "blob":
             raw = git(source_root, "show", f"{commit}:{path}")
             if _v1_log_candidate(raw):
@@ -330,7 +316,7 @@ def load_bundle(bundle_path: Path, receipt_path: Path, expected_receipt_sha256: 
     if strict_native:
         _require_migrated_tree(by_path, lambda p: blobs[by_path[p]["oid"]])
     for path, entry in sorted(by_path.items()):
-        if _bundle_root(path) is None or not path.endswith(".md") or path.endswith(".log.md") or path.rsplit("/", 1)[-1] in ("index.md", "log.md"):
+        if not path.startswith("openwiki/") or not path.endswith(".md") or path.endswith(".log.md") or path.rsplit("/", 1)[-1] in ("index.md", "log.md"):
             continue
         if entry["type"] != "blob":
             continue
@@ -346,18 +332,18 @@ def load_bundle(bundle_path: Path, receipt_path: Path, expected_receipt_sha256: 
             raise ProjectionError("canonical source has no sibling history in bundle")
         log_blobs[log_path] = blobs[log_entry["oid"]]
     expected_native_logs = {path for path, entry in by_path.items()
-                            if _bundle_root(path) is not None and path.endswith(".log.md") and
+                            if path.startswith("openwiki/") and path.endswith(".log.md") and
                             entry["type"] == "blob" and _v1_log_candidate(blobs[entry["oid"]])}
     expected_native_logs -= set(log_blobs)
     if expected_native_logs:
         raise ProjectionError("orphan native history log: " + sorted(expected_native_logs)[0])
-    if any(_bundle_root(path) is not None and path.endswith(".md") and entry["mode"] != "100644"
+    if any(path.startswith("openwiki/") and path.endswith(".md") and entry["mode"] != "100644"
            for path, entry in by_path.items()):
-        raise ProjectionError("bundle Markdown sources must be regular non-executable blobs")
-    if any(_bundle_root(path) is not None and path.endswith(".log.md") and
+        raise ProjectionError("openwiki Markdown sources must be regular non-executable blobs")
+    if any(path.startswith("openwiki/") and path.endswith(".log.md") and
            (entry["type"] != "blob" or entry["mode"] != "100644")
            for path, entry in by_path.items()):
-        raise ProjectionError("bundle history logs must be regular non-executable blobs")
+        raise ProjectionError("openwiki history logs must be regular non-executable blobs")
     records, histories, summaries = parse_source_blobs(record_blobs, log_blobs)
     policy_entry = by_path.get("config/publication.json")
     policy_bytes = blobs[policy_entry["oid"]] if policy_entry and policy_entry["type"] == "blob" else None

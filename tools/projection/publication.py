@@ -237,7 +237,7 @@ def _rewrite_markdown_links(body: str, links: list[dict], eligible_ids: set[str]
             # Match git_source._record_links: structural indexes are not
             # navigable record metadata and therefore do not consume an entry
             # in the ordered record-link list.
-            structural_index = target_path in ("openwiki/index.md", "records/index.md") or target_path.endswith("/index.md")
+            structural_index = target_path == "openwiki/index.md" or target_path.endswith("/index.md")
             is_internal = (target_path.endswith(".md") or target.startswith("#")) and not structural_index
         if is_internal and not is_image:
             if link_index < len(links):

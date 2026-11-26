@@ -85,7 +85,7 @@ On 2026-11-09, the owner authorized **unrestricted reading of the initial projec
 
 ## Related architecture reuse — Ivanovo private 3D viewer (2026-11-09)
 
-The separate [Ivanovo models project](../../records/projects/ivanovo-models.md) uses the **same security principle**, not the same application or data store. Its canonical repository `tempuku/ivanovo_models` is already private; no additional knowledge-data repository is required merely to secure that viewer. This **does not** implement the private Knowledge Hub diary/authenticated editing described by this ADR.
+The separate [Ivanovo models project](../projects/ivanovo-models.md) uses the **same security principle**, not the same application or data store. Its canonical repository `tempuku/ivanovo_models` is already private; no additional knowledge-data repository is required merely to secure that viewer. This **does not** implement the private Knowledge Hub diary/authenticated editing described by this ADR.
 
 - [Ivanovo issue #4](https://github.com/tempuku/ivanovo_models/issues/4) changed from a public-only Pages preview target to **authenticated private production viewing**, with public Pages limited to an explicitly approved synthetic/public demo.
 - [PR #7](https://github.com/tempuku/ivanovo_models/pull/7) merged safe public-demo packaging/validation but did not publish.
