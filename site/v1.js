@@ -75,6 +75,16 @@
   var cmpUpdated = function (a, b) { return String(b.updated_at || "").localeCompare(String(a.updated_at || "")) || cmpId(a, b); };
   var countLabel = function (n, one, many) { return n + " " + (n === 1 ? one : many); };
   var statusLabel = function (value) { var labels = {draft: "Draft", stable: "Stable", in_progress: "In progress", completed: "Completed", deprecated: "Archived"}; return labels[value] || "Unknown"; };
+  var areaLabel = function (value) {
+    if (!value) return "No section";
+    var known = {adr: "ADR", notes: "Notes", projects: "Projects", design: "Design", concepts: "Concepts", private: "Private", journal: "Journal"};
+    return String(value).split("/").map(function (part) {
+      if (known[part]) return known[part];
+      var words = part.replace(/-/g, " ").trim();
+      return words ? words.charAt(0).toUpperCase() + words.slice(1) : part;
+    }).join(" / ");
+  };
+  var areaNode = function (value) { return text("span", areaLabel(value), "badge area-label"); };
   var projectAlias = function (id, aliases) { var current = aliases && aliases.current_entries; return id && current && current[id] ? current[id] : id; };
   var belongsToProject = function (record, project, aliases) { return record.project_id === project.id || projectAlias(record.project_id, aliases) === project.id; };
   var projectTitles = function (records, aliases) {
@@ -225,13 +235,15 @@
     app.setAttribute("aria-busy","false");if(data.countsExact===false&&api&&api.diaryRange){var exactFilters={};fields.forEach(function(f){if(route.params.get(f))exactFilters[f]=route.params.get(f);});api.diaryRange({start:start,end:end,filters:exactFilters}).then(function(exact){if(serial!==token)return;if(exact.countsExact===false){countNode.textContent="Counts could not be calculated.";return;}var exactItems=statusFilter?dedupeByRecord(exact.items):(exact.items||[]);countNode.textContent=statusFilter?exactItems.length+" records":exact.total_changes+" changes · "+exact.total_records+" records";if(!active&&!exact.items.length){if(diaryEmpty)diaryEmpty.remove();diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","No changes in this period.","empty"));diaryEmpty.appendChild(button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));}if(active){if(diaryEmpty)diaryEmpty.remove();while(dayHost.firstChild)dayHost.removeChild(dayHost.firstChild);var exactGroups={};exactItems.forEach(function(ev){var eventDay=(ev.recorded_at||"").slice(0,10);(exactGroups[eventDay]||(exactGroups[eventDay]=[])).push(ev);});var exactDays=Object.keys(exactGroups).sort().reverse();exactDays.forEach(function(eventDay){var evs=exactGroups[eventDay],block=text("section",undefined,"day-block diary-day"),header=button(eventDay+" · "+evs.length+(statusFilter?" records":" changes"),function(){var body=block.querySelector(".day-items"),expanded=header.getAttribute("aria-expanded")==="true";header.setAttribute("aria-expanded",String(!expanded));body.hidden=expanded;},"");header.setAttribute("aria-expanded",String(exactDays[0]===eventDay));block.appendChild(header);var body=text("div",undefined,"day-items");body.hidden=header.getAttribute("aria-expanded")!=="true";var offset=0,more=null;var appendChunk=function(){evs.slice(offset,offset+50).forEach(function(ev){body.insertBefore(statusFilter?renderRecordEventRow(ev,recordMap[ev.record_id]):renderEventRow(ev,exact.items),more||null);});offset+=50;if(more&&offset>=evs.length)more.remove();};if(evs.length>50)more=button("Load more",function(){appendChunk();},"btn secondary load-more");appendChunk();if(more)body.appendChild(more);block.appendChild(body);dayHost.appendChild(block);});if(!exactItems.length){diaryEmpty=panel(box);diaryEmpty.appendChild(text("p","No changes in this period.","empty"));diaryEmpty.appendChild(button("Latest change",async function(){go("/diary",diaryParams(await latestChange(),mode,route));},"btn secondary"));diaryEmpty.appendChild(button("Clear filters",function(){go("/diary",{date:date,mode:mode});},"btn secondary"));}}}).catch(function(){if(serial===token){countNode.textContent="Counts could not be calculated.";}});}
   };
   var renderEventRow = function (ev, visible) {
-    var row=text("article",undefined,"event-row");var title=ev.title||ev.summary||"Untitled record";var h=text("h2",title);row.appendChild(h);if(ev.summary)row.appendChild(text("p",ev.summary));row.appendChild(text("p",(ev.action||"Change")+" · "+(ev.recorded_at||"")+" UTC","meta"));if(ev.occurred_on||ev.occurred_at)row.appendChild(text("p","Occurred "+(ev.occurred_on||"")+(ev.occurred_at?" "+ev.occurred_at:""),"meta"));var meta=text("p",undefined,"meta");statusText(meta,ev.status);if(ev.project_id)meta.appendChild(text("span"," · "+(ev.project_title||ev.project_id)));if(ev.actor_label)meta.appendChild(text("span"," · "+ev.actor_label));if(ev.provenance_kind && ev.provenance_kind!=="native")meta.appendChild(text("span"," · Imported history","badge"));row.appendChild(meta);
+    var row=text("article",undefined,"event-row");var title=ev.title||ev.summary||"Untitled record";var h=text("h2",title);row.appendChild(h);if(ev.summary)row.appendChild(text("p",ev.summary));row.appendChild(text("p",(ev.action||"Change")+" · "+(ev.recorded_at||"")+" UTC","meta"));if(ev.occurred_on||ev.occurred_at)row.appendChild(text("p","Occurred "+(ev.occurred_on||"")+(ev.occurred_at?" "+ev.occurred_at:""),"meta"));var meta=text("p",undefined,"meta");statusText(meta,ev.status);if(ev.area){meta.appendChild(text("span"," "));meta.appendChild(areaNode(ev.area));}if(ev.project_id)meta.appendChild(text("span"," · "+(ev.project_title||ev.project_id)));if(ev.actor_label)meta.appendChild(text("span"," · "+ev.actor_label));if(ev.provenance_kind && ev.provenance_kind!=="native")meta.appendChild(text("span"," · Imported history","badge"));row.appendChild(meta);
     var actions=text("div",undefined,"actions");actions.appendChild(link("Open current record",recordLink(ev.record_id)));actions.appendChild(link("View this revision",eventLink(ev,"revision")));actions.appendChild(link("Show changes",eventLink(ev,"diff")));var fileUrl=publicSourceUrl(ev.record_id);if(fileUrl){var file=text("a","File: "+String((window.KnowledgeHubConfig.publicSourcePaths||{})[ev.record_id]).split(/[\\/]/).pop());file.href=fileUrl;file.target="_blank";file.rel="noopener noreferrer";file.setAttribute("aria-label",file.textContent+" (opens in a new tab)");actions.appendChild(file);}row.appendChild(actions);if(ev.operation_id&&visible.filter(function(x){return x.operation_id===ev.operation_id;}).length>1)row.appendChild(text("p","Same operation","badge"));return row;
   };
   var renderRecordEventRow = function (ev, record) {
     var row=text("article",undefined,"record-row"),heading=text("h3");
     heading.appendChild(link((record&&record.title)||ev.title||ev.summary||"Untitled record",recordLink(ev.record_id)));row.appendChild(heading);
     var meta=text("p",undefined,"meta");statusText(meta,(record&&record.status)||ev.status);
+    var area=(record&&record.area)||ev.area;
+    if(area){meta.appendChild(text("span"," "));meta.appendChild(areaNode(area));}
     meta.appendChild(text("span"," · "+((record&&record.type)||ev.type||"record")));
     if(ev.recorded_at)meta.appendChild(text("span"," · Latest change: "+ev.recorded_at));
     row.appendChild(meta);
@@ -241,7 +253,7 @@
   var recordScreen = async function (route, serial) {
     if(!safeId(route.id)) { await resolveAliases(route,serial); if(route.ambiguous){renderAmbiguous(route);return;} if(!safeId(route.id))throw new Error("Record unavailable in this view."); }
     var meta=await dataCall("recordMeta",route.id,"records/"+route.id+".meta.json"); if(serial!==token)return;
-    var box=routeBox(meta.title||"Record");setNav("records");var status=panel(box);statusText(status,meta.status);status.appendChild(text("p",meta.description||""));status.appendChild(text("p",(meta.project_title||"")+(meta.area?" · "+meta.area:""),"meta"));if(meta.updated_at)status.appendChild(text("p","Last recorded update · "+meta.updated_at,"meta"));
+    var box=routeBox(meta.title||"Record");setNav("records");var status=panel(box);statusText(status,meta.status);if(meta.area){status.appendChild(text("span"," "));status.appendChild(areaNode(meta.area));}status.appendChild(text("p",meta.description||""));status.appendChild(text("p",meta.project_title||"","meta"));if(meta.updated_at)status.appendChild(text("p","Last recorded update · "+meta.updated_at,"meta"));
     var tab=route.params.get("tab")||"content", tabs=text("nav",undefined,"record-tabs");tabs.setAttribute("aria-label","Record views");["content","history","source"].forEach(function(key){var a=link(key.charAt(0).toUpperCase()+key.slice(1),recordLink(route.id,key));if(tab===key)a.setAttribute("aria-current","page");tabs.appendChild(a);});box.appendChild(tabs);
     if(tab==="content")await renderRecordContent(box,route.id,meta,serial);
     else if(tab==="history")await renderHistory(box,route.id,meta,serial);
@@ -365,7 +377,8 @@
       heading.appendChild(link(record.title || "Untitled", recordLink(record.id))); row.appendChild(heading);
       if (record.description) row.appendChild(text("p", record.description));
       var metaBox = text("p", undefined, "meta"); statusText(metaBox, record.status);
-      metaBox.appendChild(text("span", " · " + projectTitle(record.project_id, titleMap) + (record.area ? " · " + record.area : "")));
+      if (record.area) { metaBox.appendChild(text("span", " ")); metaBox.appendChild(areaNode(record.area)); }
+      metaBox.appendChild(text("span", " · " + projectTitle(record.project_id, titleMap)));
       if (record.updated_at) metaBox.appendChild(text("span", " · Updated " + record.updated_at));
       row.appendChild(metaBox); output.appendChild(row);
     });
@@ -401,7 +414,8 @@
           var item = text("li", undefined, "record-row"), heading = text("h3");
           heading.appendChild(link(record.title || "Untitled", recordLink(record.id))); item.appendChild(heading);
           var meta = text("p", undefined, "meta"); statusText(meta, record.status);
-          meta.appendChild(text("span", " · " + (record.area || "No area"))); item.appendChild(meta); list.appendChild(item);
+          if (record.area) { meta.appendChild(text("span", " ")); meta.appendChild(areaNode(record.area)); }
+          item.appendChild(meta); list.appendChild(item);
         });
         related.appendChild(list);
       }
