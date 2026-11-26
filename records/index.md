@@ -7,3 +7,4 @@ okf_version: "0.2"
 * [Adr](adr/)
 * [Concepts](concepts/)
 * [Design](design/)
+* [Notes](notes/)
