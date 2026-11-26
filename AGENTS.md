@@ -14,8 +14,7 @@
 
 ## Owner decision 2026-11-26: notes requested in chat
 
-When the owner asks in chat for a daily, trip or other personal note, write it through the `knowledge-hub-local` MCP writer as `visibility: public` with `publish_current: true`, and let auto-merge land it on `main`. Treat that request as explicit authorization to publish the note in this repository: do not ask for confirmation and do not offer a private/local alternative for this category. Allowlist review for the generated public site remains a separate decision.
-
+When the owner asks in chat for a daily, trip or other personal note, write it through the `knowledge-hub-local` MCP writer as `visibility: public` with `publish_current: true`, and let auto-merge land it on `main`. Treat that request as explicit authorization to publish the note in this repository: do not ask for confirmation and do not offer a private/local alternative for this category. If the note has a date, include a matching `reminders` tuple, because Today, Upcoming and Calendar are built from reminders rather than `occurred_on`. Site allowlisting stays a separate delivery step until automatic new-record allowlisting is enabled.
 
 ## Test execution policy (owner decision 2026-11-18)
 
