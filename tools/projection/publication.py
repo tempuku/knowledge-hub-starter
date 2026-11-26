@@ -404,7 +404,15 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
                     add(event_path)
                     if event_path and posixpath.basename(event_path) not in selected_public_basenames:
                         add(posixpath.basename(event_path))
-            _add_private_snapshot(forbidden, record.get("content"))
+            # An unallowlisted record whose current snapshot is public is
+            # already published in Git; its prose and metadata are not private
+            # references. Forbidding them would make unrelated public prose
+            # fail the substring audit (for example a shared tag such as
+            # "checklist"). Keep the record identity and paths forbidden for
+            # publication-policy hygiene, but audit private text only.
+            current = record.get("content")
+            if current is not None and _visibility(current, excluded_legacy=True) == "private":
+                _add_private_snapshot(forbidden, current)
 
         for event in events:
             if event["id"] not in selected_event_ids:
@@ -413,7 +421,7 @@ def forbidden_public_references(records: list[dict], histories: dict[str, list[d
                     # An eligible public current record can legitimately have
                     # the same bytes as an earlier unallowlisted public event.
                     # Scan omitted snapshots for private material specifically;
-                    # full current records and all private transitions are
+                    # private current records and all private transitions are
                     # independently audited below.
                     if snapshot is not None and _visibility(snapshot, excluded_legacy=True) == "private":
                         _add_private_snapshot(
