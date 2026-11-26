@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 import yaml
 
 AREAS = {"projects", "private", "ideas", "notes", "concepts", "adr", "design"}
+ROOTS = ("records", "openwiki")
 STATUSES = {"draft", "stable", "in_progress", "completed", "deprecated"}
 ACTIONS = {"CREATED", "UPDATED", "MOVED", "ARCHIVED", "REOPENED", "IMPORTED"}
 PROVENANCE = {"native", "legacy-log", "legacy-journal", "git-backfill"}
@@ -134,8 +135,17 @@ def frontmatter(source):
     return metadata, body
 
 
+def bundle_root(value):
+    if type(value) is not str:
+        return None
+    for root in ROOTS:
+        if value == root or value.startswith(root + "/"):
+            return root
+    return None
+
+
 def safe_path(value, label, kind="record"):
-    require(type(value) is str and value.startswith("openwiki/") and
+    require(type(value) is str and bundle_root(value) is not None and
             "\\" not in value and "\0" not in value and
             not any(ord(c) < 32 or ord(c) == 127 for c in value) and
             len(value.encode("utf-8")) <= 240, f"{label}: unsafe path")
@@ -393,7 +403,7 @@ def repository(root, base=None, strict_indexes=False):
             links.add(name)
     checks = set()
     for p in tracked:
-        if not p.startswith("openwiki/"):
+        if bundle_root(p) is None:
             continue
         low = p.casefold()
         require(low not in checks, f"{p}: case-insensitive path collision")
@@ -403,7 +413,7 @@ def repository(root, base=None, strict_indexes=False):
                 f"{p}: symlink at a path component")
     records, paths, event_ids = {}, {}, set()
     for path in sorted(tracked):
-        if not path.startswith("openwiki/") or not path.endswith(".md") or path.endswith(".log.md"):
+        if bundle_root(path) is None or not path.endswith(".md") or path.endswith(".log.md"):
             continue
         if path.rsplit("/", 1)[-1] in {"index.md", "log.md"}:
             continue
@@ -445,11 +455,13 @@ def compare_base(root, base, tracked, paths):
     # Required for PR CI. This is a trusted Git base, never inferred from a
     # submitted record or an event-provided digest.
     git(root, "rev-parse", "--verify", base + "^{commit}")
-    changes = git(root, "diff", "--name-status", "--no-renames", base, "--", "openwiki").decode()
+    changes = git(root, "diff", "--name-status", "--no-renames", base, "--", "records", "openwiki").decode()
     for line in changes.splitlines():
         kind, *names = line.split("\t")
         path = names[-1]
-        if not path.endswith(".md") or path.endswith(".log.md") or path.rsplit("/",1)[-1] in {"index.md","log.md"} or path in {"openwiki/GUIDE.md","openwiki/CI.md"}:
+        if (not path.startswith("records/") or not path.endswith(".md") or
+                path.endswith(".log.md") or
+                path.rsplit("/", 1)[-1] in {"index.md", "log.md"}):
             continue
         if kind.startswith("A"):
             require(path in paths, f"{path}: new record must use v1 schema and sibling log")
@@ -457,7 +469,7 @@ def compare_base(root, base, tracked, paths):
     # initial filename can legitimately be reused by a different record, and
     # the trusted base can already contain one or more completed moves.
     base_histories = {}
-    for log_path in git(root, "ls-tree", "-r", "--name-only", base, "--", "openwiki").decode().splitlines():
+    for log_path in git(root, "ls-tree", "-r", "--name-only", base, "--", "records", "openwiki").decode().splitlines():
         if not log_path.endswith(".log.md"):
             continue
         old = git(root, "show", base + ":" + log_path)
@@ -489,13 +501,14 @@ def verify_indexes(root, tracked):
     # Used on isolated v1 fixtures now; required for full tree after migration.
     expected = {}
     for p in tracked:
-        if not p.startswith("openwiki/") or not p.endswith(".md") or p.endswith(".log.md"):
+        root_name = bundle_root(p)
+        if root_name is None or not p.endswith(".md") or p.endswith(".log.md"):
             continue
         if p.rsplit("/",1)[-1] not in {"index.md","log.md"}:
             folder = p.rsplit("/", 1)[0]
             expected.setdefault(folder, set()).add(p.rsplit("/", 1)[1])
         parent = p.rsplit("/", 1)[0]
-        while parent != "openwiki":
+        while parent != root_name:
             holder, child = parent.rsplit("/", 1)
             expected.setdefault(holder, set()).add(child + "/")
             parent = holder
