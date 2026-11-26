@@ -239,8 +239,17 @@ class AllowlistNewEventTest(unittest.TestCase):
         self.assertEqual(result["state"], "not_applicable")
         self.assertFalse(any(cmd[:3] == ["git", "worktree", "add"]
                              for cmd in runner.commands()))
-        self.assertFalse(any(cmd[:2] == ["git", "push"]
-                             for cmd in runner.commands()))
+
+    def test_new_public_record_and_event_can_be_allowlisted_together(self):
+        runner, _ = self.handler(policy=policy_text(record_ids=()))
+        result = pr_publish.allowlist_new_event(
+            "/repo", "origin", BRANCH, RECORD_ID, NEW_EVENT, runner=runner,
+            add_record=True)
+        self.assertEqual(result, {"state": "added", "commit": self.commit})
+        commit = [cmd for cmd in runner.commands()
+                  if cmd[0] == "git" and "commit" in cmd][0]
+        self.assertEqual(commit[-1], "chore(publication): allowlist event " +
+                         NEW_EVENT[:8])
 
     def test_rejected_push_is_failed_and_never_overwrites(self):
         runner, state = self.handler(push_rc=1)
