@@ -154,7 +154,7 @@ def _stage_validate_commit(writer, normalized, head, edits, old_path=None, new_p
                 if parent.exists():
                     writer._reindex_target(workspace, str(
                         Path(old_path).parent / "placeholder.md"))
-            git(workspace, "add", "-A", "--", "openwiki")
+            git(workspace, "add", "-A", "--", "openwiki", "records")
             writer._fault("staged")
             repository(workspace, base=head, strict_indexes=True)
             if writer.staged_checker is not None:
