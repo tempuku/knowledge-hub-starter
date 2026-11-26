@@ -237,18 +237,22 @@ def _allowlist_failure(detail):
     return {"state": "failed", "detail": detail[:400]}
 
 
-def allowlist_new_event(root, remote, branch, record_id, event_id, runner=run):
+def allowlist_new_event(root, remote, branch, record_id, event_id, runner=run,
+                        *, add_record=False):
     """Append one new event ID to an already-approved public record (issue #126).
 
-    The policy is read from the publication branch head, never from the
-    caller's working tree. Only ``event_ids`` changes; the edit lands as one
-    extra commit on that branch and is pushed with a compare-and-swap lease.
-    A rejected push returns ``failed`` instead of overwriting another writer.
+    With ``add_record`` (trusted launch option only), a new public record's ID
+    is added together with its CREATED event. The policy is read from the
+    publication branch head, never from the caller's working tree. Only
+    ``record_ids`` and ``event_ids`` change; the edit lands as one extra commit
+    on that branch and is pushed with a compare-and-swap lease. A rejected push
+    returns ``failed`` instead of overwriting another writer.
     """
     if (type(branch) is not str or not BRANCH.fullmatch(branch) or ".." in branch
             or type(remote) is not str or not remote.strip() or any(
                 c.isspace() or ord(c) < 32 for c in remote)
-            or type(record_id) is not str or type(event_id) is not str):
+            or type(record_id) is not str or type(event_id) is not str
+            or type(add_record) is not bool):
         return _allowlist_failure("Invalid allowlist publication parameters")
     head = _local_tip(root, branch, runner)
     if head is None:
@@ -261,15 +265,16 @@ def allowlist_new_event(root, remote, branch, record_id, event_id, runner=run):
         policy, _ = validate_policy(shown.stdout.encode("utf-8"))
     except (ProjectionError, UnicodeError, AttributeError) as exc:
         return _allowlist_failure("Invalid publication allowlist: " + str(exc))
-    if record_id not in policy["record_ids"]:
+    if record_id not in policy["record_ids"] and not add_record:
         return {"state": "not_applicable",
                 "detail": "Record is not in the publication allowlist"}
-    if event_id in policy["event_ids"]:
+    if record_id in policy["record_ids"] and event_id in policy["event_ids"]:
         return {"state": "already",
                 "detail": "Event is already in the publication allowlist"}
     updated = {
         "schema_version": policy["schema_version"],
-        "record_ids": list(policy["record_ids"]),
+        "record_ids": sorted(set(policy["record_ids"]) |
+                             ({record_id} if add_record else set())),
         "event_ids": sorted(set(policy["event_ids"]) | {event_id}),
         "actor_labels": list(policy["actor_labels"]),
     }

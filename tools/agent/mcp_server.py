@@ -177,8 +177,9 @@ def _record_details(writer, result):
     return details
 
 
-def _allowlist_event(record, result, publication, head, runner):
-    """Only an already-allowlisted public record's new event may be added."""
+def _allowlist_event(record, result, publication, head, runner,
+                     *, add_record=False):
+    """Add a new event, and optionally a new public record's CREATED identity."""
     if record.get("visibility") != "public":
         return {"state": "not_applicable",
                 "detail": "Record visibility is not public"}
@@ -188,13 +189,17 @@ def _allowlist_event(record, result, publication, head, runner):
         return {"state": "failed",
                 "detail": "Committed result lacks record or event identity"}
     return allowlist_new_event(publication["root"], publication["remote"], head,
-                               record_id, event_id, runner=runner)
+                               record_id, event_id, runner=runner,
+                               add_record=add_record)
 
 
 def _attach_publication(writer, result, request, publication, head, runner):
     record = _record_details(writer, result)
+    add_record = (bool(publication.get("auto_allowlist_new_records"))
+                  and request.get("command") == "create"
+                  and request.get("publish_current") is True)
     result["allowlist"] = _allowlist_event(record, result, publication, head,
-                                           runner)
+                                           runner, add_record=add_record)
     title = "knowledge: " + (record["title"] or record["path"] or "record")
     body = build_body(record, result, request.get("summary", ""),
                       WRITER_VALIDATORS)
@@ -373,6 +378,10 @@ def build_parser():
         "--auto-merge", action="store_true",
         help="Enable squash auto-merge for created pull requests "
              "(requires --pr-base)")
+    parser.add_argument(
+        "--auto-allowlist-new-records", action="store_true",
+        help="Allowlist a newly created public record and its CREATED event "
+             "on the publication branch (requires --pr-base)")
     return parser
 
 
@@ -380,6 +389,10 @@ def main():
     args = build_parser().parse_args()
     if args.auto_merge and not args.pr_base:
         print("--auto-merge requires --pr-base", file=sys.stderr)
+        return 2
+    if args.auto_allowlist_new_records and not args.pr_base:
+        print("--auto-allowlist-new-records requires --pr-base",
+              file=sys.stderr)
         return 2
     publication = None
     if args.pr_base:
@@ -389,6 +402,8 @@ def main():
         publication = {"root": args.root, "base": args.pr_base,
                        "remote": remote,
                        "auto_merge": bool(args.auto_merge),
+                       "auto_allowlist_new_records":
+                           bool(args.auto_allowlist_new_records),
                        "capability_file": args.capability_file}
     try:
         writer = new_writer(root=args.root, capability_file=args.capability_file,
