@@ -1,3 +1,4 @@
 # Notes
 
 * [Daily 2026 11 26.Md](daily-2026-11-26.md)
+* [Recovery Public Demo.Md](recovery-public-demo.md)
