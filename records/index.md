@@ -9,3 +9,4 @@ okf_version: "0.2"
 * [Design](design/)
 * [Notes](notes/)
 * [Private](private/)
+* [Projects](projects/)
