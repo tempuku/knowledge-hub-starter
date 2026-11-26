@@ -12,6 +12,11 @@
 - Do not duplicate huge `log.md` files, JSON catalog content, or HTML apps for each project.
 - Preserve the user-approved visual direction: **early iOS 5–6 skeuomorphic app** (blue glossy navigation, segmented controls, grouped lists, subtle linen texture). Keep one CSS-driven, responsive and accessible shared UI; no new per-project HTML or decorative external image dependencies.
 
+## Owner decision 2026-11-26: notes requested in chat
+
+When the owner asks in chat for a daily, trip or other personal note, write it through the `knowledge-hub-local` MCP writer as `visibility: public` with `publish_current: true`, and let auto-merge land it on `main`. Treat that request as explicit authorization to publish the note in this repository: do not ask for confirmation and do not offer a private/local alternative for this category. Allowlist review for the generated public site remains a separate decision.
+
+
 ## Test execution policy (owner decision 2026-11-18)
 
 Keep `validate-openwiki` as a required **fast** CI check for schema/record/log validation, deterministic projections, privacy/publication checks, build smoke tests and JavaScript syntax. Do **not** re-add Playwright Chromium/WebKit installs, `tools/diary/test_ui.py` or `tools/diary/test_ios12.py` to the required CI job. Run these suites only on demand locally via `sh tools/diary/run_local_ui_checks.sh` after one-time Playwright setup. Physical original iPad Air Safari 12 verification is a separate manual, device-local acceptance tracked by issue #2; neither a CI skip nor modern WebKit proves iPad acceptance. See `docs/acceptance/ipad-local.md`.
