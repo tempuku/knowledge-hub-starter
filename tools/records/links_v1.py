@@ -62,7 +62,7 @@ def _resolve(source_path: str, target: str):
         raise IntegrityError("Unsupported or unsafe current relative link")
     destination = posixpath.normpath(
         posixpath.join(posixpath.dirname(source_path), target))
-    if not (destination.startswith("openwiki/") or destination.startswith("records/")):
+    if not destination.startswith("openwiki/") or destination == "openwiki":
         raise IntegrityError("Relative link escapes canonical knowledge root")
     if not destination.endswith(".md"):
         raise IntegrityError("Relative record link must target a Markdown file")
@@ -161,9 +161,7 @@ def resolve_historical_path(path, logs, current_records):
     from validate_v1 import parse_log
     from pathlib import PurePosixPath
 
-    if (not isinstance(path, str) or
-            not (path.startswith("openwiki/") or path.startswith("records/")) or
-            not path.endswith(".md")):
+    if not isinstance(path, str) or not path.startswith("openwiki/") or not path.endswith(".md"):
         raise IntegrityError("Invalid historical record path")
     candidates = {}
     for log_path, raw in logs.items():

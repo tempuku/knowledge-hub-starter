@@ -49,7 +49,7 @@ class NativeCutoverTests(unittest.TestCase):
         return bundle, receipt, hashlib.sha256(receipt.read_bytes()).hexdigest()
 
     def test_legacy_record_is_not_silently_dropped_in_git_or_bundle(self):
-        self.put("records/notes/legacy.md",
+        self.put("openwiki/notes/legacy.md",
                  "---\ntype: note\ntitle: Legacy\n---\n\nUnique legacy content\n")
         rev = self.commit()
         # Transitional export is still allowed before an authorized cutover.
@@ -61,19 +61,19 @@ class NativeCutoverTests(unittest.TestCase):
             load_bundle(bundle, receipt, digest, strict_native=True)
 
     def test_dated_journal_refused_even_without_a_record(self):
-        self.put("records/journal/2026/11/18/index.md", "# Old dated journal\n")
+        self.put("openwiki/journal/2026/11/18/index.md", "# Old dated journal\n")
         rev = self.commit()
         with self.assertRaisesRegex(ProjectionError, "legacy journal"):
             load_revision(self.root, rev, strict_native=True)
 
     def test_directory_log_refused(self):
-        self.put("records/notes/log.md", "# Unique legacy log\n")
+        self.put("openwiki/notes/log.md", "# Unique legacy log\n")
         rev = self.commit()
         with self.assertRaisesRegex(ProjectionError, "directory log"):
             load_revision(self.root, rev, strict_native=True)
 
     def test_old_sibling_log_must_be_archived_before_cutover(self):
-        self.put("records/CI.log.md", "# OKF Record Change Log\\n")
+        self.put("openwiki/CI.log.md", "# OKF Record Change Log\\n")
         rev = self.commit()
         with self.assertRaisesRegex(ProjectionError, "unmigrated legacy log"):
             load_revision(self.root, rev, strict_native=True)
@@ -87,7 +87,7 @@ class NativeCutoverTests(unittest.TestCase):
         self.assertEqual(load_bundle(bundle, receipt, digest, strict_native=True)[2], [])
 
     def test_strict_build_keeps_previous_live_manifest_on_legacy_source(self):
-        self.put("records/notes/legacy.md",
+        self.put("openwiki/notes/legacy.md",
                  "---\ntype: note\ntitle: Unique\n---\n\nThis must not vanish\n")
         rev = self.commit()
         published = self.root / "_public"
