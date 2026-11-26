@@ -107,6 +107,35 @@ class PolicyTests(unittest.TestCase):
         self.assertIn("Hidden revision title", forbidden)
         self.assertIn("Hidden revision body.", forbidden)
 
+    def _excluded_record(self, visibility):
+        snapshot = ("---\nid: \"" + RID + "\"\nschema_version: 1\ntype: note\n"
+                    "title: Excluded record title\nstatus: draft\n"
+                    "visibility: " + visibility + "\ntags: [checklist]\n---\n"
+                    "Excluded record body.\n")
+        return {"id": RID, "path": "openwiki/notes/excluded.md", "content": snapshot}
+
+    def test_excluded_public_record_text_is_not_a_private_reference(self):
+        record = self._excluded_record("public")
+        forbidden = forbidden_public_references([record], {RID: []}, [], {})
+        # Publication policy still hides the identity and paths.
+        self.assertIn(RID, forbidden)
+        self.assertIn("openwiki/notes/excluded.md", forbidden)
+        # But public prose and tags cannot poison unrelated public artifacts.
+        self.assertNotIn("checklist", forbidden)
+        self.assertFalse(any("Excluded record body" in value for value in forbidden))
+        audit_public({"events/public.json": b'{"summary": "Operational checklist"}'},
+                     forbidden)
+
+    def test_excluded_private_record_text_remains_forbidden(self):
+        record = self._excluded_record("private")
+        forbidden = forbidden_public_references([record], {RID: []}, [], {})
+        self.assertIn(RID, forbidden)
+        self.assertIn("checklist", forbidden)
+        self.assertTrue(any("Excluded record body" in value for value in forbidden))
+        with self.assertRaises(ProjectionError):
+            audit_public({"events/public.json": b'{"summary": "Operational checklist"}'},
+                         forbidden)
+
     def test_relative_markdown_links_are_hidden_or_rewritten_by_target(self):
         public_id = RID
         hidden_id = "123e4567-e89b-42d3-a456-426614174002"
