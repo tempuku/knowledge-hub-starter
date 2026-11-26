@@ -8,3 +8,4 @@ okf_version: "0.2"
 * [Concepts](concepts/)
 * [Design](design/)
 * [Notes](notes/)
+* [Private](private/)
