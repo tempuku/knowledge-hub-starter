@@ -10,6 +10,7 @@ on:
       - "site/**"
       - "tools/diary/**"
       - "openwiki/**"
+      - "records/**"
       - "config/publication.json"
   workflow_dispatch:
 
