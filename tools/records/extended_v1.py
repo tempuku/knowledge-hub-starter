@@ -96,6 +96,19 @@ def _clean_old_parent(workspace, prior_path):
         (parent / "index.md").unlink(missing_ok=True)
         parent.rmdir()
         parent = parent.parent
+    # Removing the last old child can empty a directory under the root; the
+    # root index must drop that directory entry as well.
+    root_index = stop / "index.md"
+    if root_index.exists():
+        entries = {p.name + "/" if p.is_dir() else p.name for p in stop.iterdir()
+                   if p.name != "index.md" and
+                   (p.is_dir() or (p.is_file() and p.name.endswith(".md") and
+                                   not p.name.endswith(".log.md") and
+                                   p.name not in {"log.md", "index.md"}))}
+        root_index.write_text(
+            _index_content(stop.relative_to(workspace).as_posix(), entries,
+                           _previous_index(root_index)),
+            encoding="utf-8")
 
 
 def _event(writer, normalized, meta, old_path, new_path, before, after,
